@@ -1,5 +1,5 @@
 #!/usr/bin/env -S scala @classpathAtfile
-// the above hashbang line works after successful sbt compile
+// hashbang line requires successful sbt compile
 import vastblue.pathextend._
 
 def main(args: Array[String]): Unit = {

@@ -41,7 +41,7 @@ object pathextend {
   }
 
   implicit class ExtendString(s: String) {
-    def path: Path         = vastblue.file.Paths.get(s)      // .toAbsolutePath
+    def path: Path         = vastblue.file.Paths.get(s)
     def toPath: Path       = path
     def absPath: Path      = s.path.toAbsolutePath.normalize // alias
     def toFile: JFile      = toPath.toFile
