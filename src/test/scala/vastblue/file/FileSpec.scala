@@ -1,10 +1,10 @@
 package vastblue.file
 
 import vastblue.pathextend.*
-import vastblue.file.Paths.{cwd, defaultDrive, isWindows}
 import org.scalatest.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import vastblue.Platform.{workingDrive, driveRoot, cwd}
 
 class FileSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   var verbose = false // manual control
@@ -87,7 +87,7 @@ class FileSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   ) ::: gdriveTests
 
   lazy val nonCanonicalDefaultDrive = {
-    val dd = defaultDrive
+    val dd = driveRoot.take(1).toLowerCase
     dd != "c"
   }
   lazy val username = sys.props("user.name").toLowerCase
@@ -238,7 +238,7 @@ class FileSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
               } else {
                 hook += 1
               }
-              if (defaultDrive.nonEmpty) {
+              if (driveRoot.nonEmpty) {
                 assert(exp == std) // || exp.drop(2) == std.drop(2) || std.contains(exp))
               } else {
                 assert(exp == std)
@@ -251,7 +251,7 @@ class FileSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       def getVariants(p: Path): Seq[Path] = {
         val pstr = p.toString.toLowerCase
-        def includeStdpath: Seq[String] = if (pstr.startsWith(defaultDrive)) {
+        def includeStdpath: Seq[String] = if (pstr.startsWith(workingDrive.string)) {
           List(p.stdpath)
         } else {
           Nil

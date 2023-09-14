@@ -1,6 +1,7 @@
 import org.junit.Test
-
+import vastblue.Platform.isWinshell
 import vastblue.file.Paths.*
+import vastblue.Platform.*
 import vastblue.pathextend.*
 
 class TestUniPath {
@@ -13,7 +14,7 @@ class TestUniPath {
     printf("%s\n%s\n", test, bashVersion)
     printf("bashPath     [%s]\n", bashPath)
     printf("shellRoot    [%s]\n", shellRoot)
-    printf("systemDrive: [%s]\n", systemDrive)
+    printf("systemDrive: [%s]\n", driveRoot)
     printf("shellDrive   [%s]\n", shellDrive)
     printf("shellBaseDir [%s]\n", shellBaseDir)
     printf("osName       [%s]\n", osName)
@@ -39,6 +40,6 @@ class TestUniPath {
     for ((key, valu) <- reverseMountMap) {
       printf("mount %-22s -> %s\n", key, valu)
     }
-    assert(bashPath.file.exists, s"bash not found")
+    assert(bashPath.exists == bashPath.isFile, s"bash not found")
   }
 }

@@ -2,9 +2,11 @@ package vastblue.file
 
 import org.scalatest.*
 import vastblue.pathextend.*
-import vastblue.file.Paths.{canExist, cwd, defaultDrive, isWindows, normPath}
+import vastblue.file.Paths.{canExist, normPath}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import vastblue.Platform
+import vastblue.Platform.driveRoot
 
 class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   var hook = 0
@@ -34,7 +36,7 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   lazy val testfileb: Path = {
     Paths.get(homeDirTestFile)
   }
-  lazy val here  = cwd.normalize.toString.toLowerCase
+  lazy val here  = Platform.cwd.normalize.toString.toLowerCase
   lazy val uhere = here.replaceAll("[a-zA-Z]:", "").replace('\\', '/')
   lazy val hereDrive = here.replaceAll(":.*", ":") match {
     case drive if drive >= "a" && drive <= "z" =>
@@ -182,7 +184,7 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
           }
         }
       }
-      lazy val nonCanonicalDefaultDrive = defaultDrive != "c:"
+      lazy val nonCanonicalDefaultDrive = driveRoot != "C:"
       lazy val username                 = sys.props("user.name").toLowerCase
       lazy val pathToStringPairs = List(
         (".", uhere),

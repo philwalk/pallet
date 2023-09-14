@@ -5,6 +5,7 @@ sall
 s[0-9]*
 _vb
 tags
+*/.scala-build/
 
 # classpath @files come in Windows/EverybodyElse versions
 classpathAtfile*
@@ -27,6 +28,7 @@ project/.sbtserver.lock
 project/project/
 *.swp
 *.sw?
+*.semanticdb
 
 jsrc/*.jar
 

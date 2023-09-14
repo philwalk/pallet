@@ -12,7 +12,7 @@ import vastblue.time.FileTime.*
 
 object pathextend {
   def Paths = vastblue.file.Paths
-  def Files = vastblue.file.Files
+  //def Files = vastblue.file.Files
   type Path        = java.nio.file.Path
   type PrintWriter = java.io.PrintWriter
   type JFile       = java.io.File
@@ -54,12 +54,22 @@ object pathextend {
     def toFile: JFile          = p.toFile
     def length: Long           = p.toFile.length
     def file: JFile            = p.toFile
-    def realpath: Path         = if (p.isSymbolicLink) p.toRealPath() else p // toRealPath(p)
+    def realpath: Path         = if (p.isSymbolicLink) {
+      try {
+        // p.toRealPath() // good symlinks
+        JFiles.readSymbolicLink(p);
+      } catch {
+      case fse: java.nio.file.FileSystemException =>
+        p.realpathLs // bad symlinks, or file access permission
+      }
+    } else {
+      p // not a symlink
+    }
     def getParentFile: JFile   = p.toFile.getParentFile
     def parentFile: JFile      = getParentFile                               // alias
     def parentPath: Path       = parentFile.toPath
     def parent: Path           = parentPath                                  // alias
-    def exists: Boolean        = Files.exists(p)                             // p.toFile.exists
+    def exists: Boolean        = JFiles.exists(p)                             // p.toFile.exists
     def listFiles: Seq[JFile]  = p.toFile.listFiles.toList
     def localpath: String      = cygpath2driveletter(p.normalize.toString)
     def dospath: String        = localpath.replace('/', '\\')
@@ -124,7 +134,7 @@ object pathextend {
         execBinary("cat", p.norm)
       } else {
         try {
-          Files.readAllLines(p, charset).asScala.toSeq
+          JFiles.readAllLines(p, charset).asScala.toSeq
         } catch {
           case mie: java.nio.charset.MalformedInputException =>
             sys.error(s"malformed input reading file [$p] with charset [$charset]")
@@ -149,7 +159,7 @@ object pathextend {
 
     def isSymbolicLink: Boolean = JFiles.isSymbolicLink(p)
     def mkdirs: Boolean = {
-      val dir = Files.createDirectories(p)
+      val dir = JFiles.createDirectories(p)
       dir.toFile.isDirectory
     }
     def realpathLs: Path = { // ask ls what symlink references
@@ -478,7 +488,7 @@ object pathextend {
       .onMalformedInput(CodingErrorAction.REPLACE)
       .onUnmappableCharacter(CodingErrorAction.REPLACE)
     try {
-      Files.readAllLines(p, codec.charSet).asScala.toSeq
+      JFiles.readAllLines(p, codec.charSet).asScala.toSeq
     } catch {
       case _: Exception =>
         encoding match {
@@ -487,13 +497,13 @@ object pathextend {
             discardWarningAbsorber = codec
               .onMalformedInput(CodingErrorAction.REPLACE)
               .onUnmappableCharacter(CodingErrorAction.REPLACE)
-            Files.readAllLines(p, codec.charSet).asScala.toSeq
+            JFiles.readAllLines(p, codec.charSet).asScala.toSeq
           case _ =>
             implicit val codec = Codec("utf-8")
             discardWarningAbsorber = codec
               .onMalformedInput(CodingErrorAction.REPLACE)
               .onUnmappableCharacter(CodingErrorAction.REPLACE)
-            Files.readAllLines(p, codec.charSet).asScala.toSeq
+            JFiles.readAllLines(p, codec.charSet).asScala.toSeq
         }
     }
   }
@@ -512,7 +522,7 @@ object pathextend {
       case "MD5"     => "md5sum"
       case _         => ""
     }
-    val toolPath = localPath(toolName)
+    val toolPath = where(toolName)
     val sum = if (bintools && toolPath.nonEmpty && toolPath.path.isFile) {
       // very fast
       val binstr = execBinary(toolPath, file.norm).take(1).mkString("")
@@ -537,7 +547,7 @@ object pathextend {
         val tailstr = Option(tail).getOrElse("/")
         s"$dl:$tailstr"
       case _ =>
-        s"$defaultDrive:$strtmp"
+        s"$workingDrive:$strtmp"
     }
   }
   def cygpath2driveletter(p: Path): String = {
@@ -552,7 +562,7 @@ object pathextend {
         case "/" =>
           s"/$letter"
         case s if s.startsWith("/") =>
-          if (letter == defaultDrive.take(1).toLowerCase) {
+          if (letter == workingDrive.letter){ // take(1).toLowerCase) {
             tail
           } else {
             s"/$letter$tail"
@@ -561,7 +571,7 @@ object pathextend {
           s"/$letter/$tail"
       }
     } else {
-      if (defaultDrive.nonEmpty && str.startsWith(s"/$defaultDrive")) {
+      if (workingDrive.nonEmpty && str.startsWith(s"/$workingDrive")) {
         str.drop(2) // drop default drive
       } else {
         str

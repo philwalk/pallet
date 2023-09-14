@@ -7,7 +7,7 @@ lazy val supportedScalaVersions = List(scalaVer)
 //ThisBuild / envFileName  := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / organization := "org.vastblue"
 ThisBuild / scalaVersion := scalaVer
-ThisBuild / version      := "0.8.1-SNAPSHOT"
+ThisBuild / version      := "0.8.2-SNAPSHOT"
 
 ThisBuild / crossScalaVersions := supportedScalaVersions
 
