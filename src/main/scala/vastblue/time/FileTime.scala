@@ -1,61 +1,20 @@
 package vastblue.time
 
-//import vastblue.pathextend.*
+import vastblue.pathextend._
 
 import java.util.concurrent.TimeUnit
 import java.time.ZoneId
-//import java.time.{ZoneOffset}
-import java.time.format.*
+import java.time.format.{DateTimeFormatter, DateTimeFormatterBuilder}
+import java.time.format._
 import java.time.LocalDateTime
-//import io.github.chronoscala.Imports.*
-
 import java.time.temporal.{TemporalAdjuster, TemporalAdjusters}
-//import java.time.temporal.{ChronoField}
 import scala.util.matching.Regex
-//import java.time.DayOfWeek
-//import java.time.DayOfWeek.*
 
 object FileTime extends vastblue.time.TimeExtensions {
   def zoneid          = ZoneId.systemDefault
   def zoneOffset      = zoneid.getRules().getStandardOffset(now.toInstant())
   def zoneOffsetHours = zoneOffset.getHour
 
-//  support usage "DateTimeConstants.FRIDAY"
-  /*
-  object DateTimeConstants {
-    def SUNDAY = java.time.DayOfWeek.SUNDAY
-    def MONDAY = java.time.DayOfWeek.MONDAY
-    def TUESDAY = java.time.DayOfWeek.TUESDAY
-    def WEDNESDAY = java.time.DayOfWeek.WEDNESDAY
-    def THURSDAY = java.time.DayOfWeek.THURSDAY
-    def FRIDAY = java.time.DayOfWeek.FRIDAY
-    def SATURDAY = java.time.DayOfWeek.SATURDAY
-  }
-  def SUNDAY = java.time.DayOfWeek.SUNDAY
-  def MONDAY = java.time.DayOfWeek.MONDAY
-  def TUESDAY = java.time.DayOfWeek.TUESDAY
-  def WEDNESDAY = java.time.DayOfWeek.WEDNESDAY
-  def THURSDAY = java.time.DayOfWeek.THURSDAY
-  def FRIDAY = java.time.DayOfWeek.FRIDAY
-  def SATURDAY = java.time.DayOfWeek.SATURDAY
-   */
-
-  // type DateTimeFormat = DateTimeFormatter
-  // type DateTimeZone = java.time.ZoneId
-  // type LocalDate = java.time.LocalDate
-  // type DateTime = LocalDateTime
-//val DateTime = LocalDateTime
-
-  /*
-  def parseLocalDate(_datestr:String, offset: Int=0): DateTime = {
-    parseDateJoda(_datestr, offset) // .toLocalDate
-  }
-
-  lazy val timeDebug:Boolean = Option(System.getenv("TIME_DEBUG")) match {
-    case None => false
-    case _ => true
-  }
-   */
   lazy val NullDate: LocalDateTime =
     LocalDateTime.parse("0000-01-01T00:00:00") // .ofInstant(Instant.ofEpochMilli(0))
 
@@ -180,36 +139,6 @@ object FileTime extends vastblue.time.TimeExtensions {
     val instant = java.time.Instant.ofEpochMilli(epoch)
     java.time.LocalDateTime.ofInstant(instant, timezone)
   }
-
-  /** Returns days, hours, minutes, seconds between timestamps.
-    */
-//  def getDuration(date1:LocalDateTime,date2:LocalDateTime): (Long, Long, Long, Long) = {
-//    val reverse = date1.getMillis() > date2.getMillis()
-//    val (d1,d2) = reverse match {
-//    case true => (date2,date1)
-//    case _    => (date1,date2)
-//val d2d = idate1 to idate2 // new RichDuration(duration)
-//val d2d = new RichDuration(between(idate1, idate2))
-//    }
-//    val duration = diffDays(d1,d2) // .toDuration
-//    val days = duration.getStandardDays
-//
-//    var (hours:Long, minutes:Long, seconds:Long) = (
-//      duration.getStandardHours,
-//      duration.getStandardMinutes,
-//      duration.getStandardSeconds
-//    )
-//    if( minutes > 0 ){
-//      seconds -= minutes*60
-//    }
-//    if( hours > 0 ){
-//      minutes -= hours*60
-//    }
-//    if( days > 0 ){
-//      hours -= days * 24
-//    }
-//    (days,hours,minutes,seconds)
-//  }
 
   def nowZoned(zone: ZoneId = MountainTime): LocalDateTime = LocalDateTime.now(zone)
   lazy val now: LocalDateTime                              = nowZoned(MountainTime)
@@ -544,7 +473,7 @@ object FileTime extends vastblue.time.TimeExtensions {
     }
   }
   class RichString(val s: String) extends AnyVal {
-    import java.time.*
+    import java.time._
     def str = s // .replaceAll(" ","T")
     def toDateTime: LocalDateTime = parseDateString(
       str

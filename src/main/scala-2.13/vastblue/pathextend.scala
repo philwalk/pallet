@@ -5,10 +5,11 @@ import java.nio.charset.Charset
 import java.io.{ByteArrayInputStream, InputStream}
 import java.io.{FileOutputStream, OutputStreamWriter}
 import java.security.{DigestInputStream, MessageDigest}
-import scala.jdk.CollectionConverters.*
-import vastblue.Platform.*
+import scala.jdk.CollectionConverters._
+import vastblue.Platform._
 import vastblue.time.FileTime
-import vastblue.time.FileTime.*
+import vastblue.time.FileTime._
+import vastblue.DriveColon._
 
 object pathextend {
   def Paths = vastblue.file.Paths
@@ -54,7 +55,17 @@ object pathextend {
     def toFile: JFile          = p.toFile
     def length: Long           = p.toFile.length
     def file: JFile            = p.toFile
-    def realpath: Path         = if (p.isSymbolicLink) p.toRealPath() else p // toRealPath(p)
+    def realpath: Path         = if (p.isSymbolicLink) {
+      try {
+        // p.toRealPath() // good symlinks
+        JFiles.readSymbolicLink(p);
+      } catch {
+      case fse: java.nio.file.FileSystemException =>
+        p.realpathLs // bad symlinks, or file access permission
+      }
+    } else {
+      p // not a symlink
+    }
     def getParentFile: JFile   = p.toFile.getParentFile
     def parentFile: JFile      = getParentFile                               // alias
     def parentPath: Path       = parentFile.toPath
@@ -513,7 +524,7 @@ object pathextend {
       case _         => ""
     }
     val toolPath = where(toolName)
-    val sum = if (bintools && toolPath.nonEmpty && toolPath.path.isFile) {
+    val sum = if (bintools && !toolPath.isEmpty && toolPath.path.isFile) {
       // very fast
       val binstr = execBinary(toolPath, file.norm).take(1).mkString("")
       binstr.replaceAll(" .*", "")
@@ -544,6 +555,7 @@ object pathextend {
     cygpath2driveletter(p.stdpath)
   }
   // return a posix version of path string; include drive letter, if not the default drive
+  // TODO: this assumes that /etc/fstab defines "cygdrive" as "/"
   def posixDriveLetter(str: String) = {
     val posix = if (str.drop(1).startsWith(":")) {
       val letter = str.take(1).toLowerCase
@@ -552,7 +564,7 @@ object pathextend {
         case "/" =>
           s"/$letter"
         case s if s.startsWith("/") =>
-          if (letter == workingDrive.take(1).toLowerCase) {
+          if (letter == workingDrive.letter){ // take(1).toLowerCase) {
             tail
           } else {
             s"/$letter$tail"
@@ -561,7 +573,7 @@ object pathextend {
           s"/$letter/$tail"
       }
     } else {
-      if (workingDrive.nonEmpty && str.startsWith(s"/$workingDrive")) {
+      if (workingDrive.isDrive && str.take(3).equalsIgnoreCase(s"/${workingDrive.letter}")) {
         str.drop(2) // drop default drive
       } else {
         str

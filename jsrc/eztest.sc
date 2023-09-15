@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala @classpathAtfile
 
-import vastblue.file.*
+import vastblue.file._
 import vastblue.file.{EzPath, PathUnx, PathWin}
 
 def main(args: Array[String]): Unit = {

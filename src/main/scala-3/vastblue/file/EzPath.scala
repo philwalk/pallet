@@ -79,14 +79,16 @@ def winlikePathstr(s: String): Boolean = {
 def defaultSlash(s: String): Slash = {
   if (winlikePathstr(s)) Slash.Win else Slash.Unx
 }
-object PathUnx:
+
+object PathUnx{
   def apply(s: String): PathUnx = new PathUnx(s)
-
-object PathWin:
-  def apply(s: String): PathWin = new PathWin(s)
-
+}
 class PathUnx(s: String) extends EzPath(s, Slash.Unx) {
   override def toString = abs
+}
+
+object PathWin{
+  def apply(s: String): PathWin = new PathWin(s)
 }
 class PathWin(s: String) extends EzPath(s, Slash.Win) {
   override def toString = abs

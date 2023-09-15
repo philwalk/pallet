@@ -1,8 +1,8 @@
 //#!/usr/bin/env -S scala -explain -cp target/scala-3.3.0/classes/*
 package vastblue.file
 
-import vastblue.file.EzPath.*
-//import vastblue.pathextend.*
+import vastblue.file.EzPath._
+//import vastblue.pathextend._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

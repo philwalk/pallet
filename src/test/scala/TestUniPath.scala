@@ -1,8 +1,8 @@
 import org.junit.Test
 import vastblue.Platform.isWinshell
-import vastblue.file.Paths.*
-import vastblue.Platform.*
-import vastblue.pathextend.*
+import vastblue.file.Paths._
+import vastblue.Platform._
+import vastblue.pathextend._
 
 class TestUniPath {
   def testArgs = Seq.empty[String]

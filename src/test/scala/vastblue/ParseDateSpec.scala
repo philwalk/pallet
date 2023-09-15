@@ -3,6 +3,7 @@ package vastblue
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import vastblue.time.FileTime._
 
 class ParseDateSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
 //import vastblue.MDate
@@ -53,7 +54,6 @@ class ParseDateSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
       it("should correctly parse dateTime Strings") {
         var lnum = 0
         dateTimePairs.foreach { case (str, expected) =>
-          import vastblue.time.FileTime.*
           val md            = parseDateStr(str)
           val value: String = md.toString("yyyy/MM/dd HH:mm:ss")
 //          printf("expected[%s], value[%s]\n",expected,value)
@@ -64,7 +64,6 @@ class ParseDateSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
       it("should correctly parse date Strings") {
         var lnum = 0
         datePairs.foreach { case (str, expected) =>
-          import vastblue.time.FileTime.*
           val md            = parseDateStr(str)
           val value: String = md.toString("yyyy/MM/dd")
 //          printf("expected[%s], value[%s]\n",expected,value)

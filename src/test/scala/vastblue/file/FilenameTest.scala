@@ -1,7 +1,7 @@
 package vastblue.file
 
-import vastblue.pathextend.*
-import vastblue.file.Paths.*
+import vastblue.pathextend._
+import vastblue.file.Paths._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

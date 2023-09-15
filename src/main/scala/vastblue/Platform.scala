@@ -1,14 +1,18 @@
 package vastblue
 
-import vastblue.pathextend.*
+import vastblue.pathextend._
 
-import java.io.File as JFile
-import java.nio.file.{FileSystemException, Path, Files as JFiles, Paths as JPaths}
+import java.io.{File => JFile}
+import java.nio.file.{FileSystemException, Path}
+import java.nio.file.{Files => JFiles, Paths => JPaths}
 import scala.collection.immutable.ListMap
-import scala.util.control.Breaks.*
+import scala.util.control.Breaks._
 import java.io.{BufferedReader, FileReader}
 import scala.util.Using
-import scala.sys.process.*
+import scala.sys.process._
+import vastblue.DriveColon
+import vastblue.DriveColon._
+import scala.sys.process._
 
 /*
  * Support for writing portable/posix scala scripts.
@@ -228,7 +232,6 @@ object Platform {
 //  def localPath(exeName: String): String = where(exeName)
 
   def execBinary(args: String*): Seq[String] = {
-    import scala.sys.process.*
     Process(Array(args: _*)).lazyLines_!
   }
 
@@ -244,7 +247,6 @@ object Platform {
       err ::= str
       if (verbose) System.err.printf("stderr[%s]\n", str).asInstanceOf[Unit]
     }
-    import scala.sys.process._
     val exit = cmd ! ProcessLogger((o) => toOut(o), (e) => toErr(e))
     (exit, out.reverse, err.reverse)
   }
@@ -429,7 +431,7 @@ object Platform {
           _.trim.replaceAll("\\s*#.*", "")
         }
         .filter {
-          _.trim.nonEmpty
+          !_.trim.isEmpty
         }
       for {
         trimmed <- lines
@@ -449,46 +451,42 @@ object Platform {
 
   def cwdstr = pwd.toString.replace('\\', '/')
 
-  /*
-  opaque type DriveLetter = String
+//opaque type DriveColon = String
 
-  object DriveLetter {
-    def apply(d: Char): DriveLetter = d.toString
-    def apply(s: String): DriveLetter = {
-      assert(s.length == 1 && isAlpha(s.charAt(0)), s"bad drive letter: $s")
-      s
-    }
-  }
-  extension DL(dl: DriveLetter){
-    def letter: String = dl.substring(0,1).toLowerCase
-    def posix: String = s"/$letter"
-  }
-  */
-
-  opaque type DriveColon = String
-
-  extension (dl: DriveColon){
-    def letter: String = dl.substring(0,1).toLowerCase
-    def string: String = dl
-    def posix: String = s"/$letter"
-    def isEmpty: Boolean = dl.string.isEmpty
-    def nonEmpty: Boolean = !dl.isEmpty
-  }
-  // DriveColon Strings can only match "" or "[A-Z]:"
-  object DriveColon {
-    // empty string or uppercase "[A-Z]:"
-    def apply(s: String): DriveColon = {
-      require(s.length <= 2, s"bad DriveColon String [$s]")
-      val str: String = s match {
-      case dl if dl.matches("^[a-zA-Z]:") => dl.toUpperCase
-      case dl if dl.matches("^[a-zA-Z]") => s"$dl:".toUpperCase
-      case _ => ""
-      }
-      str
-    }
-  }
+//extension (dl: DriveColon){
+//  def letter: String = dl.substring(0,1).toLowerCase
+//  def string: String = dl
+//  def posix: String = s"/$letter"
+//  def isEmpty: Boolean = dl.string.isEmpty
+//  def nonEmpty: Boolean = !dl.isEmpty
+//}
+//// DriveColon Strings can only match "" or "[A-Z]:"
+//object DriveColon {
+//  // empty string or uppercase "[A-Z]:"
+//  def apply(s: String): DriveColon = {
+//    require(s.length <= 2, s"bad DriveColon String [$s]")
+//    val str: String = s match {
+//    case dl if dl.matches("^[a-zA-Z]:") => dl.toUpperCase
+//    case dl if dl.matches("^[a-zA-Z]") => s"$dl:".toUpperCase
+//    case _ => ""
+//    }
+//    str
+//  }
+//}
 
   lazy val workingDrive: DriveColon = DriveColon(cwdstr.take(2))
+
+  lazy val driveLetters: List[DriveColon] = {
+    val values = mountMap.values.toList
+    val letters = {
+      for {
+        dl <- values.map { _.take(2) }
+        if dl.drop(1) == ":"
+      } yield DriveColon(dl)
+    }.distinct
+    letters
+  }
+
 
   lazy val cygpathExes = Seq(
     "c:/msys64/usr/bin/cygpath.exe",
@@ -551,17 +549,6 @@ object Platform {
     envPath.foreach { println }
   }
 
-  lazy val LetterPath = """([a-zA-Z]):([$/a-zA-Z_0-9]*)""".r
-
-  def driveAndPath(filepath: String) = {
-    filepath match {
-      case LetterPath(letter, path) =>
-        (letter.toLowerCase, path)
-      case _ =>
-        ("", realrootfull)
-    }
-  }
-
   def norm(str: String) = JPaths.get(str).normalize.toString match {
     case "." => "."
     case p   => p.replace('\\', '/')
@@ -584,7 +571,7 @@ object Platform {
     checkPath(envPath, prog)
   }
   def which(cmdname: String) = {
-    val cname = if (exeSuffix.nonEmpty && !cmdname.endsWith(exeSuffix)) {
+    val cname = if (!exeSuffix.isEmpty && !cmdname.endsWith(exeSuffix)) {
       s"${cmdname}${exeSuffix}"
     } else {
       cmdname
@@ -606,21 +593,31 @@ object Platform {
       case str if str.drop(1) == ":" =>
         DriveColon(str.take(2))
       case _ =>
-        ""
+        DriveColon("")
     }
   }
-  def pathDriveletter(p: Path): String = {
-    pathDriveletter(p.toAbsolutePath.toFile.toString)
+  def pathDriveletter(p: Path): DriveColon = {
+    pathDriveletter(p.toAbsolutePath.toString)
   }
 
   def canExist(p: Path): Boolean = {
-    // val letters = driveLettersLc.toArray
-    val pathdrive = pathDriveletter(p)
+    val pathdrive: DriveColon = pathDriveletter(p)
     pathdrive.string match {
       case "" =>
         true
       case letter =>
-        driveLettersLc.contains(letter)
+        driveLetters.contains(letter)
+    }
+  }
+
+  lazy val LetterPath = """([a-zA-Z]):([$/a-zA-Z_0-9]*)""".r
+
+  def driveAndPath(filepath: String) = {
+    filepath match {
+      case LetterPath(letter, path) =>
+        (DriveColon(letter), path)
+      case _ =>
+        (DriveColon(""), realrootfull)
     }
   }
 
@@ -643,7 +640,7 @@ object Platform {
   }
 
   // drop drive letter and normalize backslash
-  def dropDefaultDrive(str: String) = str.replaceFirst(s"^${workingDrive}:", "")
+  def dropDefaultDrive(str: String) = str.replaceFirst(s"^${workingDrive}", "")
   def dropDriveLetter(str: String)  = str.replaceFirst("^[a-zA-Z]:", "")
   def asPosixPath(str: String)      = dropDriveLetter(str).replace('\\', '/')
   def stdpath(path: Path): String   = path.toString.replace('\\', '/')
@@ -666,7 +663,7 @@ object Platform {
     // printf("fpath[%s]\n",fpath)
     val lines: Seq[String] = if (fpath.toFile.isFile) {
       val src = scala.io.Source.fromFile(fpath.toFile, "UTF-8")
-      src.getLines().toList.map { _.replaceAll("#.*$", "").trim }.filter { _.nonEmpty }
+      src.getLines().toList.map { _.replaceAll("#.*$", "").trim }.filter { !_.isEmpty }
     } else {
       Nil
     }
@@ -710,6 +707,7 @@ object Platform {
       }
       localMountMap += "/cygdrive" -> cygdrive
 
+      /*
       val driveLetters: Array[JFile] = {
         if (false) {
           java.io.File.listRoots() // veeery slow (potentially)
@@ -724,31 +722,18 @@ object Platform {
           dlfiles.distinct.toArray
         }
       }
+      */
 
       for (drive <- driveLetters) {
-        val letter =
-          drive.getAbsolutePath.take(1).toLowerCase // lowercase is typical user expectation
-        val winpath = stdpath(
-          drive.getCanonicalPath
-        ) // retain uppercase, to match cygpath.exe behavior
-        // printf("letter[%s], path[%s]\n",letter,winpath)
+        // lowercase posix drive letter, e.g. "C:" ==> "/c"
+        val letter = drive.string.toLowerCase // .take(1).toLowerCase
+        // winpath preserves uppercase DriveColon (cygpath.exe behavior)
+        val winpath = stdpath(s"$drive/".path.toAbsolutePath)
         localMountMap += s"/$letter" -> winpath
       }
-      // printf("bareRoot[%s]\n",bareRoot)
     }
     localMountMap += "/" -> realrootfull // this must be last
     (localMountMap, cd2r)
-  }
-
-  lazy val driveLettersLc: List[String] = {
-    val values = mountMap.values.toList
-    val letters = {
-      for {
-        dl <- values.map { _.take(2) }
-        if dl.drop(1) == ":"
-      } yield dl.toLowerCase
-    }.distinct
-    letters
   }
 
   def eprint(xs: Any*): Unit = {

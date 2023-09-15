@@ -1,6 +1,6 @@
 package vastblue
 
-import vastblue.time.FileTime.*
+import vastblue.time.FileTime._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 

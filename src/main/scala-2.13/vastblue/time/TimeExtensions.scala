@@ -1,13 +1,13 @@
 package vastblue.time
 
-import java.time.*
-//import java.time.format.*
+import java.time._
+//import java.time.format._
 import java.time.temporal.TemporalAdjusters
 import scala.runtime.RichInt
 
 //import io.github.chronoscala.Imports.*
 //import io.github.chronoscala.*
-import vastblue.time.FileTime.*
+import vastblue.time.FileTime._
 import java.time.DayOfWeek
 //import java.time.DayOfWeek.*
 //import scala.language.implicitConversions

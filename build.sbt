@@ -1,13 +1,13 @@
-lazy val scala213 = "2.13.11"
+lazy val scala213 = "2.13.12"
 lazy val scala331 = "3.3.1"
 lazy val scalaVer = scala331
-//lazy val supportedScalaVersions = List(scala213, scala330)
-lazy val supportedScalaVersions = List(scalaVer)
+lazy val supportedScalaVersions = List(scala213, scala331)
+//lazy val supportedScalaVersions = List(scalaVer)
 
 //ThisBuild / envFileName  := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / organization := "org.vastblue"
 ThisBuild / scalaVersion := scalaVer
-ThisBuild / version      := "0.8.2-SNAPSHOT"
+ThisBuild / version      := "0.8.3-SNAPSHOT"
 
 ThisBuild / crossScalaVersions := supportedScalaVersions
 

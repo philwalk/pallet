@@ -1,7 +1,7 @@
 package vastblue.file
 
-import vastblue.pathextend.*
-import org.scalatest.*
+import vastblue.pathextend._
+import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import vastblue.Platform.{workingDrive, driveRoot, cwd}
@@ -251,6 +251,7 @@ class FileSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       def getVariants(p: Path): Seq[Path] = {
         val pstr = p.toString.toLowerCase
+        import vastblue.DriveColon._
         def includeStdpath: Seq[String] = if (pstr.startsWith(workingDrive.string)) {
           List(p.stdpath)
         } else {

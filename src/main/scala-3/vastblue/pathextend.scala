@@ -1,6 +1,6 @@
 package vastblue
 
-import java.nio.file.{Files as JFiles}
+import java.nio.file.{Files => JFiles}
 import java.nio.charset.Charset
 import java.io.{ByteArrayInputStream, InputStream}
 import java.io.{FileOutputStream, OutputStreamWriter}
@@ -9,6 +9,7 @@ import scala.jdk.CollectionConverters.*
 import vastblue.Platform.*
 import vastblue.time.FileTime
 import vastblue.time.FileTime.*
+import vastblue.DriveColon.*
 
 object pathextend {
   def Paths = vastblue.file.Paths
@@ -41,7 +42,7 @@ object pathextend {
   }
 
   extension (s: String) {
-    def path: Path         = vastblue.file.Paths.get(s)      // .toAbsolutePath
+    def path: Path         = vastblue.file.Paths.get(s)
     def toPath: Path       = path
     def absPath: Path      = s.path.toAbsolutePath.normalize // alias
     def toFile: JFile      = toPath.toFile
@@ -195,7 +196,7 @@ object pathextend {
     // output string should be posix format, either because:
     //   A. non-Windows os
     //   B. C: matching default drive is dropped
-    //   C. D: (not matching default drive) is converted to /d
+    //   C. D: (not matching default drive) is converted to /d (TODO: or /cygdrive/d)
     def stdpath: String = { // alias
       // drop drive letter, if present
       val rawString = p.toString
@@ -523,7 +524,7 @@ object pathextend {
       case _         => ""
     }
     val toolPath = where(toolName)
-    val sum = if (bintools && toolPath.nonEmpty && toolPath.path.isFile) {
+    val sum = if (bintools && !toolPath.isEmpty && toolPath.path.isFile) {
       // very fast
       val binstr = execBinary(toolPath, file.norm).take(1).mkString("")
       binstr.replaceAll(" .*", "")
@@ -554,6 +555,7 @@ object pathextend {
     cygpath2driveletter(p.stdpath)
   }
   // return a posix version of path string; include drive letter, if not the default drive
+  // TODO: this assumes that /etc/fstab defines "cygdrive" as "/"
   def posixDriveLetter(str: String) = {
     val posix = if (str.drop(1).startsWith(":")) {
       val letter = str.take(1).toLowerCase
@@ -571,7 +573,7 @@ object pathextend {
           s"/$letter/$tail"
       }
     } else {
-      if (workingDrive.nonEmpty && str.startsWith(s"/$workingDrive")) {
+      if (workingDrive.isDrive && str.take(3).equalsIgnoreCase(s"/${workingDrive.letter}")) {
         str.drop(2) // drop default drive
       } else {
         str

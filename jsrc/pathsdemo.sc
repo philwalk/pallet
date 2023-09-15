@@ -1,5 +1,5 @@
 #!/usr/bin/env -S scala @classpathAtfile
-import vastblue.pathextend._
+import vastblue.pathextend.*
 
 object PathsDemo {
   def main(args: Array[String]): Unit = {

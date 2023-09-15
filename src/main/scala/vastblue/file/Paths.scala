@@ -1,16 +1,16 @@
 package vastblue.file
 
-import vastblue.Platform.* // mountMap
+import vastblue.Platform._  // mountMap
 import vastblue.pathextend.hook
 
-import java.io.File as JFile
-import java.nio.file.{Files as JFiles, Paths as JPaths}
-import java.nio.file.Path as JPath
+import java.io.{File => JFile}
+import java.nio.file.{Path => JPath}
+import java.nio.file.{Files => JFiles, Paths => JPaths}
 import scala.collection.immutable.ListMap
-import scala.util.control.Breaks.*
+import scala.util.control.Breaks._
 import java.io.{BufferedReader, FileReader}
 import scala.util.Using
-import scala.sys.process.*
+import scala.sys.process._
 
 /*
  * Enable access to the synthetic winshell filesystem provided by
@@ -267,7 +267,6 @@ object Paths {
 //    val s = p.toString.replace('\\', '/')
 //    val cmd = Seq("fsutil.exe", "file", "queryCaseSensitiveInfo", s)
 //    // windows filesystem case-sensitivity is not common (yet?)
-//    import scala.sys.process.*
 //    cmd.lazyLines_!.mkString("").trim.endsWith(" enabled")
 //  }
   // verified on linux and Windows 11; still needed: Darwin/OSX
@@ -365,7 +364,6 @@ object Paths {
       err ::= str
       if (verbose) System.err.printf("stderr[%s]\n", str).asInstanceOf[Unit]
     }
-    import scala.sys.process._
     val exit = cmd ! ProcessLogger((o) => toOut(o), (e) => toErr(e))
     (exit, out.reverse, err.reverse)
   }
@@ -571,13 +569,12 @@ object Paths {
     posix2localMountMap: Map[String, String],
     reverseMountMap: Map[String, String]
   ) = {
-//    printf("shellRoot[%s]\n", shellRoot)
     def emptyMap = Map.empty[String, String]
     if (notWindows || shellRoot.isEmpty) {
       ("", emptyMap, emptyMap)
     } else {
-      val mmap     = mountMap.map { (k: String, v: String) => (k.toLowerCase, v) }
-      val rmap     = mountMap.map { (k: String, v: String) => (v.toLowerCase, k) }
+      val mmap = mountMap.toList.map { case (k: String, v: String) => (k.toLowerCase -> v) }.toMap
+      val rmap = mountMap.toList.map { case (k: String, v: String) => (v.toLowerCase -> k) }.toMap
       val cygdrive = rmap.get("cygdrive").getOrElse("")
       // to speed up map access, convert keys to lowercase
       (cygdrive, mmap, rmap)

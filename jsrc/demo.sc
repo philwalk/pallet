@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala @classpathAtfile
 // hashbang line requires successful sbt compile
-import vastblue.pathextend._
+import vastblue.pathextend.*
 
 def main(args: Array[String]): Unit = {
   // show system memory info
