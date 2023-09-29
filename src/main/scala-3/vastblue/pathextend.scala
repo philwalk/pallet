@@ -9,11 +9,11 @@ import scala.jdk.CollectionConverters.*
 import vastblue.Platform.*
 import vastblue.time.FileTime
 import vastblue.time.FileTime.*
-import vastblue.DriveColon.*
+import vastblue.DriveRoot.*
 
+// TODO: factor out code common to scala3 and scala2.13 versions
 object pathextend {
   def Paths = vastblue.file.Paths
-  //def Files = vastblue.file.Files
   type Path        = java.nio.file.Path
   type PrintWriter = java.io.PrintWriter
   type JFile       = java.io.File
@@ -44,7 +44,7 @@ object pathextend {
   extension (s: String) {
     def path: Path         = vastblue.file.Paths.get(s)
     def toPath: Path       = path
-    def absPath: Path      = s.path.toAbsolutePath.normalize // alias
+    def absPath: Path      = s.path.toAbsolutePath.normalize
     def toFile: JFile      = toPath.toFile
     def file: JFile        = toFile
     def norm: String       = s.replace('\\', '/')
@@ -52,45 +52,47 @@ object pathextend {
   }
 
   extension (p: Path) {
-    def toFile: JFile          = p.toFile
-    def length: Long           = p.toFile.length
-    def file: JFile            = p.toFile
-    def realpath: Path         = if (p.isSymbolicLink) {
+    def toFile: JFile = p.toFile
+    def length: Long  = p.toFile.length
+    def file: JFile   = p.toFile
+
+    def realpath: Path = if (p.isSymbolicLink) {
       try {
         // p.toRealPath() // good symlinks
         JFiles.readSymbolicLink(p);
       } catch {
-      case fse: java.nio.file.FileSystemException =>
-        p.realpathLs // bad symlinks, or file access permission
+        case fse: java.nio.file.FileSystemException =>
+          p.realpathLs // bad symlinks, or file access permission
       }
     } else {
       p // not a symlink
     }
     def getParentFile: JFile   = p.toFile.getParentFile
-    def parentFile: JFile      = getParentFile                               // alias
+    def parentFile: JFile      = getParentFile
     def parentPath: Path       = parentFile.toPath
-    def parent: Path           = parentPath                                  // alias
-    def exists: Boolean        = JFiles.exists(p)                             // p.toFile.exists
+    def parent: Path           = parentPath
+    def exists: Boolean        = JFiles.exists(p)
     def listFiles: Seq[JFile]  = p.toFile.listFiles.toList
     def localpath: String      = cygpath2driveletter(p.normalize.toString)
     def dospath: String        = localpath.replace('/', '\\')
     def isDirectory: Boolean   = p.toFile.isDirectory
     def isFile: Boolean        = p.toFile.isFile
-    def isRegularFile: Boolean = isFile                                      // alias
+    def isRegularFile: Boolean = isFile
     def relpath: Path          = if (p.norm.startsWith(cwd.norm)) cwd.relativize(p) else p
     def relativePath: String   = relpath.norm
     def getName: String        = p.toFile.getName()
-    def name: String           = p.toFile.getName                            // alias
+    def name: String           = p.toFile.getName
     def lcname: String         = name.toLowerCase
     def basename: String       = p.toFile.basename
     def lcbasename: String     = basename.toLowerCase
     def suffix: String         = dotsuffix.dropWhile((c: Char) => c == '.')
     def lcsuffix: String       = suffix.toLowerCase
     def dotsuffix: String      = p.toFile.dotsuffix
-    def noDrive: String =
-      p.norm.replaceAll("^/?[A-Za-z]:?/", "/") // toss Windows drive letter, if present
 
-    def text: String              = p.toFile.contentAsString // alias
+    // toss Windows drive letter, if present
+    def noDrive: String = p.norm.replaceAll("^/?[A-Za-z]:?/", "/")
+
+    def text: String              = p.toFile.contentAsString
     def extension: Option[String] = p.toFile.extension
     def pathFields                = p.iterator.asScala.toList
     def reversePath: String       = pathFields.reverse.mkString("/")
@@ -132,7 +134,7 @@ object pathextend {
     def lines(encoding: String): Seq[String] = linesCharset(Charset.forName(encoding))
     def linesCharset(charset: Charset): Seq[String] = {
       if (p.norm.startsWith("/proc/")) {
-        execBinary("cat", p.norm)
+        execBinary(catExe, p.norm)
       } else {
         try {
           JFiles.readAllLines(p, charset).asScala.toSeq
@@ -146,12 +148,13 @@ object pathextend {
     def linesWithEncoding(encoding: String): Seq[String] = getLinesAnyEncoding(p, encoding)
     def firstline                                        = p.linesAnyEncoding.take(1).mkString("")
     def getLinesIgnoreEncodingErrors(): Seq[String]      = linesAnyEncoding
-    def contentAsString: String                          = p.toFile.contentAsString()
+
+    def contentAsString: String                       = p.toFile.contentAsString()
     def contentWithEncoding(encoding: String): String = p.linesWithEncoding(encoding).mkString("\n")
     def contains(s: String): Boolean                  = p.toFile.contentAsString().contains(s)
     def contentAnyEncoding: String                    = p.toFile.contentAnyEncoding
     def bytes: Array[Byte]                            = JFiles.readAllBytes(p)
-    def byteArray: Array[Byte]                        = bytes // alias
+    def byteArray: Array[Byte]                        = bytes
     def ageInDays: Double                             = FileTime.ageInDays(p.toFile)
 
     def trimmedLines: Seq[String] = linesCharset(DefaultCharset).map { _.trim }
@@ -191,34 +194,30 @@ object pathextend {
       }
     }
 
-    def abspath: String = norm // alias
+    def abspath: String = norm
 
     // output string should be posix format, either because:
     //   A. non-Windows os
     //   B. C: matching default drive is dropped
-    //   C. D: (not matching default drive) is converted to /d (TODO: or /cygdrive/d)
-    def stdpath: String = { // alias
+    //   C. D: (not matching default drive) is converted to /d
+    def stdpath: String = {
       // drop drive letter, if present
       val rawString = p.toString
       val posix = if (notWindows) {
         rawString // case A
       } else {
         val nm = norm
-        posixDriveLetter(nm) // case C
+        withPosixDriveLetter(nm) // case C
       }
       posix
     }
-    def posixpath: String = stdpath // alias
+    def posixpath: String = stdpath
     def delete(): Boolean = toFile.delete()
     def withWriter(charsetName: String = DefaultEncoding, append: Boolean = false)(
         func: PrintWriter => Any
     ): Unit = {
       p.toFile.withWriter(charsetName, append)(func)
     }
-
-    /*
-    def overwrite(text: String): Unit = p.toFile.overwrite(text)
-     */
 
     def dateSuffix: String = {
       lcbasename match {
@@ -230,6 +229,7 @@ object pathextend {
           ""
       }
     }
+
     def renameTo(s: String): Boolean = renameTo(s.path)
     def renameTo(alt: Path): Boolean = {
       p.toFile.renameTo(alt)
@@ -243,12 +243,12 @@ object pathextend {
   extension (f: JFile) {
     def path                      = f.toPath
     def realfile: JFile           = path.realpath.toFile
-    def name: String              = f.getName                      // alias
+    def name: String              = f.getName
     def lcname                    = f.getName.toLowerCase
     def norm: String              = f.path.norm
-    def abspath: String           = norm                           // alias
-    def stdpath: String           = norm                           // alias
-    def posixpath: String         = stdpath                        // alias
+    def abspath: String           = norm
+    def stdpath: String           = norm
+    def posixpath: String         = stdpath
     def lastModifiedYMD: String   = f.path.lastModifiedYMD
     def basename: String          = dropDotSuffix(name)
     def lcbasename: String        = basename.toLowerCase
@@ -258,9 +258,9 @@ object pathextend {
     def extension: Option[String] = f.dotsuffix match { case "" => None; case str => Some(str) }
     def parentFile: JFile         = f.getParentFile
     def parentPath: Path          = parentFile.toPath
-    def parent: Path              = parentPath                     // alias
+    def parent: Path              = parentPath
     def isFile: Boolean           = f.isFile
-    def isRegularFile: Boolean    = isFile                         // alias
+    def isRegularFile: Boolean    = isFile
     def filesTree: Seq[JFile] = {
       assert(f.isDirectory, s"not a directory [$f]")
       pathextend.filesTree(f)()
@@ -272,9 +272,10 @@ object pathextend {
     }
     def contentAsString: String                                    = contentAsString(DefaultCharset)
     def contentAsString(charset: Charset = DefaultCharset): String = f.lines(charset).mkString("\n")
+
     def contentAnyEncoding: String = f.linesAnyEncoding.mkString("\n")
     def bytes: Array[Byte]         = f.getBytes("UTF-8") // JFiles.readAllBytes(path)
-    def byteArray: Array[Byte]     = bytes               // alias
+    def byteArray: Array[Byte]     = bytes
     def getBytes(encoding: String = "utf-8"): Array[Byte] =
       contentAsString.getBytes(Charset.forName(encoding))
     def lines: Seq[String]                   = lines(DefaultCharset)
@@ -394,12 +395,15 @@ object pathextend {
     def apply(fpath: String): JFile              = new JFile(fpath)
   }
 
-  /** Recursive list of all files below rootfile. Filter for directories to be descended and/or
-    * files to be retained.
-    */
   def dummyFilter(f: JFile): Boolean = f.canRead()
 
   import scala.annotation.tailrec
+
+  /**
+   * Recursive list of all files below rootfile.
+   *
+   * Filter for directories to be descended and/or files to be retained.
+   */
   def filesTree(dir: JFile)(func: JFile => Boolean = dummyFilter): Seq[JFile] = {
     assert(dir.isDirectory, s"error: not a directory [$dir]")
     @tailrec
@@ -485,6 +489,8 @@ object pathextend {
     import java.nio.charset.CodingErrorAction
     var discardWarningAbsorber = Codec(encoding)
     implicit val codec         = Codec(encoding)
+
+    // scalafmt: { optIn.breakChainOnFirstMethodDot = true }
     discardWarningAbsorber = codec
       .onMalformedInput(CodingErrorAction.REPLACE)
       .onUnmappableCharacter(CodingErrorAction.REPLACE)
@@ -554,38 +560,53 @@ object pathextend {
   def cygpath2driveletter(p: Path): String = {
     cygpath2driveletter(p.stdpath)
   }
-  // return a posix version of path string; include drive letter, if not the default drive
-  // TODO: this assumes that /etc/fstab defines "cygdrive" as "/"
-  def posixDriveLetter(str: String) = {
-    val posix = if (str.drop(1).startsWith(":")) {
-      val letter = str.take(1).toLowerCase
-      val tail   = str.drop(2)
-      tail match {
-        case "/" =>
-          s"/$letter"
-        case s if s.startsWith("/") =>
-          if (letter == workingDrive.letter){ // take(1).toLowerCase) {
-            tail
-          } else {
-            s"/$letter$tail"
-          }
-        case _ =>
-          s"/$letter/$tail"
-      }
+
+  // return posix path string, with cygdrive prefix, if not the default drive
+  def withPosixDriveLetter(str: String) = {
+    if (notWindows) {
+      str
     } else {
-      if (workingDrive.isDrive && str.take(3).equalsIgnoreCase(s"/${workingDrive.letter}")) {
-        str.drop(2) // drop default drive
+      val posix = if (str.drop(1).startsWith(":")) {
+        val driveRoot = DriveRoot(str.take(2))
+        str.drop(2).string match {
+          case "/" =>
+            driveRoot.posix
+          case pathstr if pathstr.startsWith("/") =>
+            if (driveRoot == workingDrive) {
+              pathstr // implicit drive prefix
+            } else {
+              s"${driveRoot.posix}$pathstr" // explicit drive prefix
+            }
+          case pathstr =>
+            // Windows drive letter not followed by a slash resolves to
+            // the "current working directory" for the drive.
+            val cwd = driveRoot.workingDir.norm
+            s"$cwd/$pathstr"
+        }
       } else {
-        str
+        // if str prefix matches workingDrive.posix, remove it
+        if (!str.startsWith(cygdrive) || !workingDrive.isDrive) {
+          str // no change
+        } else {
+          val prefixLength = cygdrive.length + 3 // "/cygdrive" + "/c/"
+          if (str.take(prefixLength).equalsIgnoreCase(workingDrive.posix + "/")) {
+            // drop working drive prefix, for implicit root-relative path
+            str.drop(prefixLength - 1) // don't drop slash following workingDrive.posix prefix
+          } else {
+            str
+          }
+        }
       }
+      posix
     }
-    posix
   }
+
   def dropDotSuffix(s: String): String =
-    if (!s.contains(".")) s else s.reverse.dropWhile(_ != '.').drop(1).reverse
+    if (!s.contains(".")) s else s.replaceFirst("[.][^.\\/]+$", "")
+
   def commonLines(f1: Path, f2: Path): Map[String, List[String]] = {
     val items = (f1.trimmedLines ++ f2.trimmedLines).groupBy { line =>
-      line.replaceAll("""[^a-zA-Z_0-9]+""", "") // remove whitespace and punctuation
+      line.replaceAll("""[^a-zA-Z_0-9]+""", "") // remove spaces and punctuation
     }
     items.map { case (key, items) => (key, items.toList) }
   }

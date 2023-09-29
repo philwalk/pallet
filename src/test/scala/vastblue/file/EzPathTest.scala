@@ -10,12 +10,12 @@ import org.scalatest.matchers.should.Matchers
 class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   describe("EzPath constructors") {
     it("should correctly create and display EzPath objects") {
-      val upathstr    = "/opt/ue"
-      val wpathstr    = upathstr.replace('/', '\\')
-      val posixAbsstr = s"$platformPrefix$upathstr" // can insert current working directory prefix
-      val windowsAbsstr =
-        posixAbsstr.replace('/', '\\') // windows version of java.io.File.separator
-      val localAbsstr = if (isWindows) windowsAbsstr else posixAbsstr
+      val upathstr      = "/opt/ue"
+      val wpathstr      = upathstr.replace('/', '\\')
+      val posixAbsstr   = s"$platformPrefix$upathstr"    // current working directory prefix
+      val windowsAbsstr = posixAbsstr.replace('/', '\\') // Windows version
+      val localAbsstr   = if (isWindows) windowsAbsstr else posixAbsstr
+
       printf("notWindows: %s\n", notWindows)
       printf("isWindows: %s\n", isWindows)
 

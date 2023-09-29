@@ -1,7 +1,6 @@
 package vastblue.file
 
-import vastblue.Platform._  // mountMap
-import vastblue.pathextend.hook
+import vastblue.Platform._ // mountMap
 
 import java.io.{File => JFile}
 import java.nio.file.{Path => JPath}
@@ -11,6 +10,7 @@ import scala.util.control.Breaks._
 import java.io.{BufferedReader, FileReader}
 import scala.util.Using
 import scala.sys.process._
+import vastblue.pathextend.hook
 
 /*
  * Enable access to the synthetic winshell filesystem provided by
@@ -85,7 +85,7 @@ object Paths {
     } else {
       val _normpath = pathstr.replace('\\', '/')
       val normpath = _normpath.take(2) match {
-        case dl if dl.head == '/' =>
+        case dl if dl.startsWith("/") =>
           // apply mount map to paths with leading slash
           applyPosix2LocalMount(_normpath) // becomes absolute, if mounted
         case _ =>
@@ -111,9 +111,7 @@ object Paths {
       if (literalDrive.nonEmpty) {
         // no need for cygpath if drive is unambiguous.
         val fpath =
-          if (
-            fpstr.endsWith(":") && fpstr.take(3).length == 2 && fpstr.equalsIgnoreCase(driveRoot)
-          ) {
+          if (fpstr.endsWith(":") && fpstr.take(3).length == 2 && fpstr.equalsIgnoreCase(driveRoot)) {
             // fpstr is a drive letter expression.
             // Windows interprets a bare drive letter expression as
             // the "working directory" each drive had at jvm startup.
@@ -127,6 +125,7 @@ object Paths {
       }
     }
   }
+
   lazy val posix2localMountMapKeyset = posix2localMountMap.keySet.toSeq.sortBy { -_.length }
 
   /*
@@ -154,7 +153,7 @@ object Paths {
         }
       }
       val prefixMatches = lcpath.startsWith(target)
-      if (prefixMatches){
+      if (prefixMatches) {
         hook += 1
       }
       prefixMatches && exactMatch
@@ -166,18 +165,17 @@ object Paths {
    */
   def applyPosix2LocalMount(pathstr: String): String = {
     require(pathstr.take(2).last != ':', s"bad argument : ${pathstr}")
-    val segments = pathstr.drop(1).split("/")
-    require(segments.nonEmpty, s"empty segments for pathstr [$pathstr]")
-    val firstSeg = segments.head match {
-      case "/" | "" => ""
-      case s        => s
-    }
 
     val mounted = getMounted(pathstr)
     val mountTarget = if (mounted.isEmpty) {
       pathstr
     } else {
-      if (mounted == Some(cygdrive)) {
+      val cyg        = s"$cygdrive"
+      val mountpoint = mounted.getOrElse("")
+      if (mountpoint == cyg) {
+        val segments = pathstr.drop(cyg.length).split("/").dropWhile(_.isEmpty)
+        require(segments.nonEmpty, s"empty segments for pathstr [$pathstr]")
+        val firstSeg = segments.head
         if (firstSeg.length == 1 && isAlpha(firstSeg.charAt(0))) {
           // looks like a cygdrive designator replace '/cygdrive/X' with 'X:/'
           s"$firstSeg:/${segments.tail.mkString("/")}"
@@ -225,6 +223,7 @@ object Paths {
     }
     nup
   }
+
   def canBeDriveLetter(s: String): Boolean = {
     s.length == 1 && isAlpha(s.charAt(0))
   }
@@ -238,6 +237,7 @@ object Paths {
     }
     JPaths.get(fnamestr)
   }
+
   def derefTilde(str: String): String = if (str.startsWith("~")) {
     // val uh = userhome
     s"${userhome}${str.drop(1)}".replace('\\', '/')
@@ -262,7 +262,7 @@ object Paths {
     }
   }
 
-//  // in Windows 10+, per-directory case-sensitive filesystem is enabled or not.
+//  in Windows 10+, per-directory case-sensitive filesystem is enabled or not.
 //  def dirIsCaseSensitive(p: Path): Boolean = {
 //    val s = p.toString.replace('\\', '/')
 //    val cmd = Seq("fsutil.exe", "file", "queryCaseSensitiveInfo", s)
@@ -311,180 +311,14 @@ object Paths {
   def userhome: String = sys.props("user.home").replace('\\', '/')
   lazy val home: Path  = Paths.get(userhome)
 
-  /*
-  lazy val programFilesX86: String = Option(System.getenv("ProgramFiles(x86)")) match {
-    case Some(valu) => valu
-    case None       => "c:/Program Files (x86)"
-  }
-
-  lazy val winshellFlag = {
-    isDirectory(shellBaseDir) && (isCygwin || isMsys64 || isGitSdk64)
-  }
-  // get first path to prog by searching the PATH
-  def findInPath(binaryName: String): Option[Path] = {
-    findAllInPath(binaryName, findAll = false) match {
-      case Nil          => None
-      case head :: tail => Some(head)
-    }
-  }
-
-  // get all occurences of binaryName in PATH
-  def findAllInPath(prog: String, findAll: Boolean = true): Seq[Path] = {
-    val progname = prog.replace('\\', '/') match {
-      case "/" => "/"
-      case str => str.split("/").last // remove path from program, if present
-    }
-    var found = List.empty[Path]
-    breakable {
-      for (dir <- envPath) {
-        // sort .exe suffix ahead of no .exe suffix
-        for (name <- Seq(s"$dir$fsep$progname$exeSuffix", s"$dir$fsep$progname").distinct) {
-          val p = Paths.get(name)
-          if (p.toFile.isFile) {
-            found ::= p.normalize
-            if (!findAll) {
-              break() // quit on first one
-            }
-          }
-        }
-      }
-    }
-    found.reverse.distinct
-  }
-
-  def spawnCmd(cmd: Seq[String], verbose: Boolean = false): (Int, List[String], List[String]) = {
-    var (out, err) = (List[String](), List[String]())
-
-    def toOut(str: String): Unit = {
-      if (verbose) printf("stdout[%s]\n", str)
-      out ::= str
-    }
-
-    def toErr(str: String): Unit = {
-      err ::= str
-      if (verbose) System.err.printf("stderr[%s]\n", str).asInstanceOf[Unit]
-    }
-    val exit = cmd ! ProcessLogger((o) => toOut(o), (e) => toErr(e))
-    (exit, out.reverse, err.reverse)
-  }
-
-//  def shellExec(cmd: String): Seq[String] = {
-//    execBinary(bashPath, "-c", cmd)
-//  }
-
-  def execBinary(args: String*): Seq[String] = {
-    val (err, stdout, stderr) = spawnCmd(args.toSeq)
-    if (err != 0) {
-      hook += 1
-    }
-    stdout
-  }
-
-  lazy val winshellBashExes = Seq(
-    "c:/msys64/usr/bin/bash.exe",
-    "c:/cygwin64/bin/bash.exe"
-  )
-  def bashPath: String = {
-    val inPath = where(s"bash${exeSuffix}")
-    if (!isWindows) { inPath }
-    else {
-      inPath match {
-        case "" | "C:/Windows/System32/bash.exe" =>
-          winshellBashExes
-            .find { (s: String) =>
-              JPaths.get(s).toFile.isFile
-            }
-            .getOrElse(inPath)
-        case s =>
-          s
-      }
-    }
-  }
-
-//  lazy val shellRootPath = Paths.get(shellRoot)
-
-  def exec(args: String*): String = {
-    execBinary(args: _*).toList.mkString("")
-  }
-  // get path to binaryName via 'which.exe' or 'where'
-  def where(binaryName: String): String = {
-    if (isWindows) {
-      // prefer binary with .exe extension, ceteris paribus
-      val binName = setSuffix(binaryName)
-      // exec3 hides stderr complaint: `INFO: Could not find files for the given pattern(s)`
-      exec3("c:/Windows/System32/where.exe", binName).replace('\\', '/')
-    } else {
-      exec("which", binaryName)
-    }
-  }
-
-  def notWindows: Boolean = java.io.File.separator == "/"
-  def isWindows: Boolean  = !notWindows
-  def exeSuffix: String   = if (isWindows) ".exe" else ""
-
-  def osName      = sys.props("os.name")
-  lazy val osType: String = osName.takeWhile(_ != ' ').toLowerCase match {
-    case "windows"  => "windows"
-    case "linux"    => "linux"
-    case "mac os x" => "darwin"
-    case other =>
-      sys.error(s"osType is [$other]")
-  }
-
-  lazy val unamefull  = uname("-a") // -s ?
-  lazy val unameshort = unamefull.toLowerCase.replaceAll("[^a-z0-9].*", "")
-  lazy val isCygwin   = unameshort.toLowerCase.startsWith("cygwin")
-  lazy val isMsys64   = unameshort.toLowerCase.startsWith("msys")
-  lazy val isMingw64  = unameshort.toLowerCase.startsWith("mingw")
-  lazy val isGitSdk64 = unameshort.toLowerCase.startsWith("git-sdk")
-  lazy val isGitbash  = unameshort.toLowerCase.startsWith("gitbash")
-
-  def listPossibleRootDirs(startDir: String): Seq[JFile] = {
-    Paths.get(startDir).toAbsolutePath.toFile match {
-      case dir if dir.isDirectory =>
-        // NOTE: /opt/gitbash is excluded by this approach:
-        def defaultRootNames = Seq(
-          "cygwin64",
-          "msys64",
-          "git-sdk-64",
-          "gitbash",
-          "MinGW"
-        )
-        dir.listFiles.toList.filter { f =>
-          f.isDirectory && defaultRootNames.exists { name =>
-            f.getName.contains(name)
-          }
-        }
-      case path =>
-        Nil
-    }
-  }
-  def possibleWinshellRootDirs = {
-    listPossibleRootDirs("/") ++ listPossibleRootDirs("/opt")
-  }
-
-  lazy val envPath: Seq[String] = Option(System.getenv("PATH")) match {
-    case None      => Nil
-    case Some(str) => str.split(psep).toList.map { canonical(_) }.distinct
-  }
-
-  def canonical(str: String): String = {
-    Paths.get(str) match {
-      case p if p.toFile.exists => p.normalize.toString
-      case p                    => p.toString
-    }
-  }
-  */
-
   def findPath(prog: String, dirs: Seq[String] = envPath): String = {
-    dirs
-      .map { dir =>
-        Paths.get(s"$dir/$prog")
-      }
-      .find { (p: Path) =>
-        p.toFile.isFile
-      } match {
-      case None    => ""
+    // format: off
+    dirs.map { dir =>
+      Paths.get(s"$dir/$prog")
+    }.find { (p: Path) =>
+      p.toFile.isFile
+    } match {
+      case None => ""
       case Some(p) => p.normalize.toString.replace('\\', '/')
     }
   }
@@ -528,11 +362,10 @@ object Paths {
     pathDriveletter(p.toAbsolutePath.toFile.toString)
   }
 
-  // fileExists() solves the Windows jvm problem that path.toFile.exists
-  // is VEEERRRY slow for files on a non-existent drive (e.g., q:/).
+  // path.toFile.exists very slow if drive not found, fileExists() is faster.
   def fileExists(p: Path): Boolean = {
     canExist(p) &&
-    p.toFile.exists
+      p.toFile.exists
   }
   def exists(path: String): Boolean = {
     exists(Paths.get(path))
@@ -541,7 +374,7 @@ object Paths {
     canExist(p) && {
       p.toFile match {
         case f if f.isDirectory => true
-        case f                  => f.exists
+        case f => f.exists
       }
     }
   }
@@ -564,23 +397,6 @@ object Paths {
   def norm(str: String) =
     str.replace('\\', '/') // Paths.get(str).normalize.toString.replace('\\', '/')
 
-  lazy val (
-    cygdrive: String,
-    posix2localMountMap: Map[String, String],
-    reverseMountMap: Map[String, String]
-  ) = {
-    def emptyMap = Map.empty[String, String]
-    if (notWindows || shellRoot.isEmpty) {
-      ("", emptyMap, emptyMap)
-    } else {
-      val mmap = mountMap.toList.map { case (k: String, v: String) => (k.toLowerCase -> v) }.toMap
-      val rmap = mountMap.toList.map { case (k: String, v: String) => (v.toLowerCase -> k) }.toMap
-      val cygdrive = rmap.get("cygdrive").getOrElse("")
-      // to speed up map access, convert keys to lowercase
-      (cygdrive, mmap, rmap)
-      // readWinshellMounts
-    }
-  }
 //  lazy val mountMap: Map[String, String] = reverseMountMap.map { (k: String, v: String) => (v -> k)}
 
 //  lazy val cygdrive = mountMap.get("/cygdrive").getOrElse("/cygdrive")

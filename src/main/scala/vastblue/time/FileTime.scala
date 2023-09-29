@@ -66,16 +66,17 @@ object FileTime extends vastblue.time.TimeExtensions {
     dtf
   }
 
-  /** Get a diff between two dates
-    * @param date1
-    *   the oldest date
-    * @param date2
-    *   the newest date
-    * @param timeUnit
-    *   the unit in which you want the diff
-    * @return
-    *   the diff value, in the provided unit
-    */
+  /**
+   * Get a diff between two dates
+   * @param date1
+   *   the oldest date
+   * @param date2
+   *   the newest date
+   * @param timeUnit
+   *   the unit in which you want the diff
+   * @return
+   *   the diff value, in the provided unit
+   */
   def diffDays(date1: LocalDateTime, date2: LocalDateTime): Long = {
     diff(date1, date2, TimeUnit.DAYS)
   }
@@ -180,7 +181,7 @@ object FileTime extends vastblue.time.TimeExtensions {
       replaceAll(""" (\d):""", " 0$1:")
       . // make sure all time fields are 2 digits (zero filled)
       replaceAll("\\s+", " ")
-      .trim // compress random whitespace to a single space, then trim
+      .trim // compress random spaces to a single space, then trim
 
     val pattern = (
       format != "",
@@ -402,6 +403,7 @@ object FileTime extends vastblue.time.TimeExtensions {
     """(\d{4})\D(\d{1,2})\D(\d{1,2})\D(\d{2}):(\d{2}):(\d{2})""".r
   lazy val validYearPattern = """(1|2)\d{3}""" // only consider years between 1000 and 2999
   def parseDateString(_datestr: String): LocalDateTime = {
+    // scalafmt: { optIn.breakChainOnFirstMethodDot = true }
     var datestr = _datestr
       .replaceAll("/", "-")
       .replaceAll("#", "")

@@ -41,7 +41,7 @@ class EzPath(val initstring: String, val sl: Slash) {
   }
 }
 object EzPath {
-  implicit class StExtend(s: String){
+  implicit class StExtend(s: String) {
     def slash: String = s
   }
   // val winu = EzPath("c:\\opt", Unx) // valid
@@ -80,10 +80,9 @@ object EzPath {
 
   def isWindows = !notWindows
 
-
   def platformPrefix: String = Paths.get(".").toAbsolutePath.getRoot.toString match {
     case "/" => ""
-    case s => s.take(2)
+    case s   => s.take(2)
   }
 
   def winlikePathstr(s: String): Boolean = {
@@ -108,7 +107,7 @@ object EzPath {
     override def toString = abs
   }
 
-  implicit class PathExt(p: Path){
+  implicit class PathExt(p: Path) {
     def slash(sl: Slash): String = {
       if (sl == Win) {
         p.toString.replace('/', '\\')

@@ -1,5 +1,6 @@
 package vastblue.file
 
+import vastblue.Platform._
 import vastblue.pathextend._
 import vastblue.file.Paths._
 import org.scalatest.BeforeAndAfter
@@ -72,7 +73,7 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   def jvmpath: String = {
     val psep                  = java.io.File.pathSeparator
     val entries: List[String] = sys.props("java.library.path").split(psep).map { _.toString }.toList
-    val path: String = entries.map { _.replace('\\', '/').toLowerCase }.distinct.mkString(";")
+    val path: String          = entries.map { _.replace('\\', '/').toLowerCase }.distinct.mkString(";")
     path
   }
 }
