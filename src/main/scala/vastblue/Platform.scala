@@ -44,6 +44,7 @@ import vastblue.DriveRoot._
  */
 object Platform {
   def main(args: Array[String]): Unit = {
+    printf("runtime scala version: [%s]\n", vastblue.Info.scalaRuntimeVersion)
     printf("SYSTEMDRIVE: %s\n", envOrElse("SYSTEMDRIVE"))
     for (arg <- args) {
       val list = findAllInPath(arg)
@@ -235,7 +236,16 @@ object Platform {
   }
 
   def execBinary(args: String*): Seq[String] = {
-    Process(Array(args: _*)).lazyLines_!
+    args.take(1) match {
+      case Nil =>
+        sys.error(s"missing program name")
+        Nil
+      case progname =>
+        if (progname.isEmpty) {
+          hook += 1
+        }
+        Process(Array(args: _*)).lazyLines_!
+    }
   }
   def shellExec(cmd: String): Seq[String] = {
     execBinary(bashPath.norm, "-c", cmd)
@@ -259,7 +269,7 @@ object Platform {
 
   def exeFilterList = Set(
     // intellij provides anemic Path; filter problematic versions of various Windows executables.
-    "C:/Users/philwalk/AppData/Local/Programs/MiKTeX/miktex/bin/x64/pdftotext.exe",
+    "~/AppData/Local/Programs/MiKTeX/miktex/bin/x64/pdftotext.exe",
     "C:/ProgramData/anaconda3/Library/usr/bin/cygpath.exe",
     "C:/Windows/System32/bash.exe",
     "C:/Windows/System32/find.exe",
@@ -317,10 +327,35 @@ object Platform {
     found.reverse.distinct
   }
 
-  lazy val whereExe = Seq("where.exe", "where").lazyLines_!.take(1).toList.mkString("").replace('\\', '/')
+  lazy val WINDIR = Option(System.getenv("SYSTEMROOT")).getOrElse("").replace('\\', '/')
+  lazy val whereExe = {
+    WINDIR match {
+      case "" =>
+        Seq("where.exe", "where").lazyLines_!.take(1).toList.mkString("").replace('\\', '/')
+      case path =>
+        s"$path/System32/where.exe"
+    }
+  }
 
-  // cat is needed to read /proc/ files
-  lazy val catExe = Seq("where.exe", "cat").lazyLines_!.take(1).toList.mkString("").replace('\\', '/')
+  // the following is to assist finding a usable posix environment
+  // when cygpath.exe is not found in the PATH.
+  lazy val winshellBinDirs: Seq[String] = Seq(
+    "c:/msys64/usr/bin",
+    "c:/cygwin64/bin",
+    "c:/rtools42/usr/bin",
+    "c:/Program Files/Git/bin",
+    "c:/Program Files/Git/usr/bin",
+  ).filter { _.path.isDirectory }
+
+  def discovered(progname: String): String = {
+    val found = winshellBinDirs
+      .find { (dir: String) =>
+        val cygpath: Path = JPaths.get(dir, progname)
+        cygpath.isFile
+      }
+      .map { (dir: String) => s"$dir/$progname" }
+    found.getOrElse("")
+  }
 
   // get path to binaryName via 'which.exe' or 'where'
   def where(binaryName: String): String = {
@@ -328,9 +363,26 @@ object Platform {
       // prefer binary with .exe extension, ceteris paribus
       val binName = setSuffix(binaryName)
       // getStdout hides stderr: INFO: Could not find files for the given pattern(s)
-      getStdout(whereExe, binName).take(1).mkString.replace('\\', '/')
+      val fname: String = getStdout(whereExe, binName).take(1).toList match {
+        case Nil =>
+          discovered(binName)
+        case str :: tail =>
+          str
+      }
+      fname.replace('\\', '/')
     } else {
       exec("which", binaryName)
+    }
+  }
+
+  // in Windows, cat is needed to read /proc/ files
+  lazy val catExe: String = {
+    val result = where("cat")
+    result match {
+      case "" =>
+        "cat"
+      case prog =>
+        prog.replace('\\', '/')
     }
   }
 
@@ -348,13 +400,14 @@ object Platform {
   def listPossibleRootDirs(startDir: String): Seq[JFile] = {
     JPaths.get(startDir).toAbsolutePath.toFile match {
       case dir if dir.isDirectory =>
-        // NOTE: /opt/gitbash is excluded by this approach:
         def defaultRootNames = Seq(
           "cygwin64",
           "msys64",
           "git-sdk-64",
+          "Git",
           "gitbash",
           "MinGW",
+          "rtools42",
         )
         dir.listFiles.toList.filter { f =>
           f.isDirectory && defaultRootNames.exists { name =>
@@ -381,8 +434,9 @@ object Platform {
     }
   }
 
+  lazy val programFiles = Option(System.getenv("PROGRAMFILES")).getOrElse("")
   def possibleWinshellRootDirs = {
-    listPossibleRootDirs("/") ++ listPossibleRootDirs("/opt")
+    listPossibleRootDirs("/") ++ listPossibleRootDirs("/opt") ++ listPossibleRootDirs(programFiles)
   }
 
   lazy val envPath: Seq[String] = Option(System.getenv("PATH")) match {

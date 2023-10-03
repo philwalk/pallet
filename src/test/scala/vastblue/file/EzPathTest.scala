@@ -8,14 +8,14 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
+  val upathstr      = "/opt/ue"
+  val wpathstr      = upathstr.replace('/', '\\')
+  val posixAbsstr   = s"$platformPrefix$upathstr"    // current working directory prefix
+  val windowsAbsstr = posixAbsstr.replace('/', '\\') // Windows version
+  val localAbsstr   = if (isWindows) windowsAbsstr else posixAbsstr
+
   describe("EzPath constructors") {
     it("should correctly create and display EzPath objects") {
-      val upathstr      = "/opt/ue"
-      val wpathstr      = upathstr.replace('/', '\\')
-      val posixAbsstr   = s"$platformPrefix$upathstr"    // current working directory prefix
-      val windowsAbsstr = posixAbsstr.replace('/', '\\') // Windows version
-      val localAbsstr   = if (isWindows) windowsAbsstr else posixAbsstr
-
       printf("notWindows: %s\n", notWindows)
       printf("isWindows: %s\n", isWindows)
 
@@ -25,7 +25,10 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       printf("posixAbsstr   [%s]\n", posixAbsstr)
       printf("windowsAbsstr [%s]\n", windowsAbsstr)
       printf("\n")
+      assert(upathstr.contains("/"))
+    }
 
+    it("PathUnx should display with constructed slash type") {
       // test whether input strings have forward or back slash
       // accept defaults (also should match Paths.get)
 
@@ -39,16 +42,6 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       assert(unxa.initstring == upathstr)
       assert(unxa.abs == posixAbsstr)
 
-      val wina = PathWin(upathstr) // should match java.nio.file.Paths.get
-      printf("wina.pstr [%s], ", wina.initstring)
-      printf("wina.norm [%s], ", wina.norm)
-      printf("wina.sl   [%s], ", wina.sl)
-      printf("wina.abs  [%s]\n", wina.abs)
-      // printf("\n")
-      assert(wina.sl == Slash.Win)
-      assert(wina.initstring == upathstr)
-      assert(wina.abs == localAbsstr.replace('/', Slash.win))
-
       val unxb = PathUnx(upathstr) // should match java.nio.file.Paths.get
       printf("unxb.pstr [%s], ", unxb.initstring)
       printf("unxb.norm [%s], ", unxb.norm)
@@ -58,6 +51,19 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       assert(unxb.sl == Slash.Unx)
       assert(unxb.initstring == upathstr)
       assert(unxb.abs == posixAbsstr)
+      printf("\n")
+    }
+
+    it("PathWin should display with constructed slash type") {
+      val wina = PathWin(upathstr) // should match java.nio.file.Paths.get
+      printf("wina.pstr [%s], ", wina.initstring)
+      printf("wina.norm [%s], ", wina.norm)
+      printf("wina.sl   [%s], ", wina.sl)
+      printf("wina.abs  [%s]\n", wina.abs)
+      // printf("\n")
+      assert(wina.sl == Slash.Win)
+      assert(wina.initstring == upathstr)
+      assert(wina.abs == localAbsstr.replace('/', Slash.win))
 
       val winb = PathWin(upathstr) // should match java.nio.file.Paths.get
       printf("winb.pstr [%s], ", winb.initstring)
@@ -74,11 +80,14 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       printf("winw.norm [%s], ", winw.norm)
       printf("winw.sl   [%s], ", winw.sl)
       printf("winw.abs  [%s]\n", winw.abs)
-      printf("\n")
+      // printf("\n")
       assert(winw.sl == Slash.Win)
       assert(winw.initstring == windowsAbsstr)
       assert(winw.abs == windowsAbsstr)
+      printf("\n")
+    }
 
+    it("ExPath should display with os-appropriate slash type") {
       val ezpc = EzPath(wpathstr) // should match java.nio.file.Paths.get
       printf("ezpc.pstr [%s], ", ezpc.initstring)
       printf("ezpc.norm [%s], ", ezpc.norm)
@@ -99,7 +108,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       printf("ezpd.norm [%s], ", ezpd.norm)
       printf("ezpd.sl   [%s], ", ezpd.sl)
       printf("ezpd.abs  [%s]\n", ezpd.abs)
-      printf("\n")
+      // printf("\n")
       assert(ezpc.sl == defaultSlash)
       if (isWindows) {
         assert(ezpd.initstring == wpathstr)
@@ -129,7 +138,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       printf("ezpu.norm [%s], ", ezpu.norm)
       printf("ezpu.sl   [%s], ", ezpu.sl)
       printf("ezpu.abs  [%s]\n", ezpu.abs)
-      printf("\n")
+      // printf("\n")
       assert(ezpu.sl == Slash.Unx)
       if (isWindows) {
         assert(ezpu.initstring == wpathstr)

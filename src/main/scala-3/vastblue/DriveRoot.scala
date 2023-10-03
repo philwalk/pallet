@@ -4,13 +4,11 @@ import java.nio.file.{Path, Paths}
 import DriveRoot._
 import vastblue.Platform.cygdrive
 
-opaque type DriveRoot = String
-
 // DriveRoot Strings must match "" or "[A-Z]:"
 // The `toPath` method resolves path to root of disk,
 // rather than the one returned by `Paths.get("C:")`.
 object DriveRoot {
-  type DriveRoot = String
+  opaque type DriveRoot = String
 
   // empty string or uppercase "[A-Z]:"
   def apply(s: String): DriveRoot = {

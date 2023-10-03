@@ -7,6 +7,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
+  val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
   lazy val TMP = {
     val gdir = Paths.get("/g")
     gdir.isDirectory && gdir.paths.nonEmpty match {

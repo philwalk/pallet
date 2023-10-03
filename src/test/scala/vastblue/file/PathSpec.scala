@@ -1,15 +1,15 @@
 package vastblue.file
 
 import org.scalatest._
-import vastblue.pathextend._
-import vastblue.file.Paths.{canExist, normPath}
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import vastblue.pathextend._
+import vastblue.file.Paths.{canExist, normPath}
 import vastblue.Platform.{driveRoot, cwd, cygdrive}
 
 class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
-  var hook: Int        = 0
-  var verbose: Boolean = false
+  val verbose   = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
+  var hook: Int = 0
 
   val cygroot: String = cygdrive match {
     case str if str.endsWith("/") => str

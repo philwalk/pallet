@@ -7,6 +7,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 class FilenameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
+  val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
   describe("File.exists") {
     it("should correctly see whether a mapped dir (like W:/alltickers) exists or not") {
       val testdir = "w:/alltickers"

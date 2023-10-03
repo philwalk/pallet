@@ -13,6 +13,10 @@ ThisBuild / organization         := "org.vastblue"
 ThisBuild / organizationName     := "vastblue.org"
 ThisBuild / organizationHomepage := Some(url("https://vastblue.org/"))
 
+//cancelable in Global := true
+
+parallelExecution := false
+
 ThisBuild / scmInfo := Some(
   ScmInfo(
     url("https://github.com/philwalk/pallet"),

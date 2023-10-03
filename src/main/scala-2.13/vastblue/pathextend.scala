@@ -7,8 +7,6 @@ import java.io.{FileOutputStream, OutputStreamWriter}
 import java.security.{DigestInputStream, MessageDigest}
 import scala.jdk.CollectionConverters._
 import vastblue.Platform._
-import vastblue.time.FileTime
-import vastblue.time.FileTime._
 import vastblue.DriveRoot._
 
 // TODO: factor out code common to scala3 and scala2.13 versions
@@ -97,29 +95,8 @@ object pathextend {
     def pathFields                = p.iterator.asScala.toList
     def reversePath: String       = pathFields.reverse.mkString("/")
     def lastModified: Long        = p.toFile.lastModified
-    def lastModifiedTime          = whenModified(p.toFile)
-    def lastModSeconds: Double = {
-      secondsBetween(lastModifiedTime, now).toDouble
-    }
-    def lastModMinutes: Double = lastModSeconds / 60.0
-    def lastModHours: Double   = lastModMinutes / 60.0
-    def lastModDays: Double    = round(lastModHours / 24.0)
-    def weekDay: java.time.DayOfWeek = {
-      p.lastModifiedTime.getDayOfWeek
-    }
     def round(number: Double, scale: Int = 6): Double = {
       BigDecimal(number).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toDouble
-    }
-    def age: String = { // readable description of lastModified
-      if (lastModMinutes <= 60.0) {
-        "%1.2f minutes".format(lastModMinutes)
-      } else if (lastModHours <= 24.0) {
-        "%1.2f hours".format(lastModHours)
-      } else if (lastModDays <= 365.25) {
-        "%1.2f days".format(lastModDays)
-      } else {
-        "%1.2f years".format(lastModDays / 365.25)
-      }
     }
 
     def files: Seq[JFile] = p.toFile match {
@@ -155,7 +132,6 @@ object pathextend {
     def contentAnyEncoding: String                    = p.toFile.contentAnyEncoding
     def bytes: Array[Byte]                            = JFiles.readAllBytes(p)
     def byteArray: Array[Byte]                        = bytes
-    def ageInDays: Double                             = FileTime.ageInDays(p.toFile)
 
     def trimmedLines: Seq[String] = linesCharset(DefaultCharset).map { _.trim }
     def trimmedSql: Seq[String] =
@@ -568,7 +544,7 @@ object pathextend {
     } else {
       val posix = if (str.drop(1).startsWith(":")) {
         val driveRoot = DriveRoot(str.take(2))
-        str.drop(2).string match {
+        str.drop(2) match {
           case "/" =>
             driveRoot.posix
           case pathstr if pathstr.startsWith("/") =>

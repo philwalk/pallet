@@ -5,6 +5,8 @@ import vastblue.pathextend._
 import vastblue.Platform._ // isWinshell
 
 class TestUniPath {
+  val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
+
   def testArgs = Seq.empty[String]
   @Test def test1(): Unit = {
     val wherebash = where("bash")

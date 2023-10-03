@@ -8,6 +8,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
 class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
+  val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
   describe("Root-relative paths") {
     it("should correctly resolve pathRelative paths in Windows") {
       // NOTE: current working directory is set before running test (e.g., in IDE)
