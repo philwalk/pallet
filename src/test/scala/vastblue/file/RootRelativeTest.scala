@@ -9,17 +9,23 @@ import org.scalatest.matchers.should.Matchers
 
 class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
+
+  // current working directory is fixed at JVM startup time
+  val workingDir = Paths.get(".").toAbsolutePath
+  val cwdDrive   = workingDir.getRoot.toString.take(2)
+
   describe("Root-relative paths") {
-    it("should correctly resolve pathRelative paths in Windows") {
-      // NOTE: current working directory is set before running test (e.g., in IDE)
-      val currentWorkingDirectory = Paths.get(".").toAbsolutePath.getRoot.toString.take(2)
-      if (currentWorkingDirectory.contains(":")) {
-        // windows os
-        printf("cwd: %s\n", currentWorkingDirectory)
-        val testdirs = Seq("/opt", "/OPT", "/$RECYCLE.BIN")
-        val mounts   = reverseMountMap.keySet.toArray
-        for (testdir <- testdirs) {
+    printf("cwd: %s\n", workingDir)
+    printf("cwdDrive: %s\n", cwdDrive)
+    if (cwdDrive.contains(":")) {
+      // windows os
+      val testdirs = Seq("/opt", "/OPT", "/$RECYCLE.BIN", "/Program Files", "/etc")
+
+      for (testdir <- testdirs) {
+        it(s"should correctly resolve Windows rootRelative path [$testdir]") {
+          val mounts  = reverseMountMap.keySet.toArray
           val mounted = mounts.find((dir: String) => sameFile(dir, testdir))
+
           val thisPath = mounted match {
             case Some(str) =>
               reverseMountMap(str)
@@ -28,7 +34,7 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
           }
           val jf = Paths.get(thisPath)
           printf("[%s]: exists [%s]\n", jf.norm, jf.exists)
-          val sameDriveLetter = jf.toString.take(2).equalsIgnoreCase(currentWorkingDirectory)
+          val sameDriveLetter = jf.toString.take(2).equalsIgnoreCase(cwdDrive)
           if (mounted.isEmpty && !sameDriveLetter) {
             hook += 1
           }

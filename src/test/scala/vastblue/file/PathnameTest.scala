@@ -17,22 +17,22 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
         "/tmp"
     }
   }
+  val testfilenames = Seq(
+    s"${TMP}/_ÐÐ°Ð²ÐµÑÐ°Ð½Ð¸Ðµ&chapter=all",
+    s"${TMP}/Canada's_Border.mp3"
+    // ,s"${TMP}/ï"
+    ,
+    s"${TMP}/Canada&s_Border.mp3",
+    s"${TMP}/Canada=s_Border.mp3",
+    s"${TMP}/Canada!s_Border.mp3",
+    s"${TMP}/philosophy&chapter=all",
+    s"${TMP}/_2&chapter=all",
+    s"${TMP}/_3&chapter=all"
+  )
 
   describe("special-chars") {
-    it("should correctly handle filenames with special characters") {
-      val testfilenames = Seq(
-        s"${TMP}/_ÐÐ°Ð²ÐµÑÐ°Ð½Ð¸Ðµ&chapter=all",
-        s"${TMP}/Canada's_Border.mp3"
-        // ,s"${TMP}/ï"
-        ,
-        s"${TMP}/Canada&s_Border.mp3",
-        s"${TMP}/Canada=s_Border.mp3",
-        s"${TMP}/Canada!s_Border.mp3",
-        s"${TMP}/philosophy&chapter=all",
-        s"${TMP}/_2&chapter=all",
-        s"${TMP}/_3&chapter=all"
-      )
-      for (testfilename <- testfilenames) {
+    for (testfilename <- testfilenames) {
+      it(s"should correctly handle filename [$testfilename] ") {
         val testfile = Paths.get(testfilename)
         val testPossible = testfile.parentFile match {
           case dir if dir.isDirectory =>

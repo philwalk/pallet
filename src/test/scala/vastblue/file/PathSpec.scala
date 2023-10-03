@@ -16,37 +16,6 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     case str                      => s"$str/"
   }
 
-  lazy val TMP: String = {
-    val driveLetter = "g"
-    val driveRoot   = s"${cygroot}${driveLetter}"
-    if (canExist(driveRoot.path)) {
-      val tmpdir = Paths.get(driveRoot)
-      // val str = tmpdir.localpath
-      tmpdir.isDirectory && tmpdir.paths.contains("/tmp") match {
-        case true =>
-          s"${cygroot}g/tmp"
-        case false =>
-          "/tmp"
-      }
-    } else {
-      "/tmp"
-    }
-  }
-
-  /** similar to gnu 'touch <filename>' */
-  def touch(p: Path): Int = {
-    var exitCode = 0
-    try {
-      p.toFile.createNewFile()
-    } catch {
-      case _: Exception =>
-        exitCode = 17
-    }
-    exitCode
-  }
-  def touch(file: String): Int = {
-    touch(file.toPath)
-  }
   before {
     testFile.withWriter() { (w: PrintWriter) =>
       testFileLines.foreach { line =>
@@ -58,7 +27,6 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
 
   describe("File") {
     describe("#eachline") {
-      // def parseCsvLine(line:String,columnTypes:String,delimiter:String="") = {
       it("should correctly deliver all file lines") {
         // val lines = testFile.lines
         System.out.printf("testFile[%s]\n", testFile)
@@ -73,14 +41,15 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
           if (line != expected) {
             System.err.println(s"failure: line ${lnum}:\n  [$line]\n  [$expected]")
           } else {
-            println(s"success: line ${lnum}:\n  [$line]\n  [$expected]")
+            if (verbose) println(s"success: line ${lnum}:  [$line],  [$expected]")
           }
-          assert(line == expected, s"line ${lnum}:\n  [$line]\n  [$expected]")
+          assert(line == expected, s"line ${lnum}:  [$line],  [$expected]")
         }
       }
     }
 
     describe("#tilde-in-path-test") {
+      printf("posixHomeDir: [%s]\n", posixHomeDir)
       it("should see file in user home directory if present") {
         val ok = testfileb.exists
         if (ok) println(s"tilde successfully converted to path '$testfileb'")
@@ -101,49 +70,49 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
       printf("gdrive.isDirectory: %s\n", gdrive.isDirectory)
       printf("gdrive.isRegularFileg: %s\n", gdrive.isDirectory)
       printf("gdrive.isSymbolicLink: %s\n", gdrive.isSymbolicLink)
-      describe("# dospath test") {
-        it("should correctly handle cygwin dospath drive designations, when present") {
-          var loop = -1
-          for ((fname, expected) <- pathDospathPairs) {
-            loop += 1
-            printf("fname[%s], expected[%s]\n", fname, expected)
-            val file = Paths.get(fname)
-            printf("%-22s : %s\n", file.stdpath, file.exists)
-            val a = expected.toLowerCase
-            // val b = file.toString.toLowerCase
-            // val c = file.localpath.toLowerCase
-            val d        = file.dospath.toLowerCase
-            val df       = normPath(d)
-            val af       = normPath(a)
-            val sameFile = Paths.isSameFile(af, df)
-            if (sameFile || a == d) {
-              println(s"a [$a] == d [$d]")
+      var loop = -1
+      for ((fname, expected) <- pathDospathPairs) {
+        printf("# fname [%s], expected [%s]\n", fname, expected)
+        it(s"should correctly handle posix drive for dos path $fname") {
+          loop += 1
+          printf("fname[%s], expected[%s]\n", fname, expected)
+          val file = Paths.get(fname)
+          printf("%-22s : %s\n", file.stdpath, file.exists)
+          val a = expected.toLowerCase
+          // val b = file.toString.toLowerCase
+          // val c = file.localpath.toLowerCase
+          val d        = file.dospath.toLowerCase
+          val df       = normPath(d)
+          val af       = normPath(a)
+          val sameFile = Paths.isSameFile(af, df)
+          if (sameFile || a == d) {
+            println(s"a [$a] == d [$d]")
+            assert(a == d)
+          } else {
+            System.err.printf("expected[%s]\n", expected.toLowerCase)
+            System.err.printf("file.localpath[%s]\n", file.localpath.toLowerCase)
+            System.err.printf(
+              "error: expected[%s] not equal to dospath [%s]\n",
+              expected.toLowerCase,
+              file.localpath.toLowerCase
+            )
+            val x = file.exists
+            val y = new JFile(expected).exists
+            if (x && y) {
               assert(a == d)
             } else {
-              System.err.printf("expected[%s]\n", expected.toLowerCase)
-              System.err.printf("file.localpath[%s]\n", file.localpath.toLowerCase)
-              System.err.printf(
-                "error: expected[%s] not equal to dospath [%s]\n",
-                expected.toLowerCase,
-                file.localpath.toLowerCase
-              )
-              val x = file.exists
-              val y = new JFile(expected).exists
-              if (x && y) {
-                assert(a == d)
-              } else {
-                println(s"[$file].exists: [$x]\n[$expected].exists: [$y]")
-              }
+              println(s"[$file].exists: [$x]\n[$expected].exists: [$y]")
             }
           }
         }
       }
       describe("# stdpath test") {
-        it("should correctly handle toString") {
-          val upairs = toStringPairs.toArray.toSeq
-          printf("%d pairs\n", upairs.size)
-          var loop = -1
-          for ((fname, expected) <- upairs) {
+        val upairs = toStringPairs.toArray.toSeq
+        var loop   = -1
+        for ((fname, expected) <- upairs) {
+          val testName = "%-32s should map [%-12s] to [%s]".format(s"Paths.get(\"$fname\").toString", fname, expected)
+          it(testName) {
+            printf("%d pairs\n", upairs.size)
             loop += 1
             if (true || verbose) {
               printf("=====================\n")
@@ -190,40 +159,16 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
         }
       }
 
-      def getVariants(p: Path): Seq[Path] = {
-        val pstr = p.toString.toLowerCase
-        import vastblue.DriveRoot._
-        val stdpathToo = if (nonCanonicalDefaultDrive) Nil else Seq(p.stdpath)
-
-        val variants: Seq[String] = Seq(
-          p.norm,
-          p.toString,
-          p.localpath,
-          p.dospath
-        ) ++ stdpathToo // stdpath fails round-trip test when default drive != C:
-
-        val vlist = variants.distinct.map { s =>
-          val p = Paths.get(s)
-          if (p.toString.take(1).toLowerCase != pstr.take(1)) {
-            hook += 1
-          }
-          p
-        }
-        vlist.distinct
-      }
-
       describe("# Path consistency") {
-        it("round trip conversions should be consistent") {
-          for (
-            fname <-
-              (toStringPairs.toMap.keySet ++ pathDospathPairs.toMap.keySet).toList.distinct.sorted
-          ) {
-            if (fname == s"${cygroot}q/file") {
-              hook += 1
-            }
-            val f1: Path            = Paths.get(fname)
-            val variants: Seq[Path] = getVariants(f1)
-            for (v <- variants) { // not necessarily 4 variants (duplicates removed before map to Path)
+        for (
+          fname <-
+            (toStringPairs.toMap.keySet ++ pathDospathPairs.toMap.keySet).toList.distinct.sorted
+        ) {
+          val f1: Path            = Paths.get(fname)
+          val variants: Seq[Path] = getVariants(f1).distinct
+          for (v <- variants) { // not necessarily 4 variants (duplicates removed before map to Path)
+            val matchtag = "%-12s to %s".format(fname, v)
+            it(s"round trip conversion should match [$matchtag]") {
               // val (k1,k2) = (f1.key,v.key)
               val sameFile = Paths.isSameFile(f1, v)
               if (f1 != v || !sameFile) {
@@ -239,6 +184,28 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
         }
       }
     }
+  }
+
+  def getVariants(p: Path): Seq[Path] = {
+    val pstr = p.toString.toLowerCase
+    import vastblue.DriveRoot._
+    val stdpathToo = if (nonCanonicalDefaultDrive) Nil else Seq(p.stdpath)
+
+    val variants: Seq[String] = Seq(
+      p.norm,
+      p.toString,
+      p.localpath,
+      p.dospath
+    ) ++ stdpathToo // stdpath fails round-trip test when default drive != C:
+
+    val vlist = variants.distinct.map { s =>
+      val p = Paths.get(s)
+      if (p.toString.take(1).toLowerCase != pstr.take(1)) {
+        hook += 1
+      }
+      p
+    }
+    vlist.distinct
   }
 
   lazy val testFile: Path = {
@@ -265,7 +232,8 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     case _ => ""
   }
 
-  lazy val expectedHomeDir = sys.props("user.home").replace('/', '\\')
+  lazy val dosHomeDir: String   = sys.props("user.home")
+  lazy val posixHomeDir: String = dosHomeDir.path.stdpath
 
   lazy val gdrive = Paths.get("g:/")
 
@@ -274,19 +242,21 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     (s"${cygroot}g/", "g:\\")
   )
 
-  lazy val pathDospathPairs = List(
-    (".", here),
-    (hereDrive, here),         // jvm treats this as cwd, if on c:
-    (s"${cygroot}q/", "q:\\"), // assumes /etc/fstab mounts /cygroot to /
-    (s"${cygroot}q", "q:\\"),  // assumes /etc/fstab mounts /cygroot to /
-    (s"${cygroot}c", "c:\\"),
-    (s"${cygroot}c/", "c:\\"),
-    ("~", expectedHomeDir),
-    ("~/", expectedHomeDir),
-    (s"${cygroot}g", "g:\\"),
-    (s"${cygroot}g/", "g:\\"),
-    (s"${cygroot}c/data/", "c:\\data")
-  ) ::: gdriveTests
+  lazy val pathDospathPairs = {
+    List(
+      (".", here),
+      (hereDrive, here),         // jvm treats this as cwd, if on c:
+      (s"${cygroot}q/", "q:\\"), // assumes /etc/fstab mounts /cygroot to /
+      (s"${cygroot}q", "q:\\"),  // assumes /etc/fstab mounts /cygroot to /
+      (s"${cygroot}c", "c:\\"),
+      (s"${cygroot}c/", "c:\\"),
+      ("~", dosHomeDir),
+      ("~/", dosHomeDir),
+      (s"${cygroot}g", "g:\\"),
+      (s"${cygroot}g/", "g:\\"),
+      (s"${cygroot}c/data/", "c:\\data")
+    ) ::: gdriveTests
+  }.distinct
 
   lazy val nonCanonicalDefaultDrive = driveRoot.toUpperCase != "C:"
 
@@ -298,10 +268,41 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     (s"${cygroot}q/file", s"${cygroot}q/file"), // assumes there is no Q: drive
     (hereDrive, uhere),                         // jvm: bare drive == cwd
     (s"${cygroot}c/", s"${cygroot}c"),
-    ("~", s"/users/${username}"),
-    ("~/", s"/users/${username}"),
+    ("~", posixHomeDir),
+    ("~/", posixHomeDir),
     (s"${cygroot}g", s"${cygroot}g"),
     (s"${cygroot}g/", s"${cygroot}g"),
     (s"${cygroot}c/data/", "/data")
   )
+  lazy val TMP: String = {
+    val driveLetter = "g"
+    val driveRoot   = s"${cygroot}${driveLetter}"
+    if (canExist(driveRoot.path)) {
+      val tmpdir = Paths.get(driveRoot)
+      // val str = tmpdir.localpath
+      tmpdir.isDirectory && tmpdir.paths.contains("/tmp") match {
+        case true =>
+          s"${cygroot}g/tmp"
+        case false =>
+          "/tmp"
+      }
+    } else {
+      "/tmp"
+    }
+  }
+
+  /** similar to gnu 'touch <filename>' */
+  def touch(p: Path): Int = {
+    var exitCode = 0
+    try {
+      p.toFile.createNewFile()
+    } catch {
+      case _: Exception =>
+        exitCode = 17
+    }
+    exitCode
+  }
+  def touch(file: String): Int = {
+    touch(file.toPath)
+  }
 }
