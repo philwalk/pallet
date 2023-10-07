@@ -3,15 +3,30 @@ Platform Independent Tooling
 
 <img alt="pallet image" width=200 src="images/wooden-pallet.png">
 
-Provides support for various expressive idioms typical of scripting languages,
-with a goal of supporting portable code runnable in many environments with little or no customization.
+Provides support for various expressive idioms typical of scripting languages, with a goal of supporting portable code runnable across platforms with minimal or no customization.
 
-Target environments include Linux, OSX, Cygwin, Msys2, Mingw, WSL, Windows.
+* No Dependencies
 
-Example script:
+* Target environments
+  * Linux
+  * OSX
+  * Windows 10+
+  * Cygwin64
+  * Msys64
+  * Mingw64
+  * Git-bash
+  * WSL Linux
+
+#### Usage
+
+Add the following to `build.sbt`
+```sbt
+  libraryDependencies += "com.palletops" % "pallet" % "0.8.12"
+```
+
+#### Example script:
 ```scala
-#!/usr/bin/env -S scala -cp target/scala-3.3.0/classes
-// hashbang above is sufficient after 'sbt compile'
+#!/usr/bin/env -S scala -cp @~/.scala3cp
 import vastblue.pathextend.*
 
 def main(args: Array[String]): Unit = {
@@ -26,3 +41,12 @@ def main(args: Array[String]): Unit = {
   }
 }
 ```
+
+The classpath may be defined with an `@atFile`
+
+Example `@atFile` 
+```
+-cp /Users/username/.ivy2/local/org.vastblue/pallet_2.13/0.8.4-SNAPSHOT/jars/pallet_2.13.jar
+```
+
+

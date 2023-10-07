@@ -5,13 +5,14 @@ lazy val scalaVer = scala331
 lazy val supportedScalaVersions = List(scala213, scala331)
 //lazy val supportedScalaVersions = List(scalaVer)
 
-//ThisBuild / envFileName  := "dev.env" // sbt-dotenv plugin gets build environment here
-ThisBuild / scalaVersion := scalaVer
-ThisBuild / version      := "0.8.4-SNAPSHOT"
+//ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
+ThisBuild / scalaVersion  := scalaVer
+ThisBuild / version       := "0.8.4-SNAPSHOT"
+ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
 ThisBuild / organizationName     := "vastblue.org"
-ThisBuild / organizationHomepage := Some(url("https://vastblue.org/"))
+ThisBuild / organizationHomepage := Some(url("https://vastblue.org"))
 
 //cancelable in Global := true
 
@@ -73,7 +74,7 @@ libraryDependencies ++= Seq(
 inThisBuild(
   List(
     scalaVersion      := "3.3.1", // 2.13.12, or 3.x
-    semanticdbEnabled := true     // enable SemanticDB
+    // semanticdbEnabled := true     // enable SemanticDB
     // semanticdbVersion := scalafixSemanticdb.revision // only required for Scala 2.x
   )
 )

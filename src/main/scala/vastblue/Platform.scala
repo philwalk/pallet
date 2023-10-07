@@ -59,7 +59,8 @@ object Platform {
       printf("%s\n", p.norm)
     }
 
-    for (line <- "/proc/meminfo".path.lines) {
+    val meminfo = "/proc/meminfo".path
+    for (line <- meminfo.lines) {
       printf("%s\n", line)
     }
 
@@ -68,6 +69,7 @@ object Platform {
       printf("%-12s: %s\n", progname, prog)
     }
 
+    printf("cygdrive     [%s]\n", cygdrive)
     printf("bashPath     [%s]\n", bashPath)
     printf("cygpathExe   [%s]\n", cygpathExe)
     printf("realroot     [%s]\n", realroot)
@@ -297,6 +299,16 @@ object Platform {
     }
   }
 
+  def getStdout(prog: String, args: Seq[String]): Seq[String] = {
+    val cmd = prog :: args.toList
+
+    val (exit, out, err) = spawnCmd(cmd, verbose)
+
+    out.map { _.replace('\\', '/') }.filter { s =>
+      !exeFilterList.contains(s)
+    }
+  }
+
   // find binaryName in PATH
   def findInPath(binaryName: String): Option[Path] = {
     findAllInPath(binaryName, findAll = false) match {
@@ -468,7 +480,14 @@ object Platform {
       val mmap = mountMap.toList.map { case (k: String, v: String) => (k.toLowerCase -> v) }.toMap
       val rmap = mountMap.toList.map { case (k: String, v: String) => (v.toLowerCase -> k) }.toMap
 
-      val cygdrive = rmap.get("cygdrive").getOrElse("")
+      val cygdrive = rmap.get("cygdrive").getOrElse("") match {
+        case "/" =>
+          "/"
+        case "" =>
+          ""
+        case s =>
+          s"$s/" // need trailing slash
+      }
       // to speed up map access, convert keys to lowercase
       (cygdrive, mmap, rmap)
       // readWinshellMounts
@@ -682,6 +701,7 @@ object Platform {
     case p =>
       p
   }
+
   def defaultCygdrivePrefix = unamefull match {
     case "cygwin" => "/cygdrive"
     case _        => ""
@@ -713,6 +733,7 @@ object Platform {
       localMountMap += "/bin" -> s"$bareRoot/bin"
       localMountMap += "/lib" -> s"$bareRoot/lib"
       for (line <- lines) {
+        // printf("line[%s]\n", line)
         val cols = line.split("\\s+", -1).toList
         val List(winpath, _mountpoint, fstype) = cols match {
           case a :: b :: Nil       => a :: b :: "" :: Nil
@@ -735,18 +756,6 @@ object Platform {
         cygdrive = defaultCygdrivePrefix
       }
       localMountMap += "/cygdrive" -> cygdrive
-
-      // // sometimes very slow
-      // java.io.File.listRoots()
-
-      // // 1000 times faster
-      // val dlfiles = for {
-      //   locl <- localMountMap.values.toList
-      //   dl = locl.take(2)
-      //   if dl.drop(1) == ":"
-      //   ff = new JFile(s"$dl/")
-      // } yield ff
-      // dlfiles.distinct.toArray
 
       for (drive <- driveLetters) {
         // lowercase posix drive letter, e.g. "C:" ==> "/c"
