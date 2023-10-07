@@ -7,7 +7,7 @@ lazy val supportedScalaVersions = List(scala213, scala331)
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.8.4-SNAPSHOT"
+ThisBuild / version       := "0.8.5-SNAPSHOT"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
