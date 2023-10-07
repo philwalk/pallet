@@ -54,7 +54,7 @@ object Platform {
         printf("--version: [%s]\n", getStdout(path.norm, "--version").take(1).mkString)
       }
     }
-    val cwd = ".".path
+    val cwd = ".".path.toAbsolutePath
     for ((p: Path) <- cwd.paths if p.isDirectory) {
       printf("%s\n", p.norm)
     }
