@@ -176,76 +176,55 @@ found 7 windows shell root dirs:
 
 Running `vastblue.Platform` in `WSL2 Ubuntu` produces this:
 ```bash
-scala vastblue.Platform
 runtime scala version: [3.3.1]
-SYSTEMDRIVE:
-cygbin
-data
-ruby
-src
-ssrc
-.bloop
-ksrc
-luxbin
-doc
-rbin
-vastblue
-.git
-mortgage
-csrc
-config
-assessor
-osxbin
-apps
-jsrcArchive
-archive-sv
-project
-js
-target
-saved-assessor
-bin
-rs
-kt
-archive
-tmp
-jsrc
+SYSTEMDRIVE: 
+/home/philwalk/workspace/pallet/.bsp
+/home/philwalk/workspace/pallet/src
+/home/philwalk/workspace/pallet/.bloop
+/home/philwalk/workspace/pallet/.idea
+/home/philwalk/workspace/pallet/.git
+/home/philwalk/workspace/pallet/.github
+/home/philwalk/workspace/pallet/project
+/home/philwalk/workspace/pallet/target
+/home/philwalk/workspace/pallet/images
+/home/philwalk/workspace/pallet/jsrc
 MemTotal:       49337504 kB
-MemFree:        47676200 kB
-MemAvailable:   48366684 kB
-Buffers:          184952 kB
-Cached:           947088 kB
+MemFree:        42174956 kB
+MemAvailable:   45546548 kB
+Buffers:          456096 kB
+Cached:          3292128 kB
 SwapCached:            0 kB
-Active:           853100 kB
-Inactive:         477124 kB
-Active(anon):       1868 kB
-Inactive(anon):   198680 kB
-Active(file):     851232 kB
-Inactive(file):   278444 kB
+Active:          2276732 kB
+Inactive:        4428420 kB
+Active(anon):       1928 kB
+Inactive(anon):  2957904 kB
+Active(file):    2274804 kB
+Inactive(file):  1470516 kB
 Unevictable:           0 kB
 Mlocked:               0 kB
 SwapTotal:       8388608 kB
 SwapFree:        8388608 kB
-Dirty:             13748 kB
+Dirty:             18100 kB
 Writeback:             0 kB
-AnonPages:        198200 kB
-Mapped:           126832 kB
-Shmem:              2364 kB
-KReclaimable:      71008 kB
-Slab:             107040 kB
-SReclaimable:      71008 kB
-SUnreclaim:        36032 kB
-KernelStack:        2448 kB
-PageTables:         2592 kB
+AnonPages:       2863220 kB
+Mapped:           816592 kB
+Shmem:              2904 kB
+KReclaimable:     201932 kB
+Slab:             242536 kB
+SReclaimable:     201932 kB
+SUnreclaim:        40604 kB
+KernelStack:        5436 kB
+PageTables:        13188 kB
 NFS_Unstable:          0 kB
 Bounce:                0 kB
 WritebackTmp:          0 kB
 CommitLimit:    33057360 kB
-Committed_AS:    1369996 kB
+Committed_AS:    5331948 kB
 VmallocTotal:   34359738367 kB
-VmallocUsed:       24632 kB
+VmallocUsed:       27592 kB
 VmallocChunk:          0 kB
 Percpu:              544 kB
-AnonHugePages:    108544 kB
+AnonHugePages:   1187840 kB
 ShmemHugePages:        0 kB
 ShmemPmdMapped:        0 kB
 FileHugePages:         0 kB
@@ -256,9 +235,9 @@ HugePages_Rsvd:        0
 HugePages_Surp:        0
 Hugepagesize:       2048 kB
 Hugetlb:               0 kB
-DirectMap4k:       19456 kB
-DirectMap2M:     5222400 kB
-DirectMap1G:    54525952 kB
+DirectMap4k:       29696 kB
+DirectMap2M:     7309312 kB
+DirectMap1G:    52428800 kB
 basename    : /usr/bin/basename
 bash        : /usr/bin/bash
 cat         : /usr/bin/cat
@@ -300,7 +279,7 @@ isWinshell   [false]
 bash in path [/usr/bin/bash]
 cygdrive2root[true]
 wsl          [true]
-javaHome     [/usr/lib/jvm/java-11-openjdk-amd64]
+javaHome     [/usr/lib/jvm/java-17-openjdk-amd64]
 etcdir       [/etc]
 
 all bash in path:
