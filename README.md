@@ -46,7 +46,7 @@ def main(args: Array[String]): Unit = {
   }
   // list child directories of "."
   val cwd: Path = ".".path
-  for ( (p: Path) <- cwd.paths.filter { _.isDirectory }){
+  for ( p: Path <- cwd.paths.filter { _.isDirectory }){
     printf("%s\n", p.norm)
   }
 }
@@ -62,7 +62,7 @@ Example `@atFile` (written to ~/.scala3cp in this example):
 ```
 
 ```scala
-#!/usr/bin/env -S scala -cp @~/.scala3cp
+#!/usr/bin/env -S scala -cp @/home/username/.scala3cp
 import vastblue.pathextend.*
 
 def main(args: Array[String]): Unit = {
@@ -72,7 +72,7 @@ def main(args: Array[String]): Unit = {
   }
   // list child directories of "."
   val cwd: Path = ".".path
-  for ( (p: Path) <- cwd.paths.filter { _.isDirectory }){
+  for ( p: Path <- cwd.paths.filter { _.isDirectory }){
     printf("%s\n", p.norm)
   }
 }
