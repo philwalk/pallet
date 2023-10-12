@@ -178,16 +178,16 @@ Running `vastblue.Platform` in `WSL2 Ubuntu` produces this:
 ```bash
 runtime scala version: [3.3.1]
 SYSTEMDRIVE: 
-/home/philwalk/workspace/pallet/.bsp
-/home/philwalk/workspace/pallet/src
-/home/philwalk/workspace/pallet/.bloop
-/home/philwalk/workspace/pallet/.idea
-/home/philwalk/workspace/pallet/.git
-/home/philwalk/workspace/pallet/.github
-/home/philwalk/workspace/pallet/project
-/home/philwalk/workspace/pallet/target
-/home/philwalk/workspace/pallet/images
-/home/philwalk/workspace/pallet/jsrc
+/home/username/workspace/pallet/.bsp
+/home/username/workspace/pallet/src
+/home/username/workspace/pallet/.bloop
+/home/username/workspace/pallet/.idea
+/home/username/workspace/pallet/.git
+/home/username/workspace/pallet/.github
+/home/username/workspace/pallet/project
+/home/username/workspace/pallet/target
+/home/username/workspace/pallet/images
+/home/username/workspace/pallet/jsrc
 MemTotal:       49337504 kB
 MemFree:        42174956 kB
 MemAvailable:   45546548 kB
