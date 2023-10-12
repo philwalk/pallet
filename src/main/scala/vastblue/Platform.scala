@@ -236,6 +236,7 @@ object Platform {
         p // no permission to follow link
     }
   }
+  def bashExe: String = bashPath.norm
 
   def execBinary(args: String*): Seq[String] = {
     args.take(1) match {
@@ -269,13 +270,15 @@ object Platform {
     (exit, out.reverse, err.reverse)
   }
 
-  def exeFilterList = Set(
-    // intellij provides anemic Path; filter problematic versions of various Windows executables.
-    "~/AppData/Local/Programs/MiKTeX/miktex/bin/x64/pdftotext.exe",
-    "C:/ProgramData/anaconda3/Library/usr/bin/cygpath.exe",
-    "C:/Windows/System32/bash.exe",
-    "C:/Windows/System32/find.exe",
-  )
+  def exeFilterList: Seq[String] = {
+    Seq(
+      // intellij provides anemic Path; filter problematic versions of various Windows executables.
+      s"${userhome}/AppData/Local/Programs/MiKTeX/miktex/bin/x64/pdftotext.exe",
+      "C:/ProgramData/anaconda3/Library/usr/bin/cygpath.exe",
+      s"${userhome}/AppData/Local/Microsoft/WindowsApps/bash.exe",
+      "C:/Windows/System32/find.exe",
+    )
+  }
 
 //  def execShell(args: String*): Seq[String] = {
 //    val cmd = bashPath.norm :: "-c" :: args.toList
@@ -343,10 +346,19 @@ object Platform {
   lazy val whereExe = {
     WINDIR match {
       case "" =>
-        Seq("where.exe", "where").lazyLines_!.take(1).toList.mkString("").replace('\\', '/')
+        whereFunc("where")
       case path =>
         s"$path/System32/where.exe"
     }
+  }
+  def whereFunc(s: String): String = {
+    Seq("where.exe", s).lazyLines_!.toList
+      .map { _.replace('\\', '/') }
+      .filter { (s: String) =>
+        !exeFilterList.contains(s)
+      }
+      .take(1)
+      .mkString
   }
 
   // the following is to assist finding a usable posix environment

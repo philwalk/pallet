@@ -7,7 +7,7 @@ lazy val supportedScalaVersions = List(scala213, scala331)
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.8.6"
+ThisBuild / version       := "0.8.7-SNAPSHOT"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -73,7 +73,7 @@ libraryDependencies ++= Seq(
  */
 inThisBuild(
   List(
-    scalaVersion      := "3.3.1", // 2.13.12, or 3.x
+    scalaVersion := scalaVersion.value, // 2.13.12, or 3.x
     // semanticdbEnabled := true     // enable SemanticDB
     // semanticdbVersion := scalafixSemanticdb.revision // only required for Scala 2.x
   )
@@ -93,9 +93,10 @@ scalacOptions := Seq(
   "-unchecked"
 )
 
+// key identifier, otherwise this field is ignored; passwords supplied by pinentry
 credentials += Credentials(
   "GnuPG Key ID",
   "gpg",
   "1CF370113B7EE5A327DD25E7B5D88C95FC9CB6CA", // key identifier
-  "ignored" // this field is ignored; passwords are supplied by pinentry
+  "ignored",
 )

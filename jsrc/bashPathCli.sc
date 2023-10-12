@@ -1,5 +1,5 @@
-#!/usr/bin/env -S scala
-//package vastblue
+#!/usr/bin/env -S scala-cli shebang
+
 //> using scala "3.3.1"
 //> using lib "org.vastblue::pallet::0.8.7-SNAPSHOT"
 
@@ -20,3 +20,4 @@ object BashPath {
     printf("sys root: %s\n", where("bash").norm.replaceAll("(/usr)?/bin/bash.*", ""))
   }
 }
+main(args)

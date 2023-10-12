@@ -12,7 +12,7 @@ def main(args: Array[String]): Unit = {
   }
   // list child directories of "."
   val cwd: Path = ".".path
-  for ( (p: Path) <- cwd.paths.filter { _.isDirectory }){
+  for ((p: Path) <- cwd.paths.filter { _.isDirectory }) {
     printf("%s\n", p.norm)
   }
 }
