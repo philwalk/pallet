@@ -35,7 +35,7 @@ Add the following dependency to `build.sbt`
 #!/usr/bin/env -S scala-cli.bat shebang
 
 //> using scala "2.13.12"
-//> using lib "org.vastblue::pallet::0.8.4-SNAPSHOT"
+//> using lib "org.vastblue::pallet::0.8.6"
 
 import vastblue.pathextend._
 
@@ -58,7 +58,7 @@ In `scala 3.x`, the classpath may be defined with an `@atFile`
 
 Example `@atFile` (written to ~/.scala3cp in this example):
 ```
--cp /Users/username/.ivy2/local/org.vastblue/pallet_2.13/0.8.4-SNAPSHOT/jars/pallet_2.13.jar
+-cp /Users/username/.ivy2/local/org.vastblue/pallet_2.13/0.8.6/jars/pallet_2.13.jar
 ```
 
 ```scala
@@ -80,11 +80,11 @@ def main(args: Array[String]): Unit = {
 
 ### Using `SCALA_OPTS` environment variable
 
-* create an `atFile` with your classpath (e.g., ~/.scala3cp)
+* create an `atFile` with your classpath (e.g., `~/.scala3cp`)
 * define `SCALA_OPTS`
   * `SCALA_OPTS="@/Users/username/.scala3cp -save"`
 
-With this setting and if `scala` in your `PATH` is scala 3, you can do this:
+With this setting and if `scala 3` is in your `PATH`, you can do this:
 ```bash
 $ scala vastblue.Platform
 
