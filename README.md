@@ -7,7 +7,7 @@ Provides support for various expressive idioms typical of scripting languages, w
 
 * No Dependencies
 
-* Tested on Scala Versions
+* Supported Scala Versions
   * `scala 3.x`
   * `scala 2.13`
 
@@ -20,7 +20,7 @@ Provides support for various expressive idioms typical of scripting languages, w
   * `Git-bash`
   * `WSL Linux`
 
-* Soon-to-be Tested
+* Infrequently Tested
   * `OSX`
 
 ### Usage
