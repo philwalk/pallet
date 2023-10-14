@@ -42,8 +42,8 @@ object EzPath {
   def apply(p: Path, sl: Slash) = {
     val pstr: String = if notWindows then p.toString.norm else p.toString
     sl match {
-      case Unx => new PathUnx(pstr)
-      case Win => new PathWin(pstr)
+    case Unx => new PathUnx(pstr)
+    case Win => new PathWin(pstr)
     }
   }
   def apply(s: String, sl: Slash): EzPath = {
@@ -68,9 +68,11 @@ def notWindows   = java.io.File.separatorChar == '/'
 def isWindows    = !notWindows
 def defaultSlash = if (isWindows) Slash.Win else Slash.Unx
 
-def platformPrefix: String = Paths.get(".").toAbsolutePath.getRoot.toString match {
+def platformPrefix: String = {
+  Paths.get(".").toAbsolutePath.getRoot.toString match {
   case "/" => ""
   case s   => s.take(2)
+  }
 }
 
 def winlikePathstr(s: String): Boolean = {

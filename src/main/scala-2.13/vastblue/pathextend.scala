@@ -27,15 +27,19 @@ object pathextend {
   lazy val DriveLetterPattern = "([a-z]):(/.*)?".r
   private def cwd: Path       = userDir.path.toAbsolutePath.normalize
 
-  def scriptPath = Option(sys.props("script.path")) match {
-    case None       => ""
-    case Some(path) => path
-  }
+  def scriptPathProperty: String = script.scriptPathProperty
+  def sunCmdLine: Seq[String]    = script.sunCmdLine
+
+  def scriptPath: Path      = script.scriptPath
+  def scriptName: String    = script.scriptName
+  def mainArgs: Seq[String] = script.mainArgs
+  def progName: String      = script.progName
+  def sunCmd: String        = script.sunCmd
 
   def fixHome(s: String): String = {
     s.startsWith("~") match {
-      case false => s
-      case true  => s.replaceFirst("~", userHome).replace('\\', '/')
+    case false => s
+    case true  => s.replaceFirst("~", userHome).replace('\\', '/')
     }
   }
 
@@ -69,7 +73,7 @@ object pathextend {
     def parentFile: JFile      = getParentFile
     def parentPath: Path       = parentFile.toPath
     def parent: Path           = parentPath
-    def exists: Boolean        = JFiles.exists(p)
+    def exists: Boolean        = JFiles.exists(p) // p.toFile.exists()
     def listFiles: Seq[JFile]  = p.toFile.listFiles.toList
     def localpath: String      = cygpath2driveletter(p.normalize.toString)
     def dospath: String        = localpath.replace('/', '\\')
@@ -100,8 +104,8 @@ object pathextend {
     }
 
     def files: Seq[JFile] = p.toFile match {
-      case f if f.isDirectory => f.files
-      case _                  => Nil
+    case f if f.isDirectory => f.files
+    case _                  => Nil
     }
     def paths: Seq[Path]                     = files.map(_.toPath)
     def dirs: Seq[Path]                      = paths.filter { _.isDirectory }
@@ -144,8 +148,8 @@ object pathextend {
     }
     def realpathLs: Path = { // ask ls what symlink references
       exec("ls", "-l", p.norm).split("\\s+->\\s+").toList match {
-        case a :: b :: Nil => b.path
-        case _             => p
+      case a :: b :: Nil => b.path
+      case _             => p
       }
     }
     def lastModifiedYMD: String = {
@@ -156,17 +160,17 @@ object pathextend {
     def norm: String = {
       val s1 = p.toString
       val s2 = s1 match {
-        case "."  => s1
-        case ".." => p.parentPath.normalize.toString
-        case _    => p.normalize.toString
+      case "."  => s1
+      case ".." => p.parentPath.normalize.toString
+      case _    => p.normalize.toString
       }
       s2.replace('\\', '/') match {
-        case CygdrivePattern(dr, p) if isWindows =>
-          s"$dr:$p" // this can never happen, because cygdrive prefix never reproduced by Path.toString
-        case DriveLetterPattern(dr, p) if isWindows =>
-          s"$dr:$p" // not strictly needed, but useful in IDE
-        case s =>
-          s
+      case CygdrivePattern(dr, p) if isWindows =>
+        s"$dr:$p" // this can never happen, because cygdrive prefix never reproduced by Path.toString
+      case DriveLetterPattern(dr, p) if isWindows =>
+        s"$dr:$p" // not strictly needed, but useful in IDE
+      case s =>
+        s
       }
     }
 
@@ -197,12 +201,12 @@ object pathextend {
 
     def dateSuffix: String = {
       lcbasename match {
-        case DatePattern1(_, yyyymmdd, _) =>
-          yyyymmdd
-        case DatePattern2(_, yyyymmdd) =>
-          yyyymmdd
-        case _ =>
-          ""
+      case DatePattern1(_, yyyymmdd, _) =>
+        yyyymmdd
+      case DatePattern2(_, yyyymmdd) =>
+        yyyymmdd
+      case _ =>
+        ""
       }
     }
 
@@ -264,21 +268,20 @@ object pathextend {
       def lcname = name.toLowerCase
       if (lcname != "stdout") {
         Option(parentFile) match {
-          case Some(parent) if parent.isDirectory =>
-          // ok
-          case Some(parent) =>
-            throw new IllegalArgumentException(s"parent directory not found [${parent}]")
-          case None =>
-            throw new IllegalArgumentException(s"no parent directory")
+        case Some(parent) if parent.isDirectory =>
+        // ok
+        case Some(parent) =>
+          throw new IllegalArgumentException(s"parent directory not found [${parent}]")
+        case None =>
+          throw new IllegalArgumentException(s"no parent directory")
         }
       }
       val writer = lcname match {
-        case "stdout" =>
-          new PrintWriter(new OutputStreamWriter(System.out, charsetName), true)
-        case _ =>
-          val charset = Charset.forName(charsetName)
-          new PrintWriter(new OutputStreamWriter(new FileOutputStream(f, append), charset))
-//          new PrintWriter(new FileWriter(f, charset, append))
+      case "stdout" =>
+        new PrintWriter(new OutputStreamWriter(System.out, charsetName), true)
+      case _ =>
+        val charset = Charset.forName(charsetName)
+        new PrintWriter(new OutputStreamWriter(new FileOutputStream(f, append), charset))
       }
       var junk: Any = 0
       try {
@@ -353,15 +356,15 @@ object pathextend {
     }
     val lcAll: String = Option(System.getenv("LC_ALL")).getOrElse(osDefault.toString)
     lcAll match {
-      case "UTF-8" | "utf-8" | "en_US.UTF-8" | "en_US.utf8" =>
-        Codec.UTF8 // "mac" | "linux"
-      case s if s.toLowerCase.replaceAll("[^a-zA-Z0-9]", "").contains("utf8") =>
-        Codec.UTF8 // "mac" | "linux"
-      case "ISO-8859-1" | "latin1" =>
-        Codec(lcAll)
-      case encodingName =>
-        // System.err.printf("warning : unrecognized charset encoding: LC_ALL==[%s]\n",encodingName)
-        Codec(encodingName)
+    case "UTF-8" | "utf-8" | "en_US.UTF-8" | "en_US.utf8" =>
+      Codec.UTF8 // "mac" | "linux"
+    case s if s.toLowerCase.replaceAll("[^a-zA-Z0-9]", "").contains("utf8") =>
+      Codec.UTF8 // "mac" | "linux"
+    case "ISO-8859-1" | "latin1" =>
+      Codec(lcAll)
+    case encodingName =>
+      // System.err.printf("warning : unrecognized charset encoding: LC_ALL==[%s]\n",encodingName)
+      Codec(encodingName)
     }
   }
   lazy val DefaultCodec = writeCodec
@@ -383,7 +386,8 @@ object pathextend {
   def filesTree(dir: JFile)(func: JFile => Boolean = dummyFilter): Seq[JFile] = {
     assert(dir.isDirectory, s"error: not a directory [$dir]")
     @tailrec
-    def filesTree(files: List[JFile], result: List[JFile]): List[JFile] = files match {
+    def filesTree(files: List[JFile], result: List[JFile]): List[JFile] = {
+      files match {
       case Nil => result
       case head :: tail if Option(head).isEmpty =>
         Nil
@@ -398,10 +402,11 @@ object pathextend {
       // filesTree(tail ::: subs, result) // width-first
       case head :: tail => // if head.isFile =>
         val newResult = func(head) match {
-          case true  => head :: result // accepted
-          case false => result         // rejected
+        case true  => head :: result // accepted
+        case false => result         // rejected
         }
         filesTree(tail, newResult)
+      }
     }
     filesTree(List(dir), Nil).toSeq
   }
@@ -433,20 +438,20 @@ object pathextend {
     //    3. count columns-per-row tallies using various delimiters
     //    4. the tally with the most consistency is the "winner"
     (commas, tabs, pipes, semis) match {
-      case (cms, tbs, pps, sms) if cms > tbs && cms >= pps && cms >= sms =>
-        ","
-      case (cms, tbs, pps, sms) if tbs >= cms && tbs >= pps && tbs >= sms =>
-        "\t"
-      case (cms, tbs, pps, sms) if pps > cms && pps > tbs && pps > sms =>
-        "|"
-      case (cms, tbs, pps, sms) if sms > cms && sms > tbs && sms > pps =>
-        ";"
-      case _ if ignoreErrors =>
-        ""
-      case _ =>
-        sys.error(
-          s"unable to choose delimiter: tabs[$tabs], commas[$commas], semis[$semis], pipes[$pipes] for file:\n[${fname}]"
-        )
+    case (cms, tbs, pps, sms) if cms > tbs && cms >= pps && cms >= sms =>
+      ","
+    case (cms, tbs, pps, sms) if tbs >= cms && tbs >= pps && tbs >= sms =>
+      "\t"
+    case (cms, tbs, pps, sms) if pps > cms && pps > tbs && pps > sms =>
+      "|"
+    case (cms, tbs, pps, sms) if sms > cms && sms > tbs && sms > pps =>
+      ";"
+    case _ if ignoreErrors =>
+      ""
+    case _ =>
+      sys.error(
+        s"unable to choose delimiter: tabs[$tabs], commas[$commas], semis[$semis], pipes[$pipes] for file:\n[${fname}]"
+      )
     }
   }
 
@@ -475,18 +480,18 @@ object pathextend {
     } catch {
       case _: Exception =>
         encoding match {
-          case "utf-8" =>
-            implicit val codec = Codec("latin1")
-            discardWarningAbsorber = codec
-              .onMalformedInput(CodingErrorAction.REPLACE)
-              .onUnmappableCharacter(CodingErrorAction.REPLACE)
-            JFiles.readAllLines(p, codec.charSet).asScala.toSeq
-          case _ =>
-            implicit val codec = Codec("utf-8")
-            discardWarningAbsorber = codec
-              .onMalformedInput(CodingErrorAction.REPLACE)
-              .onUnmappableCharacter(CodingErrorAction.REPLACE)
-            JFiles.readAllLines(p, codec.charSet).asScala.toSeq
+        case "utf-8" =>
+          implicit val codec = Codec("latin1")
+          discardWarningAbsorber = codec
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE)
+          JFiles.readAllLines(p, codec.charSet).asScala.toSeq
+        case _ =>
+          implicit val codec = Codec("utf-8")
+          discardWarningAbsorber = codec
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE)
+          JFiles.readAllLines(p, codec.charSet).asScala.toSeq
         }
     }
   }
@@ -501,9 +506,9 @@ object pathextend {
   lazy val bintools = true // faster than MessageDigest
   def fileChecksum(file: JFile, algorithm: String): String = {
     val toolName = algorithm match {
-      case "SHA-256" => "sha256sum"
-      case "MD5"     => "md5sum"
-      case _         => ""
+    case "SHA-256" => "sha256sum"
+    case "MD5"     => "md5sum"
+    case _         => ""
     }
     val toolPath = where(toolName)
     val sum = if (bintools && !toolPath.isEmpty && toolPath.path.isFile) {
@@ -523,14 +528,14 @@ object pathextend {
   def cygpath2driveletter(str: String): String = {
     val strtmp = str.replace('\\', '/')
     strtmp match {
-      case PosixDriveLetterPrefix(dl, tail) =>
-        val tailstr = Option(tail).getOrElse("/")
-        s"$dl:$tailstr"
-      case WindowsDriveLetterPrefix(dl, tail) =>
-        val tailstr = Option(tail).getOrElse("/")
-        s"$dl:$tailstr"
-      case _ =>
-        s"$workingDrive:$strtmp"
+    case PosixDriveLetterPrefix(dl, tail) =>
+      val tailstr = Option(tail).getOrElse("/")
+      s"$dl:$tailstr"
+    case WindowsDriveLetterPrefix(dl, tail) =>
+      val tailstr = Option(tail).getOrElse("/")
+      s"$dl:$tailstr"
+    case _ =>
+      s"$workingDrive:$strtmp"
     }
   }
   def cygpath2driveletter(p: Path): String = {
@@ -545,19 +550,19 @@ object pathextend {
       val posix = if (str.drop(1).startsWith(":")) {
         val driveRoot = DriveRoot(str.take(2))
         str.drop(2) match {
-          case "/" =>
-            driveRoot.posix
-          case pathstr if pathstr.startsWith("/") =>
-            if (driveRoot == workingDrive) {
-              pathstr // implicit drive prefix
-            } else {
-              s"${driveRoot.posix}$pathstr" // explicit drive prefix
-            }
-          case pathstr =>
-            // Windows drive letter not followed by a slash resolves to
-            // the "current working directory" for the drive.
-            val cwd = driveRoot.workingDir.norm
-            s"$cwd/$pathstr"
+        case "/" =>
+          driveRoot.posix
+        case pathstr if pathstr.startsWith("/") =>
+          if (driveRoot == workingDrive) {
+            pathstr // implicit drive prefix
+          } else {
+            s"${driveRoot.posix}$pathstr" // explicit drive prefix
+          }
+        case pathstr =>
+          // Windows drive letter not followed by a slash resolves to
+          // the "current working directory" for the drive.
+          val cwd = driveRoot.workingDir.norm
+          s"$cwd/$pathstr"
         }
       } else {
         // if str prefix matches workingDrive.posix, remove it
@@ -601,5 +606,17 @@ object pathextend {
     dis.close
     val sum = md.digest.map(b => String.format("%02x", Byte.box(b))).mkString
     sum
+  }
+  def walkTree(file: JFile, depth: Int = 1, maxdepth: Int = -1): Iterable[JFile] = {
+    val children = new Iterable[JFile] {
+      def iterator = if (file.isDirectory) file.listFiles.iterator else Iterator.empty
+    }
+    Seq(file) ++ children.flatMap((f: JFile) =>
+      if ((maxdepth < 0 || depth < maxdepth) && f.isDirectory) {
+        walkTree(f, depth + 1, maxdepth)
+      } else {
+        Seq(f)
+      }
+    )
   }
 }

@@ -78,32 +78,32 @@ object Paths {
   // Windows paths are normalized to forward slash
   def get(fnamestr: String): Path = {
     val pathstr = derefTilde(fnamestr) // replace leading tilde with sys.props("user.home")
-    if (notWindows) {
+    if (notWindows || fnamestr.matches("/proc(/.*)?")) {
       JPaths.get(pathstr)
     } else if (pathstr == ".") {
       herepath // based on sys.props("user.dir")
     } else {
       val _normpath = pathstr.replace('\\', '/')
       val normpath = _normpath.take(2) match {
-        case dl if dl.startsWith("/") =>
-          // apply mount map to paths with leading slash
-          applyPosix2LocalMount(_normpath) // becomes absolute, if mounted
-        case _ =>
-          _normpath
+      case dl if dl.startsWith("/") =>
+        // apply mount map to paths with leading slash
+        applyPosix2LocalMount(_normpath) // becomes absolute, if mounted
+      case _ =>
+        _normpath
       }
       def dd = driveRoot.toUpperCase.take(1)
       val (literalDrive, impliedDrive, pathtail) = normpath match {
-        case DriveLetterColonPattern(dl, tail) => // windows drive letter
-          (dl, dl, tail)
-        case CygdrivePattern(dl, tail) => // cygpath drive letter
-          (dl, dl, tail)
-        case pstr if pstr.matches("/proc(/.*)?") => // /proc file system
-          ("", "", pstr) // must not specify a drive letter!
-        case pstr if pstr.startsWith("/") => // drive-relative path, with no drive letter
-          // drive-relative paths are on the current-working-drive,
-          ("", dd, pstr)
-        case pstr => // relative path, implies default drive
-          (dd, "", pstr)
+      case DriveLetterColonPattern(dl, tail) => // windows drive letter
+        (dl, dl, tail)
+      case CygdrivePattern(dl, tail) => // cygpath drive letter
+        (dl, dl, tail)
+      case pstr if pstr.matches("/proc(/.*)?") => // /proc file system
+        ("", "", pstr) // must not specify a drive letter!
+      case pstr if pstr.startsWith("/") => // drive-relative path, with no drive letter
+        // drive-relative paths are on the current-working-drive,
+        ("", dd, pstr)
+      case pstr => // relative path, implies default drive
+        (dd, "", pstr)
       }
       val semipath          = Option(pathtail).getOrElse("/")
       val neededDriveLetter = if (impliedDrive.nonEmpty) s"$impliedDrive:" else ""
@@ -137,19 +137,22 @@ object Paths {
   def getMounted(pathstr: String): Option[String] = {
     val mounts = posix2localMountMapKeyset
     val lcpath = pathstr.toLowerCase
+    if (lcpath.matches("/proc\\b(.*)?")) {
+      hook += 1
+    }
     mounts.find { (target: String) =>
       def exactMatch: Boolean = {
         target match {
-          case "/" =>
-            true
+        case "/" =>
+          true
+        case _ =>
+          val pathTail = lcpath.drop(target.length).take(1)
+          pathTail match {
+          case "" | "/" =>
+            true // full segment match
           case _ =>
-            val pathTail = lcpath.drop(target.length).take(1)
-            pathTail match {
-              case "" | "/" =>
-                true // full segment match
-              case _ =>
-                false // partial suffix match
-            }
+            false // partial suffix match
+          }
         }
       }
       val prefixMatches = lcpath.startsWith(target)
@@ -170,7 +173,7 @@ object Paths {
     val mountTarget = if (mounted.isEmpty) {
       pathstr
     } else {
-      val cyg        = s"$cygdrive"
+      val cyg        = cygdrive
       val mountpoint = mounted.getOrElse("")
       if (mountpoint == cyg) {
         val segments = pathstr.drop(cyg.length).split("/").dropWhile(_.isEmpty)
@@ -199,8 +202,8 @@ object Paths {
     val (dl, segments) = pathSegments(pathstr) // TODO: toss dl?
     require(segments.nonEmpty, s"empty segments for pathstr [$pathstr]")
     var firstSeg = segments.head match {
-      case "/" | "" => ""
-      case s        => s
+    case "/" | "" => ""
+    case s        => s
     }
     val mounts = posix2localMountMap.keySet.toArray
     val lcpath = pathstr.toLowerCase
@@ -213,10 +216,10 @@ object Paths {
       nup = (firstSeg :: segments.tail.toList).mkString("/")
     } else {
       val driveLetter = (cygdrive, segments.head) match {
-        case ("", d) if canBeDriveLetter(d) =>
-          s"$d:"
-        case _ =>
-          ""
+      case ("", d) if canBeDriveLetter(d) =>
+        s"$d:"
+      case _ =>
+        ""
       }
       val abs = s"$driveLetter/${segments.tail.mkString("/")}"
       nup = abs
@@ -297,10 +300,10 @@ object Paths {
 
   def driveAndPath(filepath: String) = {
     filepath match {
-      case LetterPath(letter, path) =>
-        (s"$letter:", path)
-      case _ =>
-        ("", shellRoot)
+    case LetterPath(letter, path) =>
+      (s"$letter:", path)
+    case _ =>
+      ("", shellRoot)
     }
   }
 
@@ -318,8 +321,8 @@ object Paths {
     }.find { (p: Path) =>
       p.toFile.isFile
     } match {
-      case None => ""
-      case Some(p) => p.normalize.toString.replace('\\', '/')
+    case None => ""
+    case Some(p) => p.normalize.toString.replace('\\', '/')
     }
   }
 
@@ -336,10 +339,10 @@ object Paths {
     // val letters = driveLettersLc.toArray
     val pathdrive = pathDriveletter(p)
     pathdrive match {
-      case "" =>
-        true
-      case letter =>
-        driveLettersLc.contains(letter)
+    case "" =>
+      true
+    case letter =>
+      driveLettersLc.contains(letter)
     }
   }
 
@@ -352,10 +355,10 @@ object Paths {
 
   def pathDriveletter(ps: String): String = {
     ps.take(2) match {
-      case str if str.drop(1) == ":" =>
-        str.take(2).toLowerCase
-      case _ =>
-        ""
+    case str if str.drop(1) == ":" =>
+      str.take(2).toLowerCase
+    case _ =>
+      ""
     }
   }
   def pathDriveletter(p: Path): String = {
@@ -373,8 +376,8 @@ object Paths {
   def exists(p: Path): Boolean = {
     canExist(p) && {
       p.toFile match {
-        case f if f.isDirectory => true
-        case f => f.exists
+      case f if f.isDirectory => true
+      case f => f.exists
       }
     }
   }
@@ -386,8 +389,8 @@ object Paths {
   def asLocalPath(str: String) = if (notWindows) str
   else
     str match {
-      case PosixCygdrive(dl, tail) => s"$dl:/$tail"
-      case _                       => str
+    case PosixCygdrive(dl, tail) => s"$dl:/$tail"
+    case _                       => str
     }
   lazy val PosixCygdrive = "[\\/]([a-z])([\\/].*)?".r
 
@@ -413,22 +416,22 @@ object Paths {
       normed.startsWith(k) && (normtail.isEmpty || normtail.startsWith("/"))
     }
     val cygMstr: String = tupes match {
-      case Some((k, v)) =>
-        val normtail = normed.drop(k.length)
-        s"$v$normtail"
-      case None =>
-        // apply the convention that single letter paths below / are cygdrive references
-        if (normed.take(3).matches("/./?")) {
-          val dl: String = normed.drop(1).take(1) + ":"
-          normed.drop(2) match {
-            case "" =>
-              s"$dl/" // trailing slash is required here
-            case str =>
-              s"$dl$str"
-          }
-        } else {
-          normed
+    case Some((k, v)) =>
+      val normtail = normed.drop(k.length)
+      s"$v$normtail"
+    case None =>
+      // apply the convention that single letter paths below / are cygdrive references
+      if (normed.take(3).matches("/./?")) {
+        val dl: String = normed.drop(1).take(1) + ":"
+        normed.drop(2) match {
+          case "" =>
+            s"$dl/" // trailing slash is required here
+          case str =>
+            s"$dl$str"
         }
+      } else {
+        normed
+      }
     }
     // replace multiple slashes with single slash
     cygMstr.replaceAll("//+", "/")
@@ -460,19 +463,19 @@ object Paths {
     for (line <- lines) {
       val cols = line.split("\\s+", -1).toList
       val List(winpath, _mountpoint, fstype) = cols match {
-        case a :: b :: Nil       => a :: b :: "" :: Nil
-        case a :: b :: c :: tail => a :: b :: c :: Nil
-        case list                => sys.error(s"bad line in ${fpath}: ${list.mkString("|")}")
+      case a :: b :: Nil       => a :: b :: "" :: Nil
+      case a :: b :: c :: tail => a :: b :: c :: Nil
+      case list                => sys.error(s"bad line in ${fpath}: ${list.mkString("|")}")
       }
       val mountpoint = _mountpoint.replaceAll("\\040", " ")
       fstype match {
-        case "cygdrive" =>
-          cygdrive = mountpoint
-        case "usertemp" =>
-          usertemp = mountpoint // need to parse it, but unused here
-        case _ =>
-          // fstype ignored
-          localMountMap += mountpoint -> winpath
+      case "cygdrive" =>
+        cygdrive = mountpoint
+      case "usertemp" =>
+        usertemp = mountpoint // need to parse it, but unused here
+      case _ =>
+        // fstype ignored
+        localMountMap += mountpoint -> winpath
       }
     }
 
@@ -544,14 +547,14 @@ object Paths {
   def envOrElse(varname: String, elseValue: String = ""): String = Option(
     System.getenv(varname)
   ) match {
-    case None      => elseValue
-    case Some(str) => str
+  case None      => elseValue
+  case Some(str) => str
   }
 
   def normPath(_pathstr: String): Path = {
     val jpath: Path = _pathstr match {
-      case "." => JPaths.get(sys.props("user.dir"))
-      case _   => JPaths.get(_pathstr)
+    case "." => JPaths.get(sys.props("user.dir"))
+    case _   => JPaths.get(_pathstr)
     }
     normPath(jpath)
   }
@@ -609,16 +612,16 @@ object Paths {
   def pathSegments(path: String): (String, Seq[String]) = {
     // remove windows drive letter, if present
     val (dl, pathRelative) = path.take(2) match {
-      case s if s.endsWith(":") =>
-        (path.take(2), path.drop(2))
-      case s =>
-        (cygdrive, path)
+    case s if s.endsWith(":") =>
+      (path.take(2), path.drop(2))
+    case s =>
+      (cygdrive, path)
     }
     pathRelative match {
-      case "/" | "" =>
-        (dl, Seq(pathRelative))
-      case _ =>
-        (dl, pathRelative.split("[/\\\\]+").filter { _.nonEmpty }.toSeq)
+    case "/" | "" =>
+      (dl, Seq(pathRelative))
+    case _ =>
+      (dl, pathRelative.split("[/\\\\]+").filter { _.nonEmpty }.toSeq)
     }
   }
 }

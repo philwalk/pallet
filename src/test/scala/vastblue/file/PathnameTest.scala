@@ -11,10 +11,10 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   lazy val TMP = {
     val gdir = Paths.get("/g")
     gdir.isDirectory && gdir.paths.nonEmpty match {
-      case true =>
-        "/g/tmp"
-      case false =>
-        "/tmp"
+    case true =>
+      "/g/tmp"
+    case false =>
+      "/tmp"
     }
   }
   val testfilenames = Seq(
@@ -35,10 +35,10 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       it(s"should correctly handle filename [$testfilename] ") {
         val testfile = Paths.get(testfilename)
         val testPossible = testfile.parentFile match {
-          case dir if dir.isDirectory =>
-            true
-          case _ =>
-            false
+        case dir if dir.isDirectory =>
+          true
+        case _ =>
+          false
         }
         if (!testPossible) {
           hook += 1

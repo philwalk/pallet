@@ -4,8 +4,6 @@ import java.nio.file.{Path, Paths}
 import DriveRoot._
 import vastblue.Platform.cygdrive
 
-//opaque type DriveRoot = String
-
 // DriveRoot Strings must match "" or "[A-Z]:"
 // The `toPath` method resolves path to root of disk,
 // rather than the one returned by `Paths.get("C:")`.
@@ -16,9 +14,9 @@ object DriveRoot {
   def apply(s: String): DriveRoot = {
     require(s.length <= 2, s"bad DriveRoot String [$s]")
     val str: String = s match {
-      case dl if dl.matches("^[a-zA-Z]:") => dl.toUpperCase
-      case dl if dl.matches("^[a-zA-Z]")  => s"$dl:".toUpperCase
-      case _                              => ""
+    case dl if dl.matches("^[a-zA-Z]:") => dl.toUpperCase
+    case dl if dl.matches("^[a-zA-Z]")  => s"$dl:".toUpperCase
+    case _                              => ""
     }
     str
   }

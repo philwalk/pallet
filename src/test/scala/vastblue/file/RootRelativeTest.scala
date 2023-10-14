@@ -27,10 +27,10 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
           val mounted = mounts.find((dir: String) => sameFile(dir, testdir))
 
           val thisPath = mounted match {
-            case Some(str) =>
-              reverseMountMap(str)
-            case None =>
-              testdir
+          case Some(str) =>
+            reverseMountMap(str)
+          case None =>
+            testdir
           }
           val jf = Paths.get(thisPath)
           printf("[%s]: exists [%s]\n", jf.norm, jf.exists)
@@ -53,10 +53,10 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
         for (dir <- testdirs) {
           val mounted = mounts.find((s: String) => sameFile(s, dir))
           val thisPath = mounted match {
-            case Some(str) =>
-              reverseMountMap(str)
-            case None =>
-              dir
+          case Some(str) =>
+            reverseMountMap(str)
+          case None =>
+            dir
           }
           val jf = java.nio.file.Paths.get(thisPath)
           printf("[%s]: exists [%s]\n", jf.norm, jf.exists)

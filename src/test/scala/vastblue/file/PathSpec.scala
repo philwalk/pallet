@@ -12,8 +12,8 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   var hook: Int = 0
 
   val cygroot: String = cygdrive match {
-    case str if str.endsWith("/") => str
-    case str                      => s"$str/"
+  case str if str.endsWith("/") => str
+  case str                      => s"$str/"
   }
 
   before {
@@ -227,9 +227,10 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   lazy val uhere = here.replaceAll("[a-zA-Z]:", "").replace('\\', '/')
 
   lazy val hereDrive = here.replaceAll(":.*", ":") match {
-    case drive if drive >= "a" && drive <= "z" =>
-      drive
-    case _ => ""
+  case drive if drive >= "a" && drive <= "z" =>
+    drive
+  case _ =>
+    ""
   }
 
   lazy val dosHomeDir: String   = sys.props("user.home")
@@ -281,10 +282,10 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
       val tmpdir = Paths.get(driveRoot)
       // val str = tmpdir.localpath
       tmpdir.isDirectory && tmpdir.paths.contains("/tmp") match {
-        case true =>
-          s"${cygroot}g/tmp"
-        case false =>
-          "/tmp"
+      case true =>
+        s"${cygroot}g/tmp"
+      case false =>
+        "/tmp"
       }
     } else {
       "/tmp"

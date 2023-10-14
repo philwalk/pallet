@@ -14,9 +14,9 @@ object DriveRoot {
   def apply(s: String): DriveRoot = {
     require(s.length <= 2, s"bad DriveRoot String [$s]")
     val str: String = s match {
-      case dl if dl.matches("^[a-zA-Z]:") => dl.toUpperCase
-      case dl if dl.matches("^[a-zA-Z]")  => s"$dl:".toUpperCase
-      case _                              => ""
+    case dl if dl.matches("^[a-zA-Z]:") => dl.toUpperCase
+    case dl if dl.matches("^[a-zA-Z]")  => s"$dl:".toUpperCase
+    case _                              => ""
     }
     str
   }

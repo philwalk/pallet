@@ -49,8 +49,8 @@ object EzPath {
   def apply(p: Path, sl: Slash) = {
     val pstr: String = if (notWindows) p.toString.replace('\\', '/') else p.toString
     sl match {
-      case Unx => new PathUnx(pstr)
-      case Win => new PathWin(pstr)
+    case Unx => new PathUnx(pstr)
+    case Win => new PathWin(pstr)
     }
   }
 
@@ -81,8 +81,8 @@ object EzPath {
   def isWindows = !notWindows
 
   def platformPrefix: String = Paths.get(".").toAbsolutePath.getRoot.toString match {
-    case "/" => ""
-    case s   => s.take(2)
+  case "/" => ""
+  case s   => s.take(2)
   }
 
   def winlikePathstr(s: String): Boolean = {
