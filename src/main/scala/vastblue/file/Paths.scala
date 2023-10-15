@@ -183,7 +183,8 @@ object Paths {
           // looks like a cygdrive designator replace '/cygdrive/X' with 'X:/'
           s"$firstSeg:/${segments.tail.mkString("/")}"
         } else {
-          pathstr
+          val rr = posixrootBare
+          s"$rr$pathstr"
         }
       } else {
         val Some(posix) = mounted: @unchecked

@@ -5,7 +5,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import vastblue.pathextend._
 import vastblue.file.Paths.{canExist, normPath}
-import vastblue.Platform.{driveRoot, cwd, cygdrive}
+import vastblue.Platform.{driveRoot, cwd, cygdrive, isWinshell, posixroot}
 
 class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   val verbose   = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
@@ -24,7 +24,14 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     }
     printf("testFile: %s\n", testFile)
   }
-
+  describe("Paths.get"){
+    it("should correctly apply `posixroot`") {
+        if (isWinshell){
+          val etcFstab = Paths.get("/etc/fstab").norm
+          assert(etcFstab.startsWith(posixroot))
+        }
+    }
+  }
   describe("File") {
     describe("#eachline") {
       it("should correctly deliver all file lines") {

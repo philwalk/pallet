@@ -22,7 +22,7 @@ import vastblue.DriveRoot._
  *
  * convenience fields:
  * bashPath: Path      : path to bash executable
- * realroot: String    : root directory of the shell environment
+ * posixroot: String   : root directory of the shell environment
  * unamefull: String   : value reported by `uname -a`
  *
  * To identify the environment:
@@ -41,7 +41,7 @@ import vastblue.DriveRoot._
  *   val path: String = whichPath(binaryName)
  *
  * How to determine where msys2/ mingw64 / cygwin64 is installed?
- *   realroot
+ *   posixroot
  */
 object Platform {
   def main(args: Array[String]): Unit = {
@@ -74,9 +74,7 @@ object Platform {
     printf("cygdrive     [%s]\n", cygdrive)
     printf("bashPath     [%s]\n", bashPath)
     printf("cygpathExe   [%s]\n", cygpathExe)
-    printf("realroot     [%s]\n", realroot)
-    printf("realrootbare [%s]\n", realrootbare)
-    printf("realrootfull [%s]\n", realrootfull)
+    printf("posixroot    [%s]\n", posixroot)
     printf("osName       [%s]\n", osName)
     printf("unamefull    [%s]\n", unamefull)
     printf("unameshort   [%s]\n", unameshort)
@@ -187,7 +185,7 @@ object Platform {
     case LetterPath(letter, path) =>
       (DriveRoot(letter), path)
     case _ =>
-      (DriveRoot(""), realrootfull)
+      (DriveRoot(""), posixroot)
     }
   }
   lazy val LetterPath = """([a-zA-Z]):([$/a-zA-Z_0-9]*)""".r
@@ -237,8 +235,8 @@ object Platform {
   def lsExe: String = lsPath.norm
 
   def rootElsePath(name: String): Path = {
-    val rr = realroot
-    // search for `name` below realroot, and else take first in PATH
+    val rr = posixroot
+    // search for `name` below posixroot, and else take first in PATH
     val candidates = Seq(
       s"${rr}usr/bin/$name$exeSuffix",
       s"${rr}bin/$name$exeSuffix"
@@ -521,8 +519,6 @@ object Platform {
     }
   }
 
-  def realrootfull: String = realroot
-
   lazy val mountMap = {
     fstabEntries.map { (e: FsEntry) => (e.posix -> e.dir) }.toMap
   }
@@ -556,7 +552,7 @@ object Platform {
     override def toString = "%-22s, %-18s, %s".format(dir, posix, ftype)
   }
   lazy val fstabEntries: Seq[FsEntry] = {
-    val rr: String = realroot
+    val rr: String = posixroot
     val etcFstab   = s"$rr/etc/fstab".replaceAll("[\\/]+", "/")
     val f          = JPaths.get(etcFstab)
     val entries = if (!f.isFile) {
@@ -627,7 +623,7 @@ object Platform {
     }
   }
 
-  lazy val realroot: String = {
+  lazy val posixroot: String = {
     if (notWindows) {
       "/"
     } else {
@@ -639,20 +635,11 @@ object Platform {
       }
     }
   }
-  def realrootbare = if (notWindows) {
-    realroot
-  } else {
-    val noDriveLetter = realroot.replaceFirst(s"^(?i)${workingDrive.string}", "")
-    noDriveLetter match {
-    case "" =>
-      "/"
-    case str =>
-      str
-    }
+  lazy val posixrootBare = {
+    posixroot.reverse.dropWhile(_ == '/').reverse
   }
-
   lazy val binDir = {
-    val binDirString = s"${realroot}/bin"
+    val binDirString = s"${posixroot}/bin"
     val binDirPath   = JPaths.get(binDirString)
     binDirPath.toFile.isDirectory match {
     case true =>
@@ -749,7 +736,7 @@ object Platform {
   def stdpath(str: String)          = str.replace('\\', '/')
   def norm(p: Path): String         = p.toString.replace('\\', '/')
 
-  def etcdir = getPath(realrootfull, "etc") match {
+  def etcdir = getPath(posixroot, "etc") match {
   case p if JFiles.isSymbolicLink(p) =>
     p.toRealPath()
   case p =>
@@ -780,12 +767,12 @@ object Platform {
     var cd2r          = true // by default /c should mount to c:/ in windows
     if (isWindows) {
       // cygwin provides default values, potentially overridden in fstab
-      val bareRoot = realrootfull
-      localMountMap += "/usr/bin" -> s"$bareRoot/bin"
-      localMountMap += "/usr/lib" -> s"$bareRoot/lib"
+      val rr = posixrootBare
+      localMountMap += "/usr/bin" -> s"$rr/bin"
+      localMountMap += "/usr/lib" -> s"$rr/lib"
       // next 2 are convenient, but MUST be added before reading fstab
-      localMountMap += "/bin" -> s"$bareRoot/bin"
-      localMountMap += "/lib" -> s"$bareRoot/lib"
+      localMountMap += "/bin" -> s"$rr/bin"
+      localMountMap += "/lib" -> s"$rr/lib"
       for (line <- lines) {
         // printf("line[%s]\n", line)
         val cols = line.split("\\s+", -1).toList
@@ -819,7 +806,7 @@ object Platform {
         localMountMap += s"/$letter" -> winpath
       }
     }
-    localMountMap += "/" -> realrootfull // this must be last
+    localMountMap += "/" -> posixroot // this must be last
     (localMountMap, cd2r)
   }
 

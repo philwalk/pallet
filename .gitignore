@@ -1,11 +1,12 @@
 ../
+*.jar
 *.class
 *.log
 sall
 s[0-9]*
 _vb
 tags
-.scala-build/
+.scala-build
 
 sonatype.sbt
 
