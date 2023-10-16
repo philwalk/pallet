@@ -31,22 +31,32 @@ Add the following dependency to `build.sbt`
 ```
 
 ## TL;DR
-Let's you use `scala` instead of `bash` or `python` for writing scripts that "do the same thing" on all your platforms.
+Write scripts in `scala` instead of `bash` or `python` that "do the same thing" on all platforms, including `Windows`.
+A complete solution requires a posix shell, but even without it this library provides an expressive scripting solution.
 
 ### Concept
-This library provides a way to write portable scripts that work in all supported environments, including most `Windows` posix environments.
+* Concise, powerful and readable scripting idioms
+* extended filenames via a drop-in replacement for `java.nio.file.Paths` that:
+ * returns an ordinary `java.nio.file.Path` object
+ * recognizes `posix` paths in `Windows` shell environments
 
-Various concise, powerful and readable scripting idioms are provided, making it faster to use `scala` than `bash`, even for quick work.
-Much of the filesystem magic is performed by a drop-in replacement for `java.nio.file.Paths` that recognizes the `posix` paths of `Windows` shell environments.
-
-The example scala scripts below illustrate what can be done.
+Example below illustrate the capabilities.
 
 ### Background
-If your work spans multiple environments, you generally need to learn different technologies for each environment.
-Some of this can be avoided by installing various `bash` shell environments in `Windows`, but `jvm` languages don't support the filesystem abstractions provided by `cygwin` or `msys64`, so there's a limit to what can be done in your preferred language.
+If your work spans multiple environments, you generally must use different tools for each environment:
+ * batch files or powershell scripts in `Windows`
+ * bash files everywhere else
+
+Most platforms other than `Windows` are unix-like, so the problem is how to support unix-like scripts in `Windows`.
+Installing `bash` shell environments (e.g., `git-bash`, `cygwin64`, `msys64`) is a partial solution.
+However, the `jvm` does not recognize the filesystem abstractions.  This library provides the missing piece.
+
+Choices to be made when using `scala` as a general purpose scripting language include:
+ * how to manage the classpath
+ * learning cross-platform coding techniques
 
 ### Setup for running the example scripts:
-If you already have `scala-cli` installed, it's a good option, and some of the example scripts are written for it.
+If you have `scala-cli` installed, it's a good option, and some of the example scripts are written for it.
 
 In `scala 3.x`, the classpath may be defined with an `atFile`, a very simple way to control your `classpath`.
 
