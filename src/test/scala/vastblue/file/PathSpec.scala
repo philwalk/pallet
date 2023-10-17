@@ -5,7 +5,7 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import vastblue.pathextend._
 import vastblue.file.Paths.{canExist, normPath}
-import vastblue.Platform.{driveRoot, cwd, cygdrive, isWinshell, posixroot}
+import vastblue.Platform.{driveRoot, cwd, cygdrive, isWinshell, posixroot, isWindows}
 
 class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   val verbose   = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
@@ -24,13 +24,23 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     }
     printf("testFile: %s\n", testFile)
   }
-  describe("Paths.get"){
+  describe("Paths.get") {
     it("should correctly apply `posixroot`") {
-        if (isWinshell){
-          val etcFstab = Paths.get("/etc/fstab").norm
-          assert(etcFstab.startsWith(posixroot))
-        }
+      if (isWinshell) {
+        val etcFstab = Paths.get("/etc/fstab").norm
+        assert(etcFstab.startsWith(posixroot))
+      }
     }
+  }
+  describe("Path.relpath.posixpath") {
+    it("should correctly relativize Path, if below `cwd`") {
+      val p     = Paths.get(s"${cwd.norm}/src")
+      val pnorm = p.norm
+      val relp  = p.relpath
+      val posx  = relp.posixpath
+      assert(posx.length < pnorm.length && pnorm.endsWith(posx))
+    }
+    // TODO: should NOT relativize .. blah-blah-blah
   }
   describe("File") {
     describe("#eachline") {

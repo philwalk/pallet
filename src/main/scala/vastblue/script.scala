@@ -1,18 +1,22 @@
 package vastblue
 
 import vastblue.Platform._
+import vastblue.file.Util.{Path}
 import vastblue.pathextend._
 
 object script {
-  lazy val scriptPathProperty: String = propOrEmpty("script.path")
+  def stackHeadName: String = new Exception().getStackTrace.head.getFileName
+  lazy val scriptPathProperty: String = {
+    propOrElse("script.path", stackHeadName)
+  }
 
-  lazy val sunCmdLine: Seq[String] = mainArgs
+  lazy val sunCmdLine: Seq[String] = mainArgv
 
   def sunCmd: String = sunCmdLine.mkString(" ")
 
   // Discard all of sun.java.command except the script name and args.
   // In IDE, script command line can be simulated by defining script.path.
-  lazy val mainArgs: Seq[String] = {
+  lazy val mainArgv: Seq[String] = {
     val sjc = propOrEmpty("sun.java.command").split(" ")
     if (verbose) {
       sjc.foreach { printf(" sjc[%s]\n", _) }
@@ -20,18 +24,28 @@ object script {
     val args = sjc.dropWhile((s: String) => !s.endsWith(scriptPathProperty) && !legalMainClass(s))
     args.toList match {
     // in an IDE, sun.java.command main class is a fully-qualified java class name
-    case prog :: args if legalMainClass(prog) && scriptPathProperty.nonEmpty =>
-      // if script.path is defined, we can simulate the script environment
-      scriptPathProperty :: args
-    case args =>
+    case prog :: tail if legalMainClass(prog) && scriptPathProperty.nonEmpty =>
+      // if script.path defined, simulate the script environment in IDE
+      scriptPathProperty :: tail
+    case _ =>
       // presumed to be a script environment, all is good
       args
     }
   }
 
   def mainProg = scriptPathProperty match {
-  case ""  => mainArgs.take(1).mkString
-  case str => str
+  case "" =>
+    mainArgv.take(1).mkString
+  case str =>
+    str
+  }
+
+  // TODO: this works if running from a script, but need to gracefully do something
+  // otherwise.  If executing from a jar file, read manifest to get main class
+  // else if running in an IDE, pretend that main class name is script name.
+  lazy val (scriptPath: Path, scalaScript: String) = {
+    val spath = vastblue.file.Paths.get(mainProg).toAbsolutePath
+    (spath, spath.toFile.getName)
   }
 
   // scriptName, or legal fully qualified class name (must include package)
@@ -41,12 +55,6 @@ object script {
     val notMgr: Boolean         = s != "dotty.tools.MainGenericRunner"
     notMgr && (validScript || validMainClass)
   }
-
-  // TODO: this works if running from a script, but need to gracefully do something
-  // otherwise.  If executing from a jar file, read manifest to get main class
-  // else if running in an IDE, pretend that main class name is script name.
-  lazy val scriptPath: Path    = Paths.get(mainProg).toAbsolutePath
-  lazy val scalaScript: String = progName.norm.replaceAll(".*/", "")
 
   def progName   = scriptPath.name
   def scriptName = scalaScript

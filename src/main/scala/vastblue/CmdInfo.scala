@@ -6,7 +6,7 @@ import vastblue.Platform._
 
 object CmdInfo {
   def main(args: Array[String]): Unit = {
-    val mainArgv = vastblue.script.mainArgs
+    val mainArgv = vastblue.script.mainArgv
     printf("mainArgv           [%s]\n", mainArgv.take(1).mkString)
 
     printf("sunCmdLine         [%s]\n", sunCmdLine)
@@ -16,7 +16,7 @@ object CmdInfo {
     printf("scriptPath.name    [%s]\n", scriptPath.name)
     printf("scriptName         [%s]\n", scriptName)
     printf("progName           [%s]\n", progName)
-    for ((arg, i) <- mainArgs.zipWithIndex) {
+    for ((arg, i) <- mainArgv.zipWithIndex) {
       printf("  args(%d) == [%s]\n", i, arg)
     }
   }

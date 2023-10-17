@@ -12,7 +12,7 @@ object Fstab {
     printf("posixroot: %s\n", posixroot)
     val p = Paths.get("/etc/fstab")
     printf("%s\n", p.norm)
-    if (p.isFile){
+    if (p.isFile) {
       p.lines.foreach { println }
     }
   }
