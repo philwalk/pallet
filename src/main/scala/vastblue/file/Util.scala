@@ -20,13 +20,11 @@ object Util {
   type JFile       = java.io.File
 
   def scriptPathProperty: String = script.scriptPathProperty
-  def sunCmdLine: Seq[String]    = script.sunCmdLine
   def scriptPath: Path           = script.scriptPath
 
-  def scriptName: String    = script.scriptName
-  def mainArgv: Seq[String] = script.mainArgv
-  def progName: String      = script.progName
-  def sunCmd: String        = script.sunCmd
+  def scriptName: String      = script.scriptName
+  def scriptArgs: Seq[String] = script.scriptArgs
+  def progName: String        = script.progName
 
   lazy val DefaultEncoding    = DefaultCodec.toString
   lazy val DefaultCharset     = Charset.forName(DefaultEncoding)
@@ -425,6 +423,31 @@ object Util {
       Paths.get(b)
     case _ =>
       p
+    }
+  }
+  def linesCharset(p: Path, charset: Charset): Seq[String] = {
+    def readLines: Seq[String] = {
+      try {
+        if (p.toFile.isFile) {
+          JFiles.readAllLines(p, charset).asScala.toSeq
+        } else {
+          Nil
+        }
+      } catch {
+        case mie: java.nio.charset.MalformedInputException =>
+          sys.error(s"malformed input reading file [$p] with charset [$charset]")
+      }
+    }
+    if (!isWindows && p.toFile.isFile) {
+      readLines
+    } else {
+      val segments = p.iterator().asScala.toSeq
+      if (segments.head.toString == "proc") {
+        val pnorm: String = nativePathString(p)
+        execBinary(catExe, pnorm)
+      } else {
+        readLines
+      }
     }
   }
 }

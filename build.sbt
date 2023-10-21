@@ -2,8 +2,8 @@ lazy val scala213 = "2.13.12"
 lazy val scala331 = "3.3.1"
 lazy val scalaVer = scala331
 
-lazy val supportedScalaVersions = List(scala213, scala331)
-//lazy val supportedScalaVersions = List(scalaVer)
+lazy val supportedScalaVersions = List(scala331, scala213)
+// lazy val supportedScalaVersions = List(scalaVer)
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
@@ -88,6 +88,7 @@ scalacOptions := Seq(
   "-language:experimental.macros",
   "-language:higherKinds",
   "-language:implicitConversions",
+  "-deprecation",
 
   // Linting options
   "-unchecked"

@@ -44,6 +44,8 @@ import vastblue.DriveRoot._
  *   posixroot
  */
 object Platform {
+//  import PidCmd._
+
   def main(args: Array[String]): Unit = {
     printf("runtime scala version: [%s]\n", vastblue.Info.scalaRuntimeVersion)
     printf("SYSTEMDRIVE: %s\n", envOrEmpty("SYSTEMDRIVE"))
@@ -222,39 +224,39 @@ object Platform {
 
   def driveRoot = JPaths.get("").toAbsolutePath.getRoot.toString.take(2)
 
-  def bashPath: Path  = rootElsePath("bash")
-  def bashExe: String = bashPath.norm
+  // pre-searched executables, as lazy vals
+  lazy val (bashPath: Path, bashExe)           = rootElsePath("bash")
+  lazy val (catPath: Path, catExe: String)     = rootElsePath("cat")
+  lazy val (findPath: Path, findExe: String)   = rootElsePath("find")
+  lazy val (whichPath: Path, whichExe: String) = rootElsePath("which")
+  lazy val (lsPath: Path, lsExe: String)       = rootElsePath("ls")
+  lazy val (trPath: Path, trExe: String)       = rootElsePath("tr")
+  lazy val (psPath: Path, psExe: String)       = rootElsePath("ps")
 
-  def findPath: Path  = rootElsePath("find")
-  def findExe: String = findPath.norm
-
-  def whichPath: Path  = rootElsePath("which")
-  def whichExe: String = whichPath.norm
-
-  def lsPath: Path  = rootElsePath("ls")
-  def lsExe: String = lsPath.norm
-
-  def rootElsePath(name: String): Path = {
+  def rootElsePath(name: String): (Path, String) = {
     val rr = posixroot
-    // search for `name` below posixroot, and else take first in PATH
+
+    // search for `name` below posixroot, else take first in PATH
     val candidates = Seq(
       s"${rr}usr/bin/$name$exeSuffix",
       s"${rr}bin/$name$exeSuffix"
     ).map { (s: String) =>
       Paths.get(s)
     }.filter { _.isFile }
+
     val pathstr: String = candidates.toList match {
-    case bsh :: tail => bsh.norm
+    case exe :: tail => exe.norm
     case Nil         => where(name)
     }
 
-    val p = pathstr.path
+    var p: Path = Paths.get(pathstr)
     try {
-      p.toRealPath()
+      p = p.toRealPath()
     } catch {
       case fse: FileSystemException =>
-        p // no permission to follow link
+      // no permission to follow link
     }
+    (p, p.norm)
   }
 
   def execBinary(args: String*): Seq[String] = {
@@ -307,10 +309,29 @@ object Platform {
 
     def toErr(str: String): Unit = {
       err ::= str
-      if (verbose) System.err.printf("stderr[%s]\n", str);
+      if (verbose) System.err.printf("stderr[%s]\n[%s]\n", str, cmd.mkString("|"))
     }
     val exit = cmd ! ProcessLogger((o) => toOut(o), (e) => toErr(e))
     (exit, out.reverse, err.reverse)
+  }
+
+  def procCmdlineReader(pidfile: String, verbose: Boolean = false) = {
+//    import scala.concurrent._
+//    import scala.concurrent.duration._
+//    import java.io.ByteArrayOutputStream
+//    import scala.concurrent.ExecutionContext.Implicits.global
+//    import scala.util.{Try, Success, Failure}
+    import scala.sys.process._
+//    val catCmd: String = s"$catExe $pidfile"
+//    val trCmd: String = s"$trExe '\\0' '\\|'"
+//    val bashcmd: String = catCmd + " | " + trCmd
+//    val str =  (catCmd #| trCmd).lazyLines_!.mkString("\n")
+    val scriptCmd = s"${cwd.norm}/bin/catPidfile"
+    val cmd       = Seq(catExe, "-A", pidfile)
+    val str       = cmd.lazyLines_!.mkString("\n")
+    // -v causes non-printing characters to be displayed (zero becomes '^@'?)
+//    val str = Seq(bashExe, "-c", "bash", bashcmd).lazyLines_!.mkString("\n")
+    str
   }
 
   def exeFilterList: Seq[String] = {
@@ -443,16 +464,16 @@ object Platform {
     }
   }
 
-  // in Windows, cat is needed to read /proc/ files
-  lazy val catExe: String = {
-    val result = where("cat")
-    result match {
-    case "" =>
-      "cat"
-    case prog =>
-      prog.replace('\\', '/')
-    }
-  }
+//  // in Windows, cat is needed to read /proc/ files
+//  lazy val catExe: String = {
+//    val result = where("cat")
+//    result match {
+//    case "" =>
+//      "cat"
+//    case prog =>
+//      prog.replace('\\', '/')
+//    }
+//  }
 
   lazy val unamefull  = uname("-a")
   lazy val unameshort = unamefull.toLowerCase.replaceAll("[^a-z0-9].*", "")
@@ -507,7 +528,7 @@ object Platform {
     listPossibleRootDirs("/") ++ listPossibleRootDirs("/opt") ++ listPossibleRootDirs(programFiles)
   }
 
-  lazy val envPath: Seq[String] = Option(System.getenv("PATH")) match {
+  lazy val envPath: List[String] = Option(System.getenv("PATH")) match {
   case None      => Nil
   case Some(str) => str.split(psep).toList.map { canonical(_) }.distinct
   }
@@ -834,7 +855,7 @@ object Platform {
 
   def scalaHome = propElseEnv("scala.home", "SCALA_HOME")
 
-  val username: String = propOrElse("user.name", "unknown")
+  def username: String = propOrElse("user.name", "unknown")
   def userhome: String = propOrElse("user.home", "unknown").replace('\\', '/')
 
   def fileLines(f: JFile): Seq[String] = {
@@ -853,21 +874,6 @@ object Platform {
   }
 
   def ostype = uname("-s")
-
-//  lazy val (os: String, wsl: Boolean) = (osname.toLowerCase, osversion.toLowerCase) match {
-//  case (str, _) if str.startsWith("windows") =>
-//    ("windows", false)
-//  case ("linux", ver) if ver.contains("microsoft") =>
-//    ("linux", true)
-//  case ("linux", _) =>
-//    ("linux", false)
-//  case ("osx", ver@_) =>
-//    ("osx", false)
-//  case ("mac os x", ver@_) =>
-//    ("osx", false)
-//  case (a, b) =>
-//    sys.error(s"not supported: os.name[$a], os.version[$b]")
-//  }
 
   // this may be needed to replace `def canExist` in vastblue.os
   lazy val driveLettersLc: List[String] = {
@@ -893,24 +899,4 @@ object Platform {
     val elapsed = System.currentTimeMillis - t0
     printf("%d iterations in %9.6f seconds\n", n * 2, elapsed.toDouble / 1000.0)
   }
-
-  // def isDirectory(path: String): Boolean = { JPaths.get(path).toFile.isDirectory }
-
-//  lazy val cygpathExe: String = {
-//    if (notWindows){
-//      ""
-//    } else {
-//      val cpexe = where("cygpath.exe")
-//      val cp = cpexe match {
-//        case "" =>
-//          cygpathExes.find { s =>
-//            JPaths.get(s).toFile.isFile
-//          }
-//          .getOrElse(cpexe)
-//        case f =>
-//          f
-//      }
-//      cp
-//    }
-//  }
 }

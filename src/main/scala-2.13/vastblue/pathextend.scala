@@ -27,13 +27,11 @@ object pathextend {
   def showLimitedStack(e: Throwable = newEx): Unit = vastblue.file.Util.showLimitedStack(e)
 
   def scriptPathProperty: String = script.scriptPathProperty
-  def sunCmdLine: Seq[String]    = script.sunCmdLine
 
-  def scriptPath: Path      = script.scriptPath
-  def scriptName: String    = script.scriptName
-  def mainArgv: Seq[String] = script.mainArgv
-  def progName: String      = script.progName
-  def sunCmd: String        = script.sunCmd
+  def scriptPath: Path        = script.scriptPath
+  def scriptName: String      = script.scriptName
+  def scriptArgs: Seq[String] = script.scriptArgs
+  def progName: String        = script.progName
 
   implicit class ExtendString(s: String) {
     def path: Path         = vastblue.file.Paths.get(s)
@@ -95,18 +93,9 @@ object pathextend {
     def pathsTree: Seq[Path]                 = p.toFile.pathsTree
     def lines: Seq[String]                   = linesCharset(DefaultCharset)
     def lines(encoding: String): Seq[String] = linesCharset(Charset.forName(encoding))
-    def linesCharset(charset: Charset): Seq[String] = {
-      if (p.norm.startsWith("/proc/")) {
-        execBinary(catExe, p.norm)
-      } else {
-        try {
-          JFiles.readAllLines(p, charset).asScala.toSeq
-        } catch {
-          case mie: java.nio.charset.MalformedInputException =>
-            sys.error(s"malformed input reading file [$p] with charset [$charset]")
-        }
-      }
-    }
+
+    def linesCharset(charset: Charset): Seq[String] = vastblue.file.Util.linesCharset(p, charset)
+
     def linesAnyEncoding: Seq[String]                    = getLinesAnyEncoding(p)
     def linesWithEncoding(encoding: String): Seq[String] = getLinesAnyEncoding(p, encoding)
     def firstline                                        = p.linesAnyEncoding.take(1).mkString("")
@@ -152,7 +141,7 @@ object pathextend {
       val posix = if (notWindows) {
         pathStr(p)
       } else {
-        val nm = norm
+        val nm = nativePathString(p)
         withPosixDriveLetter(nm) // case C
       }
       posix
@@ -210,7 +199,7 @@ object pathextend {
     def isRegularFile: Boolean    = isFile
     def filesTree: Seq[JFile] = {
       assert(f.isDirectory, s"not a directory [$f]")
-      pathextend.filesTree(f)()
+      vastblue.file.Util.filesTree(f)()
     }
     def pathsTree: Seq[Path] = filesTree.map { _.path }
     def files: Seq[JFile] = {

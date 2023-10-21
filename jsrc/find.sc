@@ -4,9 +4,11 @@ package vastblue
 import vastblue.pathextend._
 
 object Find {
-  def main(args: Array[String]): Unit = {
+  val cmdParms = new CmdParams()
+  def main(_args: Array[String]): Unit = {
     try {
-      val parms = parseMainArgv(mainArgv)
+      val args = scriptArgs  // args is (usually) identical to scriptArgs
+      val parms = parseArgs(args)
 
       for (dir <- parms.paths) {
         for (f <- walkTree(dir.toFile, maxdepth = parms.maxdepth)) {
@@ -47,90 +49,95 @@ object Find {
    *
    * mainArgv always delivers unexpanded glob arguments.
    */
-  def parseMainArgv(args: Seq[String]): CmdParams = {
-    var cmdParms = new CmdParams()
-    parse(mainArgv.tail) // args is (usually) identical to mainArgv.tail
 
-    def parse(args: Seq[String]): Unit = {
-      if (args.nonEmpty) {
-        var tailargs = List.empty[String]
-        args match {
-        case Nil =>
-          usage()
-        case "-v" :: tail =>
-          tailargs = tail
-          cmdParms.verbose = true
-        case "-maxdepth" :: dep :: tail =>
-          tailargs = tail
-          if (dep.matches("[0-9]+")) {
-            cmdParms.maxdepth = dep.toInt
-          } else {
-            usage(s"-maxdepth followed by a non-integer: [$dep]")
-          }
-
-        case "-type" :: typ :: tail =>
-          tailargs = tail
-          typ match {
-          case "f" | "d" | "l" =>
-            cmdParms.ftype = typ
-          case _ =>
-            usage(s"-type [$typ] not supported")
-          }
-
-        case "-name" :: nam :: tail =>
-          tailargs = tail
-          if (cmdParms.verbose) printf("nam[%s]\n", nam)
-          cmdParms.glob = nam
-
-        case "-iname" :: nam :: tail =>
-          tailargs = tail
-          if (cmdParms.verbose) printf("nam[%s]\n", nam)
-          cmdParms.glob = nam
-          cmdParms.nocase = true
-
-        case arg :: _ if arg.startsWith("-") =>
-          usage(s"unknown predicate '$arg'")
-
-        case sdir :: tail =>
-          tailargs = tail
-          if (cmdParms.verbose) printf("sdir[%s]\n", sdir)
-          if (!sdir.path.exists) {
-            usage(s"not found: $sdir")
-          }
-          cmdParms.dirs :+= sdir
-        }
-        if (tailargs.nonEmpty) {
-          parse(tailargs)
-        }
-      }
-    }
+  def parseArgs(args: Seq[String]): CmdParams = {
+    parse(args)
     cmdParms.validate // might exit with usage message
     cmdParms
   }
 
+  def parse(args: Seq[String]): Unit = {
+    if (args.nonEmpty) {
+      var tailargs = List.empty[String]
+      args.toList match {
+      case "-v" :: tail =>
+        tailargs = tail
+        cmdParms.verbose = true
+      case "-maxdepth" :: dep :: tail =>
+        tailargs = tail
+        if (dep.matches("[0-9]+")) {
+          cmdParms.maxdepth = dep.toInt
+        } else {
+          usage(s"-maxdepth followed by a non-integer: [$dep]")
+        }
+
+      case "-type" :: typ :: tail =>
+        tailargs = tail
+        typ match {
+          case "f" | "d" | "l" =>
+            cmdParms.ftype = typ
+          case _ =>
+            usage(s"-type [$typ] not supported")
+        }
+
+      case "-name" :: nam :: tail =>
+        tailargs = tail
+        if (cmdParms.verbose) printf("nam[%s]\n", nam)
+        cmdParms.glob = nam
+
+      case "-iname" :: nam :: tail =>
+        tailargs = tail
+        if (cmdParms.verbose) printf("nam[%s]\n", nam)
+        cmdParms.glob = nam
+        cmdParms.nocase = true
+
+      case arg :: _ if arg.startsWith("-") =>
+        usage(s"unknown predicate '$arg'")
+
+      case sdir :: tail =>
+        tailargs = tail
+        if (cmdParms.verbose) printf("sdir[%s]\n", sdir)
+        if (sdir.contains("*") || !sdir.path.exists) {
+          usage(s"not found: $sdir")
+        }
+        cmdParms.appendDir(sdir)
+      case Nil =>
+        // ruled out
+        hook += 1
+      }
+      if (tailargs.nonEmpty) {
+        parse(tailargs)
+      }
+    }
+  }
+
   // command line interface parameters
   class CmdParams(
-      var dirs: Seq[String] = Nil,
+      var _dirs: Vector[String] = Vector.empty[String],
       var glob: String = "",
       var ftype: String = "",
       var maxdepth: Int = -1,
       var nocase: Boolean = false,
       var verbose: Boolean = false,
   ) {
+    def dirs: Seq[String] = _dirs
+    def appendDir(s: String): Unit = {
+      _dirs :+= s
+    }
     val validFtypes = Seq("f", "d", "l")
     def validate: Unit = {
       if (dirs.isEmpty) {
-        usage("must provide one or more dirs")
+        appendDir(".") // by default, find searches "."
       }
       if (ftype.nonEmpty && !validFtypes.contains(ftype)) {
-        usage(s"not a valid file type [$ftype]")
+        usage(s"unknown argument to -type: $ftype")
       }
       val badpaths = paths.filter { (p: Path) =>
         !p.exists
       }
       if (badpaths.nonEmpty) {
-        for (path <- badpaths) {
-          printf(s"not found: [${path.norm}]\n")
+        for ((path, dir) <- badpaths zip dirs) {
+          printf("find: '%s': No such file or directory", dir)
         }
         usage()
       }

@@ -10,42 +10,15 @@ object script {
     propOrElse("script.path", stackHeadName)
   }
 
-  lazy val sunCmdLine: Seq[String] = mainArgv
-
-  def sunCmd: String = sunCmdLine.mkString(" ")
-
-  // Discard all of sun.java.command except the script name and args.
-  // In IDE, script command line can be simulated by defining script.path.
-  lazy val mainArgv: Seq[String] = {
-    val sjc = propOrEmpty("sun.java.command").split(" ")
-    if (verbose) {
-      sjc.foreach { printf(" sjc[%s]\n", _) }
-    }
-    val args = sjc.dropWhile((s: String) => !s.endsWith(scriptPathProperty) && !legalMainClass(s))
-    args.toList match {
-    // in an IDE, sun.java.command main class is a fully-qualified java class name
-    case prog :: tail if legalMainClass(prog) && scriptPathProperty.nonEmpty =>
-      // if script.path defined, simulate the script environment in IDE
-      scriptPathProperty :: tail
-    case _ =>
-      // presumed to be a script environment, all is good
-      args
-    }
-  }
-
-  def mainProg = scriptPathProperty match {
-  case "" =>
-    mainArgv.take(1).mkString
-  case str =>
-    str
-  }
+  def mainProc: ProcInfo.Proc = ProcInfo.thisProc
+  def scriptName: String      = ProcInfo.scriptName
+  def scriptArgs: Seq[String] = ProcInfo.scriptArgs
 
   // TODO: this works if running from a script, but need to gracefully do something
   // otherwise.  If executing from a jar file, read manifest to get main class
   // else if running in an IDE, pretend that main class name is script name.
-  lazy val (scriptPath: Path, scalaScript: String) = {
-    val spath = vastblue.file.Paths.get(mainProg).toAbsolutePath
-    (spath, spath.toFile.getName)
+  lazy val scriptPath: Path = {
+    vastblue.file.Paths.get(scriptName).toAbsolutePath
   }
 
   // scriptName, or legal fully qualified class name (must include package)
@@ -56,16 +29,12 @@ object script {
     notMgr && (validScript || validMainClass)
   }
 
-  def progName   = scriptPath.name
-  def scriptName = scalaScript
+  def progName = scriptPath.name
 
   def stripPackagePrefix(fullname: String): String = fullname.replaceAll(""".*[^a-zA-Z_0-9]""", "")
 
   def fullClassname(ref: AnyRef): String = ref.getClass.getName.stripSuffix("$")
-
-  def bareClassname(ref: AnyRef): String = {
-    stripPackagePrefix(fullClassname(ref))
-  }
+  def bareClassname(ref: AnyRef): String = stripPackagePrefix(fullClassname(ref))
 
   def scalaScriptFile: Path = scriptPath
 

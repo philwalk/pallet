@@ -6,17 +6,14 @@ import vastblue.Platform._
 
 object CmdInfo {
   def main(args: Array[String]): Unit = {
-    val mainArgv = vastblue.script.mainArgv
-    printf("mainArgv           [%s]\n", mainArgv.take(1).mkString)
-
-    printf("sunCmdLine         [%s]\n", sunCmdLine)
-    printf("sunCmd             [%s]\n", sunCmd)
+    val scriptArgs = vastblue.script.scriptArgs
+    printf("scriptName         [%s]\n", scriptName)
     printf("scriptPathProperty [%s]\n", scriptPathProperty)
     printf("scriptPath         [%s]\n", scriptPath.norm)
     printf("scriptPath.name    [%s]\n", scriptPath.name)
     printf("scriptName         [%s]\n", scriptName)
     printf("progName           [%s]\n", progName)
-    for ((arg, i) <- mainArgv.zipWithIndex) {
+    for ((arg, i) <- scriptArgs.zipWithIndex) {
       printf("  args(%d) == [%s]\n", i, arg)
     }
   }
