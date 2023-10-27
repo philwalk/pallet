@@ -9,6 +9,7 @@ import scala.jdk.CollectionConverters._
 import vastblue.Platform.{isWindows, execBinary, catExe, exec}
 import vastblue.DriveRoot
 import vastblue.DriveRoot._
+import vastblue.MainArgs
 import vastblue.file.Util._
 
 object pathextend {
@@ -26,12 +27,15 @@ object pathextend {
 
   def showLimitedStack(e: Throwable = newEx): Unit = vastblue.file.Util.showLimitedStack(e)
 
-  def scriptPathProperty: String = script.scriptPathProperty
+  def scriptProp(e: Exception = new Exception()): String = script.scriptProp(e)
+
+  def prepArgs(args: Seq[String]) = script.prepArgs(args)
 
   def scriptPath: Path        = script.scriptPath
   def scriptName: String      = script.scriptName
-  def scriptArgs: Seq[String] = script.scriptArgs
-  def progName: String        = script.progName
+  def thisProc: MainArgs.Proc = script.thisProc
+
+  // def progName: String        = script.progName
 
   extension (s: String) {
     def path: Path         = vastblue.file.Paths.get(s)

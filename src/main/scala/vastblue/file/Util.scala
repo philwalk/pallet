@@ -19,12 +19,10 @@ object Util {
   type PrintWriter = java.io.PrintWriter
   type JFile       = java.io.File
 
-  def scriptPathProperty: String = script.scriptPathProperty
-  def scriptPath: Path           = script.scriptPath
+  def scriptProp(e: Exception = new Exception()): String = script.scriptProp(e)
 
-  def scriptName: String      = script.scriptName
-  def scriptArgs: Seq[String] = script.scriptArgs
-  def progName: String        = script.progName
+  def scriptPath: Path   = script.scriptPath
+  def scriptName: String = script.scriptName
 
   lazy val DefaultEncoding    = DefaultCodec.toString
   lazy val DefaultCharset     = Charset.forName(DefaultEncoding)
@@ -105,7 +103,7 @@ object Util {
     case "ISO-8859-1" | "latin1" =>
       Codec(lcAll)
     case encodingName =>
-      // System.err.printf("warning : unrecognized charset encoding: LC_ALL==[%s]\n",encodingName)
+      // System.err.printf("warning : unrecognized charset encoding: LC_ALL==[%s]\n", encodingName)
       Codec(encodingName)
     }
   }
@@ -175,7 +173,7 @@ object Util {
     //   while comma-delimited files contain more commas than tabs.
     //
     // A much slower but more thorough approach would be:
-    //    1. replaceAll("""(?m)"[^"]*","") // remove quoted strings
+    //    1. replaceAll("""(?m)"[^"]*", "") // remove quoted strings
     //    2. split("[\r\n]+") // extract multiple lines
     //    3. count columns-per-row tallies using various delimiters
     //    4. the tally with the most consistency is the "winner"

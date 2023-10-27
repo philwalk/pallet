@@ -1,6 +1,5 @@
 #!/usr/bin/env -S scala
 
-//package vastblue
 //> using scala "3.3.1"
 //> using lib "org.vastblue::pallet::0.9.0"
 

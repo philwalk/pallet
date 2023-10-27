@@ -79,20 +79,23 @@ inThisBuild(
   )
 )
 
-scalacOptions := Seq(
-//"-Xmaxerrs", "10",
-  "-encoding",
-  "utf-8",
-  "-explaintypes",
-  "-language:existentials",
-  "-language:experimental.macros",
-  "-language:higherKinds",
-  "-language:implicitConversions",
-  "-deprecation",
+scalacOptions := {
+  Seq(
+    // "-Xmaxerrs", "10",
+    "-encoding",
+    "utf-8",
+    "-explaintypes",
+    "-language:existentials",
+    "-language:experimental.macros",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-deprecation",
+    "-Xsource:3", // ignore scala3 complaint
 
-  // Linting options
-  "-unchecked"
-)
+    // Linting options
+    "-unchecked"
+  )
+}
 
 // key identifier, otherwise this field is ignored; passwords supplied by pinentry
 credentials += Credentials(

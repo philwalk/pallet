@@ -51,7 +51,7 @@ import vastblue.pathextend.hook
  * Most of the magic is available via Paths.get(), defined below.
  *
  * How to determine where msys2/ mingw64 / cygwin64 is installed?
- * best answer: norm(where(s"bash${exeSuffix}")).replaceFirst("/bin/bash.*","")
+ * best answer: norm(where(s"bash${exeSuffix}")).replaceFirst("/bin/bash.*", "")
  */
 object Paths {
   type Path = java.nio.file.Path
@@ -506,10 +506,10 @@ object Paths {
       val winpath = stdpath(
         drive.getCanonicalPath
       ) // retain uppercase, to match cygpath.exe behavior
-      // printf("letter[%s], path[%s]\n",letter,winpath)
+      // printf("letter[%s], path[%s]\n", letter, winpath)
       localMountMap += s"/$letter" -> winpath
     }
-    // printf("bareRoot[%s]\n",bareRoot)
+    // printf("bareRoot[%s]\n", bareRoot)
     localMountMap += "/" -> shellRoot // this must be last
     localMountMap
   }

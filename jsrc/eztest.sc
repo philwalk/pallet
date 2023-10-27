@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala @classpathAtfile
+#!/usr/bin/env -S scala @./atFile
 
 import vastblue.file._
 import vastblue.file.{EzPath, PathUnx, PathWin}

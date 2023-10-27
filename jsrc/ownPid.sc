@@ -3,19 +3,19 @@ package vastblue
 
 import vastblue.pathextend._
 import vastblue.Platform._
-import vastblue.ProcInfo
+import vastblue.MainArgs
 
 object OwnPid {
   def main(args: Array[String]): Unit = {
     try {
-      val procs = ProcInfo.pidCommandlines()
-      for (proc <- procs){
-        printf("[%s]\n", proc)
+      val argv = MainArgs.prepArgs(args)
+      for ((arg, i) <- argv) {
+        printf("%2d: [%s]\n", i, arg)
       }
 
     } catch {
-      case ex: Exception =>
-        printf("%s\n", ex.getMessage)
+      case e: Exception =>
+        printf("%s\n", e.getMessage)
     }
   }
 }

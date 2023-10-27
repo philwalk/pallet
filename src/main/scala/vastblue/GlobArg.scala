@@ -1,14 +1,15 @@
-#!/usr/bin/env -S scala @./atFile -deprecation
+//#!/usr/bin/env -S scala @./atFile -deprecation
 package vastblue
 
 import vastblue.pathextend.*
 
-object MainName {
+object GlobArg {
+  // if glob args are passed, they should be preserved in argv
   def main(args: Array[String]): Unit = {
+    for ((a, i) <- args.zipWithIndex) {
+      printf(" %2d: [%s]\n", i, a)
+    }
     val argv = prepArgs(args.toSeq)
-    printf("scriptName: [%s]\n", argv.head)
-    printf("scriptArgs: [%s]\n", argv.tail.mkString("|"))
-    printf("thisProc: %s\n", thisProc)
     for ((a, i) <- argv.zipWithIndex) {
       printf(" %2d: [%s]\n", i, a)
     }

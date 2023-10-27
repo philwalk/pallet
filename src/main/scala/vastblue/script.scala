@@ -5,20 +5,28 @@ import vastblue.file.Util.{Path}
 import vastblue.pathextend._
 
 object script {
-  def stackHeadName: String = new Exception().getStackTrace.head.getFileName
-  lazy val scriptPathProperty: String = {
-    propOrElse("script.path", stackHeadName)
+
+  def prepArgs(args: Seq[String]) = MainArgs.prepArgs(args)
+
+  def scriptProp(e: Exception = new Exception()): String = {
+    def stackHead: String   = e.getStackTrace.head.getFileName
+    val scrPathProp: String = propOrElse("script.path", stackHead).path.relativePath
+    if (verbose) {
+      System.err.printf("scrPathProp[%s]\n", scrPathProp)
+    }
+    scrPathProp
   }
 
-  def mainProc: ProcInfo.Proc = ProcInfo.thisProc
-  def scriptName: String      = ProcInfo.scriptName
-  def scriptArgs: Seq[String] = ProcInfo.scriptArgs
+//
+  def scriptName: String      = MainArgs.scriptName
+  def thisProc: MainArgs.Proc = MainArgs.thisProc
 
   // TODO: this works if running from a script, but need to gracefully do something
   // otherwise.  If executing from a jar file, read manifest to get main class
   // else if running in an IDE, pretend that main class name is script name.
   lazy val scriptPath: Path = {
-    vastblue.file.Paths.get(scriptName).toAbsolutePath
+    val rp = vastblue.file.Paths.get(scriptName).relpath
+    java.nio.file.Paths.get(rp.relativePath)
   }
 
   // scriptName, or legal fully qualified class name (must include package)
@@ -29,7 +37,7 @@ object script {
     notMgr && (validScript || validMainClass)
   }
 
-  def progName = scriptPath.name
+  // def progName = scriptPath.name
 
   def stripPackagePrefix(fullname: String): String = fullname.replaceAll(""".*[^a-zA-Z_0-9]""", "")
 

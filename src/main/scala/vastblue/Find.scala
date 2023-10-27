@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala @/opt/.scala3cp
+//#!/usr/bin/env -S scala @./atFile
 package vastblue
 
 import vastblue.pathextend._

@@ -140,10 +140,10 @@ object Platform {
 
   def osName = sys.props("os.name")
 
-  lazy val osType: String = osName.takeWhile(_ != ' ').toLowerCase match {
-  case "windows"  => "windows"
-  case "linux"    => "linux"
-  case "mac os x" => "darwin"
+  lazy val osType: String = osName.toLowerCase match {
+  case s if s.contains("windows")  => "windows"
+  case s if s.contains("linux")    => "linux"
+  case s if s.contains("mac os x") => "darwin"
   case other =>
     sys.error(s"osType is [$other]")
   }
@@ -178,7 +178,7 @@ object Platform {
 
 //  def driveLetterColon = JPaths.get(".").toAbsolutePath.normalize.toString.take(2)
 
-  def isWinshell = isCygwin | isMsys64 | isMingw64 | isGitSdk64 | isGitbash
+  def isWinshell = isMsys64 | isCygwin | isMingw64 | isGitSdk64 | isGitbash
 
   lazy val (shellDrive, shellBaseDir) = driveAndPath(shellRoot)
 

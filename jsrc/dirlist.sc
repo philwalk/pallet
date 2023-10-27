@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala @classpathAtfile
+#!/usr/bin/env -S scala @./atFile
 // hashbang line requires successful sbt compile
 import vastblue.pathextend.*
 

@@ -12,7 +12,7 @@ lazy val homedir = sys.props("user.home").replace('\\', '/')
 lazy val scriptName = sys.props("script.path").norm.replaceAll(".*/", "")
 
 def usage(msg: String=""): Nothing = {
-  if ( msg.nonEmpty ){
+  if ( msg.nonEmpty ) {
     printf("%s\n", msg)
   }
   printf("%s [<options>]\n", scriptName)
@@ -21,7 +21,7 @@ def usage(msg: String=""): Nothing = {
     "-j           ; list classpath jars",
     "-v           ; verbose",
   )
-  for (s <- info){
+  for (s <- info) {
     printf("%s\n", s)
   }
   sys.exit(0)
@@ -41,19 +41,19 @@ def main(args: Array[String]): Unit =
       usage(s"unrecognized arg [$arg]")
     }
   }
-  if (!dirs && !jars && !verbose){
+  if (!dirs && !jars && !verbose) {
     usage()
   }
-  if (verbose){
+  if (verbose) {
     printf("psep[%s]\n", psep)
   }
-  for (e <- cp){
-    val fname = if (e.startsWith("~")){
-      e.replaceFirst("~",homedir)
+  for (e <- cp) {
+    val fname = if (e.startsWith("~")) {
+      e.replaceFirst("~", homedir)
     } else {
       e
     }
-    if (verbose){
+    if (verbose) {
       printf("%s\n", fname.norm)
     }
     val p = java.nio.file.Paths.get(fname)

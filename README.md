@@ -13,15 +13,13 @@ Provides support for various expressive idioms typical of scripting languages, w
 
 * Tested Target environments
   * `Linux`
+  * `Darwin/OSX`
   * `Windows`
   * `Cygwin64`
   * `Msys64`
   * `Mingw64`
   * `Git-bash`
   * `WSL Linux`
-
-* Occasionally Verified
-  * `OSX`
 
 ### Usage
 
@@ -32,19 +30,19 @@ Add the following dependency to `build.sbt`
 
 ## TL;DR
 Write scripts in `scala` instead of `bash` or `python` that "do the same thing" on all platforms, including `Windows`.
-A complete solution requires a posix shell, but even without it this library provides an expressive scripting solution.
+In Windows, some features require installation of a posix shell (such as [MSYS64](https://msys2.org)), and in `Darwin/OSX`, `homebrew`.
 
 ### Concept
-* Concise, powerful and readable scripting idioms
-* extended filenames via a drop-in replacement for `java.nio.file.Paths` that:
- * returns an ordinary `java.nio.file.Path` object
- * recognizes `posix` paths in `Windows` shell environments
+* Concise, expressive and readable scripting idioms
+* extended Paths.get via a drop-in replacement for `java.nio.file.Paths` that:
+  * returns an ordinary `java.nio.file.Path` object
+  * correctly interprets mounted `posix` paths in `Windows`
 
-Example below illustrate the capabilities.
+Examples below illustrate the capabilities.
 
 ### Background
 If your work spans multiple environments, you generally must use different tools for each environment:
- * batch files or powershell scripts in `Windows`
+ * batch files, powershell scripts, or other Windows-specific tools in `Windows`
  * bash files everywhere else
 
 Most platforms other than `Windows` are unix-like, so the problem is how to support unix-like scripts in `Windows`.
@@ -56,55 +54,83 @@ Choices to be made when using `scala` as a general purpose scripting language in
  * learning cross-platform coding techniques
 
 ### Setup for running the example scripts:
-If you have `scala-cli` installed, it's a good option, and some of the example scripts are written for it.
+A good option for writing scala scripts is `scala-cli`, and some example scripts are written for it.
+Each `scala-cli` scripts specifies required dependency internally, and the classpath is managed for you.
 
-In `scala 3.x`, the classpath may be defined with an `atFile`, a very simple way to control your `classpath`.
+Alternatively, in `scala 3.x`, a classpath may be defined with an `atFile`, for both simple and complex `classpath` definitions.
 
-Create a file in the current directory named `./scala3cp`, with your classpath, for example:
+Some differences to be aware of between `scala-cli` scripts and ordinary `scala` scripts:
+  * dependencies must be declared in special comment lines at the top of the script
+  * the `main(args)` call must be explicitly specified in the script file
+  * classpath management tends to require less fuss
+  * startup times the two script types differ, even after the initial compile invocation.  On my Windows box:
+    * 4 seconds for `scala-cli` before printing `hello world`
+    * 2 seconds for scala scripts (`SCALA_CLI=-save @/Users/username/scala3cp`)
+
+### Defining the classpath
+For a per-user classpath `atFile`, define your classpath in a file named, e.g., `$HOME/scala3cp`.
+To include the `scala3` version of this library, for example, the @file might contain:
 ```
--cp /Users/username/.ivy2/local/org.vastblue/pallet_3/0.9.0/jars/pallet_3.jar
+-cp ${HOME}/.ivy2/local/org.vastblue/pallet_3/0.9.0/jars/pallet_3.jar
 ```
 With this configuration, your scala 3 `shebang` line will look like this:
 ```scala
-#!/usr/bin/env -S scala @./scala3cp
+#!/usr/bin/env -S scala @${HOME}/scala3cp
 ```
-This works as long as you're in the same directory as the `@atFile`.
+This uses an absolute path: `${HOME}/scala3cp`, so you might need to define `HOME` on some platforms.
+Unfortunately, the `Darwin` version of `/usr/bin/env` doesn't seem to expand the $HOME environment variable in my experiments, so you might want to use an explicit path.  For a fully portable alternative, you can reference your `@atFile` argument by defining environment variable, e.g., `SCALA_OPTS=@/Users/username/scala3cp`, eliminating the need to add it to the `shebang` line.  See the section below.
 
-A more permanent approach uses an absolute path, .e.g., `/home/username/.scala3cp`, although you might need a slightly different `shebang` line on some platforms.
+Examples below assume classpath and other options are defined by the `SCALA_CLI` variable.  Note that when the classpath is also defined in the `shebang` line, it supplements (appends) rather than overrides classpath defined in `SCALA_CLI`.
 
-
-### Example script: display the native path and number of lines in `/etc/fstab`
+### Example script: display the native path and the number of lines in `/etc/fstab`
 ```scala
 #!/usr/bin/env -S scala
-package vastblue
 
 import vastblue.pathextend._
 import vastblue.Platform._
 
 object Fstab {
   def main(args: Array[String]): Unit = {
-    // display the native path corresponding to "/"
-    printf("posixroot: %s\n", posixroot)
-
-    // print the native path and the contents of "/etc/fstab", if present
+    // `posixroot` is the native path corresponding to "/"
+    // display the native path and lines.size of /etc/fstab
     val p = Paths.get("/etc/fstab")
-    printf("/etc/fstab => %s\n", p.norm)
-    printf("size: %s lines\n", p.lines.size)
+    printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
+      uname("-o"), posixroot, p.norm, p.lines.size)
   }
 }
 ```
+### Equivalent Scala-cli version of the same script:
+```scala
+#!/usr/bin/env -S scala-cli shebang
+
+//> using scala "3.3.1"
+//> using lib "org.vastblue::pallet::0.9.0"
+
+import vastblue.pathextend._
+import vastblue.Platform._
+
+object FstabCli {
+  def main(args: Array[String]): Unit = {
+    // `posixroot` is the native path corresponding to "/"
+    // display the native path and lines.size of /etc/fstab
+    val p = Paths.get("/etc/fstab")
+    printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
+      uname("-o"), posixroot, p.norm, p.lines.size)
+  }
+}
+FstabCli.main(args)
+```
 ### Output on various platforms:
 ```
-# WSL Ubuntu | env: GNU/Linux | posixroot: /           | /etc/fstab            | 6 lines
-# Linux Mint | env: GNU/Linux | posixroot: /           | /etc/fstab            | 21 lines
-# Cygwin64   | env: Cygwin    | posixroot: C:/cygwin64 | C:/cygwin64/etc/fstab | 24 lines
-# Msys64     | env: Msys      | posixroot: C:/msys64/  | C:/msys64/etc/fstab   | 22 lines
+WSL Ubuntu # env: GNU/Linux | posixroot: /           | /etc/fstab            | 6 lines
+Linux Mint # env: GNU/Linux | posixroot: /           | /etc/fstab            | 21 lines
+Cygwin64   # env: Cygwin    | posixroot: C:/cygwin64 | C:/cygwin64/etc/fstab | 24 lines
+Msys64     # env: Msys      | posixroot: C:/msys64/  | C:/msys64/etc/fstab   | 22 lines
+Darwin     # env: Darwin    | posixroot: /           | /etc/fstab            | 0 lines
 ```
-
+Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extension returns `Nil`.
 
 ### Example `scala-cli` script:
-This script requires `scala-cli` to be in your path.  It is compatible with all supported environments, although in Windows, to read `/proc/meminfo` requires there to be a posix Shell environment, such as `WSL`, `cygwin64`, `msys64`, `git-bash`, etc.
-
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
@@ -114,10 +140,6 @@ This script requires `scala-cli` to be in your path.  It is compatible with all 
 import vastblue.pathextend._
 
 def main(args: Array[String]): Unit = {
-  // show system memory info
-  for (line <- "/proc/meminfo".path.lines) {
-    printf("%s\n", line)
-  }
   // list child directories of "."
   val cwd: Path = Paths.get(".")
   for ( p: Path <- cwd.paths.filter { _.isDirectory }){
@@ -143,202 +165,56 @@ def main(args: Array[String]): Unit =
   printf("%s\n", dirs.toList.mkString("\n"))
 ```
 
-### Using `SCALA_OPTS` environment variable
-With `scala 3`, you can specify the `classpath` via an environment variable, permitting the use of a universal `shebang` line (a portability requirement).
-
-* Create a classpath `atFile` named `/Users/username/.scala3cp`: 
-* define `SCALA_OPTS` (e.g., in ~/.bashrc):
-  * `export SCALA_OPTS="@/Users/username/.scala3cp"`
-
-If you want to speed up subsequent calls to your scripts (after the initial compile-and-run invocation), you can add the `-save` option to your `SCALA_OPTS` variable:
-  * `export SCALA_OPTS="@/Users/username/.scala3cp -save"`
-
-The `-save` option saves the compiled script to a `jar` file in the script parent directory, speeding up subsequent calls, which are equivalent to `java -jar <jarfile>`.  The `jar` is self-contained, as it defines main class, classpath, etc. via the jar `manifest.mf` file.
-
-### Fix for inconsistent treatment of glob arguments by the `jvm`
+### How to consistently access comand line arguments
 The Windows `jvm` sometimes will expand `glob` arguments, even if double-quoted.
- * https://bugs.openjdk.org/browse/JDK-8131329
- * https://bugs.openjdk.org/browse/JDK-8131680
- * https://bugs.openjdk.org/browse/JDK-8158359
  * https://stackoverflow.com/questions/37037375/trailing-asterisks-on-windows-jvm-command-line-args-are-globbed-in-cygwin-bash-s/37081167#37081167:~:text=This%20problem%20is%20caused,net/browse/JDK%2D8131329
-
-Actions that only occur in some environments are a problem for portable code.
-This partial implementation of `/usr/bin/find` avoids the problem:
-
+This script demonstrates a consistent, portable way to get command line arguments.
 ```scala
-#!/ usr / bin / env -S scala
-@./ atFile
+#!/usr/bin/env -S scala
 package vastblue
 
 import vastblue.pathextend._
 
-object Find {
-  def main(args: Array[String]): Unit = {
-    try {
-      val parms = parseMainArgv(scriptArgv)
-
-      for (dir <- parms.paths) {
-        for (f <- walkTree(dir.toFile, maxdepth = parms.maxdepth)) {
-          val p = f.toPath
-          if (parms.matches(p)) {
-            printf("%s\n", p.relpath.posixpath)
-          }
-        }
-      }
-    } catch {
-      case t: Throwable =>
-        showLimitedStack(t)
-        sys.exit(1)
-    }
+def main(args: Array[String]): Unit = {
+  // display default args
+  for (arg <- args) {
+    printf("arg [%s]\n", arg)
   }
-
-  def usage(m: String = ""): Nothing = {
-    if (m.nonEmpty) {
-      printf("%s\n", m)
-    }
-    printf("usage: %s [options]\n", scriptName)
-
-    def usageText = Seq(
-      "<dir1> [<dir2> ...]",
-      " [-maxdepth <N>]",
-      " -type [fdl]",
-      " [-name | -iname] <filename-glob>",
-    )
-
-    for (str <- usageText) {
-      printf("  %s\n", str)
-    }
-    sys.exit(1)
-  }
-
-  /**
-   * Parse vastblue.script.mainArgv, equivalent to C language main arguments vector.
-   *
-   * jvm main#args and script.mainArgv.tail identical if `glob` args are not passed.
-   *
-   * mainArgv always delivers unexpanded glob arguments.
-   */
-  def parseMainArgv(args: Seq[String]): CmdParams = {
-    var cmdParms = new CmdParams()
-    parse(scriptArgv.tail) // args is (usually) identical to mainArgv.tail
-
-    def parse(args: Seq[String]): Unit = {
-      if (args.nonEmpty) {
-        var tailargs = List.empty[String]
-        args match {
-          case Nil =>
-            usage()
-          case "-v" :: tail =>
-            tailargs = tail
-            cmdParms.verbose = true
-          case "-maxdepth" :: dep :: tail =>
-            tailargs = tail
-            if (dep.matches("[0-9]+")) {
-              cmdParms.maxdepth = dep.toInt
-            } else {
-              usage(s"-maxdepth followed by a non-integer: [$dep]")
-            }
-
-          case "-type" :: typ :: tail =>
-            tailargs = tail
-            typ match {
-              case "f" | "d" | "l" =>
-                cmdParms.ftype = typ
-              case _ =>
-                usage(s"-type [$typ] not supported")
-            }
-
-          case "-name" :: nam :: tail =>
-            tailargs = tail
-            if (cmdParms.verbose) printf("nam[%s]\n", nam)
-            cmdParms.glob = nam
-
-          case "-iname" :: nam :: tail =>
-            tailargs = tail
-            if (cmdParms.verbose) printf("nam[%s]\n", nam)
-            cmdParms.glob = nam
-            cmdParms.nocase = true
-
-          case arg :: _ if arg.startsWith("-") =>
-            usage(s"unknown predicate '$arg'")
-
-          case sdir :: tail =>
-            tailargs = tail
-            if (cmdParms.verbose) printf("sdir[%s]\n", sdir)
-            if (!sdir.path.exists) {
-              usage(s"not found: $sdir")
-            }
-            cmdParms.dirs :+= sdir
-        }
-        if (tailargs.nonEmpty) {
-          parse(tailargs)
-        }
-      }
-    }
-
-    cmdParms.validate // might exit with usage message
-    cmdParms
-  }
-
-  // command line interface parameters
-  class CmdParams(
-                   var dirs: Seq[String] = Nil,
-                   var glob: String = "",
-                   var ftype: String = "",
-                   var maxdepth: Int = -1,
-                   var nocase: Boolean = false,
-                   var verbose: Boolean = false,
-                 ) {
-    val validFtypes = Seq("f", "d", "l")
-
-    def validate: Unit = {
-      if (dirs.isEmpty) {
-        usage("must provide one or more dirs")
-      }
-      if (ftype.nonEmpty && !validFtypes.contains(ftype)) {
-        usage(s"not a valid file type [$ftype]")
-      }
-      val badpaths = paths.filter { (p: Path) =>
-        !p.exists
-      }
-      if (badpaths.nonEmpty) {
-        for (path <- badpaths) {
-          printf(s"not found: [${path.norm}]\n")
-        }
-        usage()
-      }
-    }
-
-    lazy val paths = dirs.map {
-      Paths.get(_)
-    }
-
-    import java.nio.file.{FileSystems, PathMatcher}
-
-    lazy val matcher: PathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + glob);
-
-    def nameMatch(p: Path): Boolean = {
-      matcher.matches(p.getFileName)
-    }
-
-    def typeMatch(p: Path): Boolean = {
-      ftype match {
-        case "" => true
-        case "f" => p.isFile
-        case "d" => p.isDirectory
-        case "l" => p.isSymbolicLink
-        case _ => false // should never happen, ftype was validated
-      }
-    }
-
-    def matches(p: Path): Boolean = {
-      val nameflag = glob.isEmpty || nameMatch(p)
-      val typeflag = ftype.isEmpty || typeMatch(p)
-      nameflag && typeflag
-    }
+  // display extended and repaired args
+  val argv = prepArgs(args.toSeq)
+  for ((arg, i) <- argv.zipWithIndex) {
+    printf(" %2d: [%s]\n", i, arg)
   }
 }
 ```
+Pass arguments with embedded spaces and glob expressions to see the difference between `args` and `argv`.
+Notice that `argv` has added the script path as argv(0), similar to the standard in `C` 
+
+### Using `SCALA_OPTS` environment variable
+With `scala 3`, you can specify the `classpath` via an environment variable, permitting the use of a universal `shebang` line (a portability requirement).
+
+* Create a classpath `atFile` named `${HOME}/scala3cp`: 
+* define `SCALA_OPTS` (e.g., in ~/.bashrc):
+  * `export SCALA_OPTS="@${HOME}/scala3cp"`
+
+If you want to speed up subsequent calls to your scripts (after the initial compile-and-run invocation), you can add the `-save` option to your `SCALA_OPTS` variable:
+  * `export SCALA_OPTS="@/${HOME}/scala3cp -save"`
+
+The `-save` option saves the compiled script to a `jar` file in the script parent directory, speeding up subsequent calls, which are equivalent to `java -jar <jarfile>`.  The `jar` is self-contained, as it defines main class, classpath, etc. via the jar `manifest.mf` file.
 
 ### How to Write Portable Scala Scripts
-(TO BE CONTINUED)
+Things that maximize the odds of your script running on another system:
+  * use `scala 3`
+  * always call `val argv = prepArgs(args.toSeq)`
+  * use `posix` file paths by default
+  * only use `File.separator` for output, never for parsing input
+  * avoid depending on `System.lineSeparator` (or property `line.separator`)
+  * when parsing input, split line endings with regex `[\r\n]+` rather than `line.separator` property or equivalent.
+  * use forward slash, avoid drive letters
+    * a drive letter is not needed for paths on the current working drive (often C:)
+  * in `Windows`, install a posix shell (such as [MSYS64](https://msys2.org) or [CYGWIN64](https://www.cygwin.com))
+  * in `Darwin/OSX`, install `homebrew`
+  * to access disks other than the working drive, mount the drive via `/etc/fstab`
+  * create `java.nio.file.Path` objects from `Strings` by the `String#path` extension
+    * `Path` objects created this way can see mounted posix files, e.g,. `/etc/fstab`.
+

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala @classpathAtfile
+#!/usr/bin/env -S scala @./atFile
 
 import vastblue.pathextend.*
 import vastblue.Platform.{getStdout, envPath, isWindows}
@@ -6,7 +6,7 @@ import scala.util.control.Breaks._
 import java.nio.file.{Files => JFiles, Paths => JPaths}
 
 def main(args: Array[String]): Unit =
-  for (arg <- args){
+  for (arg <- args) {
     val list = findAllInPath(arg)
     printf("found %d [%s] in PATH:\n", list.size, arg)
     for (path <- list) {
@@ -16,6 +16,7 @@ def main(args: Array[String]): Unit =
   }
 
 def fsep = java.io.File.separator
+
 def exeSuffix: String = if (isWindows) ".exe" else ""
 
 def findAllInPath(prog: String): Seq[Path] = {

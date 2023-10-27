@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala @./atFile -deprecation
+//#!/usr/bin/env -S scala @./atFile -deprecation
 package vastblue
 
 import vastblue.pathextend.*

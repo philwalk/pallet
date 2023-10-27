@@ -1,5 +1,4 @@
 #!/usr/bin/env -S scala @./atFile
-package vastblue
 
 import vastblue.pathextend._
 

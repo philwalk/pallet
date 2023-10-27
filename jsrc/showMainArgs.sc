@@ -4,11 +4,11 @@ package vastblue
 import vastblue.pathextend._
 
 def main(args: Array[String]): Unit = {
-  printf("[%s]\n", sys.props("sun.java.command"))
-  for (arg <- args){
+  for (arg <- args) {
     printf("arg [%s]\n", arg)
   }
-  for (arg <- scriptArgv){
-    printf("argv[%s]\n", arg)
+  val argv = prepArgs(args.toSeq)
+  for ((arg, i) <- argv.zipWithIndex) {
+    printf(" %2d: [%s]\n", i, arg)
   }
 }

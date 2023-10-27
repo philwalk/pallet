@@ -87,7 +87,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       printf("\n")
     }
 
-    it("ExPath should display with os-appropriate slash type") {
+    it("EzPath should display with os-appropriate slash type") {
       val ezpc = EzPath(wpathstr) // should match java.nio.file.Paths.get
       printf("ezpc.pstr [%s], ", ezpc.initstring)
       printf("ezpc.norm [%s], ", ezpc.norm)

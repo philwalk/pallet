@@ -186,7 +186,7 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
           for (v <- variants) { // not necessarily 4 variants (duplicates removed before map to Path)
             val matchtag = "%-12s to %s".format(fname, v)
             it(s"round trip conversion should match [$matchtag]") {
-              // val (k1,k2) = (f1.key,v.key)
+              // val (k1, k2) = (f1.key, v.key)
               val sameFile = Paths.isSameFile(f1, v)
               if (f1 != v || !sameFile) {
                 System.err.printf("f1[%s]\nv[%s]\n", f1, v)

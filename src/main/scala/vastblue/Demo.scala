@@ -1,5 +1,5 @@
-#!/usr/bin/env -S scala @./atFile
-//package vastblue
+//#!/usr/bin/env -S scala @./atFile
+package vastblue
 
 import vastblue.pathextend._
 import vastblue.MainArgs
