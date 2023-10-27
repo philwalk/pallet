@@ -1,6 +1,5 @@
-#!/usr/bin/env -S scala @./classpathAtfileWindows
+#!/usr/bin/env -S scala @./atFile
 
-import vastblue.pathextend.*
 import vastblue.pathextend.*
 
 lazy val (psep, cp) = {

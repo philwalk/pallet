@@ -1,7 +1,7 @@
 //#!/usr/bin/env -S scala @$HOME/.scala3cp
 package vastblue
 
-import vastblue.pathextend._
+import vastblue.pathextend.{osType, _}
 import vastblue.Platform._
 import vastblue.script.legalMainClass
 import vastblue.Unexpand._

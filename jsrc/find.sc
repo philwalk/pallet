@@ -1,13 +1,16 @@
-#!/usr/bin/env -S scala @/opt/.scala3cp
-package vastblue
+#!/usr/bin/env -S scala @./.scala3cp
+//package vastblue.demo
 
 import vastblue.pathextend._
 
+// partial implementation of the gnu find utility
 object Find {
   val cmdParms = new CmdParams()
   def main(_args: Array[String]): Unit = {
     try {
+      // call prepArgs to avoid jvm bug when passing quoted glob expressions
       val argv  = prepArgs(_args.toSeq)
+
       val parms = parseArgs(argv.tail) // argv.tail is validated _args
 
       for (dir <- parms.paths) {

@@ -135,6 +135,7 @@ object Platform {
   def notWindows: Boolean = java.io.File.separator == "/"
 
   def isWindows: Boolean = !notWindows
+  def isDarwin: Boolean  = osType == "darwin"
 
   def exeSuffix: String = if (isWindows) ".exe" else ""
 
@@ -157,7 +158,7 @@ object Platform {
   def getPath(dir: String, s: String = ""): Path = Paths.get(s"$dir/$s")
 
   def setSuffix(exeName: String): String = {
-    if (!exeName.endsWith(".exe")) {
+    if (isWindows && !exeName.endsWith(".exe")) {
       s"$exeName$exeSuffix"
     } else {
       exeName
@@ -632,7 +633,7 @@ object Platform {
     if (notWindows) {
       ""
     } else {
-      val cpexe = where("cygpath.exe")
+      val cpexe = where(s"cygpath${exeSuffix}")
       val cp = cpexe match {
       case "" =>
         // scalafmt: { optIn.breakChainOnFirstMethodDot = false }
@@ -891,7 +892,7 @@ object Platform {
   def time(n: Int, func: (String) => Any): Unit = {
     val t0 = System.currentTimeMillis
     for (i <- 0 until n) {
-      func("bash.exe")
+      func("bash${exeSuffix}")
     }
     for (i <- 0 until n) {
       func("bash")

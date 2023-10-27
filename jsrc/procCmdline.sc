@@ -5,7 +5,11 @@ import vastblue.pathextend._
 def main(args: Array[String]): Unit = {
   try {
     val proc = Paths.get("/proc")
-    proc.lines.foreach { println }
+    if (proc.exists){
+      proc.paths.foreach { println }
+    } else {
+      printf("not found: [%s]\n", proc)
+    }
   } catch {
     case t: Throwable =>
       showLimitedStack(t)

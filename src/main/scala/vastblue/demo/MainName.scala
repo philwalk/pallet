@@ -1,5 +1,5 @@
 //#!/usr/bin/env -S scala @./atFile -deprecation
-package vastblue
+package vastblue.demo
 
 import vastblue.pathextend.*
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala @${HOME}/.scala3cp
+#!/usr/bin/env -S scala @./.scala3cp -deprecation
 package vastblue
 
 import vastblue.pathextend._
@@ -8,8 +8,8 @@ import vastblue.MainArgs
 object OwnPid {
   def main(args: Array[String]): Unit = {
     try {
-      val argv = MainArgs.prepArgs(args)
-      for ((arg, i) <- argv) {
+      val argv = MainArgs.prepArgs(args.toSeq)
+      for ((arg, i) <- argv.zipWithIndex) {
         printf("%2d: [%s]\n", i, arg)
       }
 

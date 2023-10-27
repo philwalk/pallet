@@ -21,6 +21,8 @@ object pathextend {
 
   var hook: Int = 0 // breakpoint hook
 
+  def osType: String = vastblue.Platform.osType
+
   def walkTree(file: JFile, depth: Int = 1, maxdepth: Int = -1): Iterable[JFile] = vastblue.file.Util.walkTree(file, depth, maxdepth)
 
   def filesTree(dir: JFile)(func: JFile => Boolean = dummyFilter): Seq[JFile] = vastblue.file.Util.filesTree(dir)(func)
@@ -59,7 +61,12 @@ object pathextend {
     def parent: Path           = parentPath
     def exists: Boolean        = JFiles.exists(p) // p.toFile.exists()
     def listFiles: Seq[JFile]  = p.toFile.listFiles.toList
-    def localpath: String      = cygpath2driveletter(p.normalize.toString)
+    def localpath: String      = osType match {
+      case "windows" =>
+        cygpath2driveletter(p.normalize.toString)
+      case _ =>
+        p.toString
+    }
     def dospath: String        = localpath.replace('/', '\\')
     def isDirectory: Boolean   = p.toFile.isDirectory
     def isFile: Boolean        = p.toFile.isFile
