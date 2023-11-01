@@ -7,7 +7,7 @@ lazy val supportedScalaVersions = List(scala331, scala213)
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.9.1-SNAPSHOT"
+ThisBuild / version       := "0.9.1"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -38,8 +38,10 @@ ThisBuild / developers.withRank(KeyRanks.Invisible) := List(
 ThisBuild / publishTo := {
   // For accounts created after Feb 2021:
   val nexus = "https://s01.oss.sonatype.org/"
-  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
-  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
 ThisBuild / publishMavenStyle.withRank(KeyRanks.Invisible) := true
@@ -63,8 +65,6 @@ libraryDependencies ++= Seq(
   "org.scalatest"  %% "scalatest"       % "3.2.17" % Test,
   "com.github.sbt"  % "junit-interface" % "0.13.3" % Test
 )
-
-// If you created a new account on or after February 2021, add sonatypeCredentialHost settings:
 
 /*
  * build.sbt

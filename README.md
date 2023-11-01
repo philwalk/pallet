@@ -3,9 +3,7 @@ Library for Cross-Platform Development
 
 <img alt="pallet image" width=200 src="images/wooden-pallet.png">
 
-Provides support for various expressive idioms typical of scripting languages, with support across most platforms.
-
-* No Dependencies
+Provides support for expressive idioms typical of scripting languages, for writing portable code that runs everywhere.
 
 * Supported Scala Versions
   * `scala 3.x`
@@ -15,11 +13,11 @@ Provides support for various expressive idioms typical of scripting languages, w
   * `Linux`
   * `Darwin/OSX`
   * `Windows`
-  * `Cygwin64`
-  * `Msys64`
-  * `Mingw64`
-  * `Git-bash`
-  * `WSL Linux`
+    * `Cygwin64`
+    * `Msys64`
+    * `Mingw64`
+    * `Git-bash`
+    * `WSL Linux`
 
 ### Usage
 
@@ -29,16 +27,17 @@ Add the following dependency to `build.sbt`
 ```
 
 ## TL;DR
-Write scripts in `scala` instead of `bash` or `python` that "do the same thing" on all platforms, including `Windows`.
+Replace `bash` and `python` scripts with `scala`.  
 In Windows, some features require installation of a posix shell (such as [MSYS64](https://msys2.org)), and in `Darwin/OSX`, `homebrew`.
 
 ### Concept
 * Concise, expressive and readable scripting idioms
-* extended Paths.get via a drop-in replacement for `java.nio.file.Paths` that:
-  * returns an ordinary `java.nio.file.Path` object
-  * correctly interprets mounted `posix` paths in `Windows`
+* correct portable handling of command line args
+* provides a `java.nio.file.Paths` drop-in replacement that:
+  * correctly handles mounted `posix` paths
+  * returns ordinary `java.nio.file.Path` objects
 
-Examples below illustrate the capabilities.
+Examples below illustrate some of the capabilities.
 
 ### Background
 If your work spans multiple environments, you generally must use different tools for each environment:

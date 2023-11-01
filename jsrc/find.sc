@@ -1,17 +1,18 @@
-#!/usr/bin/env -S scala @./.scala3cp
+#!/usr/bin/env -S scala @${HOME}/.scala3cp
 //package vastblue.demo
+
+// shebang line error on OSX/Darwin due to non-gnu /usr/bin/env
+// portable way to set classpath:
+// export SCALA_OPTS="@/Users/username/.scala3cp -save"
+// .scala3cp contains '-cp <path-to-pallet.jar>'
 
 import vastblue.pathextend._
 
 // partial implementation of the gnu find utility
 object Find {
-  val cmdParms = new CmdParams()
-  def main(_args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
     try {
-      // call prepArgs to avoid jvm bug when passing quoted glob expressions
-      val argv  = prepArgs(_args.toSeq)
-
-      val parms = parseArgs(argv.tail) // argv.tail is validated _args
+      val parms = parseArgs(args.toSeq)
 
       for (dir <- parms.paths) {
         for (f <- walkTree(dir.toFile, maxdepth = parms.maxdepth)) {
@@ -32,42 +33,45 @@ object Find {
     if (m.nonEmpty) {
       printf("%s\n", m)
     }
-    printf("usage: %s [options]\n", scriptName)
-    def usageText = Seq(
-      "<dir1> [<dir2> ...]",
-      " [-maxdepth <N>]",
-      " -type [fdl]",
-      " [-name | -iname] <filename-glob>",
-    )
-    for (str <- usageText) {
-      printf("  %s\n", str)
-    }
+    printf("Usage: %s [options] [path...] [expression]\n", scriptName)
+    def usageText =
+      """|<path> [<path> ...]
+         | [-maxdepth <N>]
+         | -type [fdl]
+         | [-name | -iname] <filename-glob>
+         |
+         |Default path is the current directory.
+         |
+         |Normal options (always true, specified before other expressions):
+         |      -maxdepth LEVELS
+         |""".stripMargin
+
+    printf("%s\n", usageText)
     sys.exit(1)
   }
 
   /**
-   * Parse vastblue.script.mainArgv, equivalent to C language main arguments vector.
-   *
-   * jvm main#args and script.mainArgv.tail identical if `glob` args are not passed.
-   *
-   * mainArgv always delivers unexpanded glob arguments.
+   * prepArgs returns `argv`, equivalent to C language main arguments vector.
+   * jvm main#args and `argv.tail` identical if no `glob` args are passed.
+   * `argv` always delivers unexpanded glob arguments, unlike main#args.
    */
 
-  def parseArgs(args: Seq[String]): CmdParams = {
-    parse(args)
-    cmdParms.validate // might exit with usage message
-    cmdParms
-  }
+  def parseArgs(_args: Seq[String]): CmdParams = {
+    val cmdParms = new CmdParams()
 
-  def parse(args: Seq[String]): Unit = {
-    if (args.nonEmpty) {
-      var tailargs = List.empty[String]
-      args.toList match {
+    val argv       = prepArgs(_args) // derive C-style argv
+    val thisScript = argv.head
+    var args       = argv.tail.toList
+
+    while (args.nonEmpty) {
+      args match {
+      case Nil => // disable warning
       case "-v" :: tail =>
-        tailargs = tail
+        args = tail
         cmdParms.verbose = true
+
       case "-maxdepth" :: dep :: tail =>
-        tailargs = tail
+        args = tail
         if (dep.matches("[0-9]+")) {
           cmdParms.maxdepth = dep.toInt
         } else {
@@ -75,7 +79,7 @@ object Find {
         }
 
       case "-type" :: typ :: tail =>
-        tailargs = tail
+        args = tail
         typ match {
         case "f" | "d" | "l" =>
           cmdParms.ftype = typ
@@ -84,45 +88,59 @@ object Find {
         }
 
       case "-name" :: nam :: tail =>
-        tailargs = tail
+        args = tail
         if (cmdParms.verbose) printf("nam[%s]\n", nam)
         cmdParms.glob = nam
 
       case "-iname" :: nam :: tail =>
-        tailargs = tail
+        args = tail
         if (cmdParms.verbose) printf("nam[%s]\n", nam)
         cmdParms.glob = nam
         cmdParms.nocase = true
+
+      case "-z" :: tail =>
+        args = tail
+        cmdParms.debug = true
 
       case arg :: _ if arg.startsWith("-") =>
         usage(s"unknown predicate '$arg'")
 
       case sdir :: tail =>
-        tailargs = tail
+        args = tail
         if (cmdParms.verbose) printf("sdir[%s]\n", sdir)
         if (sdir.contains("*") || !sdir.path.exists) {
           usage(s"not found: $sdir")
         }
         cmdParms.appendDir(sdir)
-      case Nil =>
-        // ruled out
-        hook += 1
-      }
-      if (tailargs.nonEmpty) {
-        parse(tailargs)
       }
     }
+    if (cmdParms.debug) {
+      printf("%s\n", cmdParms)
+      sys.exit(1)
+    }
+    cmdParms.validate // might exit with usage message
+    cmdParms
   }
 
   // command line interface parameters
-  class CmdParams(
+  case class CmdParams(
       var _dirs: Vector[String] = Vector.empty[String],
       var glob: String = "",
       var ftype: String = "",
       var maxdepth: Int = -1,
       var nocase: Boolean = false,
       var verbose: Boolean = false,
+      var debug: Boolean = false,
   ) {
+    override def toString = Seq(
+      s"dirs     [${dirs.mkString("|")}]",
+      s"glob     [$glob]",
+      s"ftype    [$ftype]",
+      s"maxdepth [$maxdepth]",
+      s"nocase   [$nocase]",
+      s"verbose  [$verbose]",
+      s"debug    [$debug]",
+    ).mkString("\n")
     def dirs: Seq[String] = _dirs
     def appendDir(s: String): Unit = {
       _dirs :+= s
