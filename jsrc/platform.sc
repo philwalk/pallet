@@ -7,7 +7,7 @@ def main(args: Array[String]): Unit =
   if (isDarwin || args.contains("-verbose")) {
     Platform.main(args.filter { _ != "-verbose" })
   }
-  if (!isDarwin){
+  if (!isDarwin) {
     val cygdrivePrefix = Platform.reverseMountMap.get("cygdrive").getOrElse("not-found")
     printf("cygdrivePrefix: [%s]\n", cygdrivePrefix)
     for ((k, v) <- Platform.mountMap) {

@@ -44,10 +44,10 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
     testpath.path.localpath,
   )
   describe("file paths") {
-    for ((str, i) <- testPaths.zipWithIndex){
+    for ((str, i) <- testPaths.zipWithIndex) {
       it(s"path [$str] should be correct for os type [$osType] output index $i") {
-        if ( !isWindows ){
-          if (str.contains(":")){
+        if (!isWindows) {
+          if (str.contains(":")) {
             hook += 1
           }
           assert(!str.contains(":"))

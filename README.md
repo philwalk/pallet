@@ -23,12 +23,17 @@ Provides support for expressive idioms typical of scripting languages, for writi
 
 Add the following dependency to `build.sbt`
 ```sbt
-  "org.vastblue" % "pallet" % "0.9.0"
+  "org.vastblue" % "pallet" % "0.9.2"
 ```
 
 ## TL;DR
-Replace `bash` and `python` scripts with `scala`.  
-In Windows, some features require installation of a posix shell (such as [MSYS64](https://msys2.org)), and in `Darwin/OSX`, `homebrew`.
+Simplicity and Portability:
+* If you would like to use `scala` instead of `bash` or `python` for writing portable scripts
+* If you distribute example scala scripts that you want everyone to be successful running
+
+In Windows, some features require a posix shell ([MSYS64](https://msys2.org), [CYGWIN64](https://www.cygwin.com), or `WSL`)
+In `Darwin/OSX`, requires `homebrew` or similar.
+A recent version of coreutils (e.g., `ubuntu`: 8.32-4.1ubuntu1, `osx`: stable 9.4)
 
 ### Concept
 * Concise, expressive and readable scripting idioms
@@ -40,48 +45,76 @@ In Windows, some features require installation of a posix shell (such as [MSYS64
 Examples below illustrate some of the capabilities.
 
 ### Background
-If your work spans multiple environments, you generally must use different tools for each environment:
- * batch files, powershell scripts, or other Windows-specific tools in `Windows`
- * bash files everywhere else
+If you work in diverse environments, you generally must customize scripts for each environment:
+ * in `Linux`, shell or python scripts
+ * in `Darwin/Osx`, ...
+ * in `Windows`, batch files, powershell scripts, or other Windows-specific tools
 
-Most platforms other than `Windows` are unix-like, so the problem is how to support unix-like scripts in `Windows`.
-Installing `bash` shell environments (e.g., `git-bash`, `cygwin64`, `msys64`) is a partial solution.
-However, the `jvm` does not recognize the filesystem abstractions.  This library provides the missing piece.
+Although most platforms other than `Windows` are unix-like, the problems are:
+ * how to support unix-like scripts in `Windows`
+ * how to work around differing conventions and incompatibilities elsewhere:
+   * Incompatible symantics of `/usr/bin/env`, etc.
+   * Linux `/var/proc` not available in `Darwin/Osx`
+
+In `Windows`, installing a posix shell (e.g., `git-bash`, `cygwin64`, `msys64`) provides some help,
+but `jvm` languages don't support the posix filesystem abstractions.
+This library provides the missing piece.
 
 Choices to be made when using `scala` as a general purpose scripting language include:
  * how to manage the classpath
  * learning cross-platform coding techniques
 
+### The Classpath
+The various approaches to managing classpaths fall into two categories.
+In addition to installing scripts, client systems must either:
+  * install `scala-cli`
+  * install required jars plus an associated `@atFile`
+
+If `scala-cli` is installed, the classpath is fully managed for you.
+If required jars plus associated `@atFile` are installed, your scripts must either:
+  * reference `@<path-to-atFile>` in the `shebang` line
+  * set environment variable `SCALA_OPTS=@<path-to-atFile>`
+
+To support `Darwin/Osx`, an absolute path to an `@atFile` is required in the `shebang` line.
+Example portable `shebang` line:
+   `#!/usr/bin/env -S scala @/opt/atFiles/.scala3cp`
+
+Alternatively, if `SCALA_OPTS` is defined:
+   `#!/usr/bin/env -S scala`
+
 ### Setup for running the example scripts:
 A good option for writing scala scripts is `scala-cli`, and some example scripts are written for it.
-Each `scala-cli` scripts specifies required dependency internally, and the classpath is managed for you.
+Each `scala-cli` script specifies required dependency internally, and the classpath is managed for you.
 
-Alternatively, in `scala 3.x`, a classpath may be defined with an `atFile`, for both simple and complex `classpath` definitions.
+A `scala-cli` alternative is to create an `@atFile` containing the `-classpath` definition.
 
-Some differences to be aware of between `scala-cli` scripts and ordinary `scala` scripts:
-  * dependencies must be declared in special comment lines at the top of the script
-  * the `main(args)` call must be explicitly specified in the script file
-  * classpath management tends to require less fuss
+Some differences to be aware of between `scala-cli` scripts and conventional `scala` scripts:
+  * a `scala-cli` script declares dependencies within the script via special comments 
+  * if `main()` is defined, it must be explicitly called within a `scala-cli` script
   * startup times the two script types differ, even after the initial compile invocation.  On my Windows box:
     * 4 seconds for `scala-cli` before printing `hello world`
     * 2 seconds for scala scripts (`SCALA_CLI=-save @/Users/username/scala3cp`)
 
 ### Defining the classpath
-For a per-user classpath `atFile`, define your classpath in a file named, e.g., `$HOME/scala3cp`.
-To include the `scala3` version of this library, for example, the @file might contain:
+For a per-user classpath `atFile`, define your classpath in a file named, e.g., `/Users/username/.scala3cp`.
+To include the `scala3` version of this library, for example, the `@file` might contain:
 ```
--cp ${HOME}/.ivy2/local/org.vastblue/pallet_3/0.9.0/jars/pallet_3.jar
+-classpath /Users/username/.ivy2/local/org.vastblue/pallet_3/0.9.2/jars/pallet_3.jar
 ```
 With this configuration, your scala 3 `shebang` line will look like this:
 ```scala
 #!/usr/bin/env -S scala @${HOME}/scala3cp
 ```
-This uses an absolute path: `${HOME}/scala3cp`, so you might need to define `HOME` on some platforms.
-Unfortunately, the `Darwin` version of `/usr/bin/env` doesn't seem to expand the $HOME environment variable in my experiments, so you might want to use an explicit path.  For a fully portable alternative, you can reference your `@atFile` argument by defining environment variable, e.g., `SCALA_OPTS=@/Users/username/scala3cp`, eliminating the need to add it to the `shebang` line.  See the section below.
 
-Examples below assume classpath and other options are defined by the `SCALA_CLI` variable.  Note that when the classpath is also defined in the `shebang` line, it supplements (appends) rather than overrides classpath defined in `SCALA_CLI`.
+In `Darwin/Osx` the `${HOME}` path must be explicit, due to `/usr/bin/env` semantics.
+The alternative is to reference the `@atFile` via `SCALA_OPTS=@/Users/username/scala3cp` rather than in the `shebang` line.
+
+Examples below assume classpath and other options are defined by the `SCALA_CLI` variable.
+
+Note that if `classpath` is also defined in the `shebang` line, it will append to the classpath defined in `SCALA_CLI`.
 
 ### Example script: display the native path and the number of lines in `/etc/fstab`
+This example might surprise developers working in a `Windows` posix shell, since `jvm` languages normally cannot see posix file paths that aren't also legal `Windows` paths.
 ```scala
 #!/usr/bin/env -S scala
 
@@ -103,7 +136,7 @@ object Fstab {
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.0"
+//> using lib "org.vastblue::pallet::0.9.2"
 
 import vastblue.pathextend._
 import vastblue.Platform._
@@ -119,13 +152,13 @@ object FstabCli {
 }
 FstabCli.main(args)
 ```
-### Output on various platforms:
+### Output of the previous example scripts on various platforms:
 ```
-WSL Ubuntu # env: GNU/Linux | posixroot: /           | /etc/fstab            | 6 lines
 Linux Mint # env: GNU/Linux | posixroot: /           | /etc/fstab            | 21 lines
+Darwin     # env: Darwin    | posixroot: /           | /etc/fstab            | 0 lines
+WSL Ubuntu # env: GNU/Linux | posixroot: /           | /etc/fstab            | 6 lines
 Cygwin64   # env: Cygwin    | posixroot: C:/cygwin64 | C:/cygwin64/etc/fstab | 24 lines
 Msys64     # env: Msys      | posixroot: C:/msys64/  | C:/msys64/etc/fstab   | 22 lines
-Darwin     # env: Darwin    | posixroot: /           | /etc/fstab            | 0 lines
 ```
 Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extension returns `Nil`.
 
@@ -134,14 +167,14 @@ Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extensio
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.0"
+//> using lib "org.vastblue::pallet::0.9.2"
 
 import vastblue.pathextend._
 
 def main(args: Array[String]): Unit = {
   // list child directories of "."
   val cwd: Path = Paths.get(".")
-  for ( p: Path <- cwd.paths.filter { _.isDirectory }){
+  for ( p: Path <- cwd.paths.filter { _.isDirectory }) {
     printf("%s\n", p.norm)
   }
 }
@@ -165,7 +198,7 @@ def main(args: Array[String]): Unit =
 ```
 
 ### How to consistently access comand line arguments
-The Windows `jvm` sometimes will expand `glob` arguments, even if double-quoted.
+The Windows `jvm` will sometimes expand `glob` arguments, even if double-quoted.
  * https://stackoverflow.com/questions/37037375/trailing-asterisks-on-windows-jvm-command-line-args-are-globbed-in-cygwin-bash-s/37081167#37081167:~:text=This%20problem%20is%20caused,net/browse/JDK%2D8131329
 This script demonstrates a consistent, portable way to get command line arguments.
 ```scala
@@ -187,7 +220,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 Pass arguments with embedded spaces and glob expressions to see the difference between `args` and `argv`.
-Notice that `argv` has added the script path as argv(0), similar to the standard in `C` 
+Notice that `argv` has the script path in argv(0), similar to the standard in `C` 
 
 ### Using `SCALA_OPTS` environment variable
 With `scala 3`, you can specify the `classpath` via an environment variable, permitting the use of a universal `shebang` line (a portability requirement).
@@ -201,19 +234,34 @@ If you want to speed up subsequent calls to your scripts (after the initial comp
 
 The `-save` option saves the compiled script to a `jar` file in the script parent directory, speeding up subsequent calls, which are equivalent to `java -jar <jarfile>`.  The `jar` is self-contained, as it defines main class, classpath, etc. via the jar `manifest.mf` file.
 
+### Setup
+  * `Windows`: install one of the following:
+    * [MSYS64](https://msys2.org)
+    * [CYGWIN64](https://www.cygwin.com)
+    * [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+  * `Linux`: required packages:
+    * `sudo apt install coreutils`
+  * `Darwin/OSX`:
+    * `brew install coreutils`
+
 ### How to Write Portable Scala Scripts
 Things that maximize the odds of your script running on another system:
   * use `scala 3`
-  * always call `val argv = prepArgs(args.toSeq)`
   * use `posix` file paths by default
-  * only use `File.separator` for output, never for parsing input
-  * avoid depending on `System.lineSeparator` (or property `line.separator`)
-  * when parsing input, split line endings with regex `[\r\n]+` rather than `line.separator` property or equivalent.
-  * use forward slash, avoid drive letters
-    * a drive letter is not needed for paths on the current working drive (often C:)
-  * in `Windows`, install a posix shell (such as [MSYS64](https://msys2.org) or [CYGWIN64](https://www.cygwin.com))
-  * in `Darwin/OSX`, install `homebrew`
-  * to access disks other than the working drive, mount the drive via `/etc/fstab`
-  * create `java.nio.file.Path` objects from `Strings` by the `String#path` extension
-    * `Path` objects created this way can see mounted posix files, e.g,. `/etc/fstab`.
+  * in `Windows`
+    * represent paths internally with forward slashes and avoid drive letters
+    * drive letter not needed for paths on the current working drive (often C:)
+    * to access disks other than the working drive, mount them via `/etc/fstab`
+    * `vastblue.Paths.get()` is can parse both `posix` and `Windows` filesystem paths
+  * never use `java.nio.File.separator` for parsing input, only for output, as appropriate
+  * never use `sys.props("line.separator")` for parsing input, only for output, as appropriate
+  * split input into lines via regex `[\r\n]+` rather than `line.separator`
+    * compatible with input files generated anywhere
+  * create `java.nio.file.Path` objects in either of two ways:
+    * `Paths.get("/etc/fstab")
+    * `"/etc/fstab".path
+  * in `main()` prep args via `val argv = prepArgs(args.toSeq)`
+    * this avoids exposure to the `Windows` jvm glob expansion bug, and
+    * inserts `script` path or `main` method class as `argv(0)` (as in C/C++)
+    * script name can be an input parameter affecting script behaviour
 

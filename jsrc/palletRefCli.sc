@@ -1,13 +1,13 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.0"
+//> using lib "org.vastblue::pallet::0.9.2"
 
 import vastblue.pathextend._
 
 def main(args: Array[String]): Unit = {
   // show system memory info
-  if (vastblue.Platform.osType != "darwin"){
+  if (vastblue.Platform.osType != "darwin") {
     // osx doesn't have /proc/meminfo
     for (line <- "/proc/meminfo".path.lines) {
       printf("%s\n", line)

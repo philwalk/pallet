@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.0"
+//> using lib "org.vastblue::pallet::0.9.2"
 
 import vastblue.pathextend._
 import vastblue.Platform._

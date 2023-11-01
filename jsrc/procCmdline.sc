@@ -5,7 +5,7 @@ import vastblue.pathextend._
 def main(args: Array[String]): Unit = {
   try {
     val proc = Paths.get("/proc")
-    if (proc.exists){
+    if (proc.exists) {
       proc.paths.foreach { println }
     } else {
       printf("not found: [%s]\n", proc)

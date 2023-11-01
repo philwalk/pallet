@@ -54,19 +54,21 @@ object pathextend {
     def length: Long  = p.toFile.length
     def file: JFile   = p.toFile
 
-    def realpath: Path         = vastblue.file.Util.realpath(p)
-    def getParentFile: JFile   = p.toFile.getParentFile
-    def parentFile: JFile      = getParentFile
-    def parentPath: Path       = parentFile.toPath
-    def parent: Path           = parentPath
-    def exists: Boolean        = JFiles.exists(p) // p.toFile.exists()
-    def listFiles: Seq[JFile]  = p.toFile.listFiles.toList
-    def localpath: String      = osType match {
-      case "windows" =>
-        cygpath2driveletter(p.normalize.toString)
-      case _ =>
-        p.toString
+    def realpath: Path        = vastblue.file.Util.realpath(p)
+    def getParentFile: JFile  = p.toFile.getParentFile
+    def parentFile: JFile     = getParentFile
+    def parentPath: Path      = parentFile.toPath
+    def parent: Path          = parentPath
+    def exists: Boolean       = JFiles.exists(p) // p.toFile.exists()
+    def listFiles: Seq[JFile] = p.toFile.listFiles.toList
+
+    def localpath: String = osType match {
+    case "windows" =>
+      cygpath2driveletter(p.normalize.toString)
+    case _ =>
+      p.toString
     }
+
     def dospath: String        = localpath.replace('/', '\\')
     def isDirectory: Boolean   = p.toFile.isDirectory
     def isFile: Boolean        = p.toFile.isFile

@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.0"
+//> using lib "org.vastblue::pallet::0.9.2"
 
 import vastblue.pathextend.*
 import vastblue.Platform.*
@@ -11,7 +11,7 @@ lazy val bashPath = where("bash").path
 def main(args: Array[String]): Unit =
   printf("userhome: [%s]\n", userhome)
   import scala.sys.process.*
-  val progname = if (isWindows){
+  val progname = if (isWindows) {
     "where.exe"
   } else {
     "which"

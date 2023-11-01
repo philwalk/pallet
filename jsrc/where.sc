@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala
 def main(args: Array[String]): Unit = {
   import scala.sys.process._
-  val name = if (vastblue.Platform.isWindows){
+  val name = if (vastblue.Platform.isWindows) {
     "where.exe"
   } else {
     "which"
