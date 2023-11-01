@@ -32,6 +32,7 @@ In Windows, some features require installation of a posix shell (such as [MSYS64
 
 ### Concept
 * Concise, expressive and readable scripting idioms
+* correct portable handling of command line args
 * provides a `java.nio.file.Paths` drop-in replacement that:
   * correctly handles mounted `posix` paths
   * returns ordinary `java.nio.file.Path` objects

@@ -33,7 +33,7 @@ object Find {
       printf("%s\n", m)
     }
     printf("Usage: %s [options] [path...] [expression]\n", scriptName)
-    val usageText =
+    def usageText =
       """|<path> [<path> ...]
          | [-maxdepth <N>]
          | -type [fdl]
