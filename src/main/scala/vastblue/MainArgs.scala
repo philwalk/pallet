@@ -43,19 +43,21 @@ object MainArgs {
     } else {
       // argz respects globs, but does not respect spaces
       // argv respects spaces, but does not respect globs
-      val argz = scriptArgz
+      val argz: Seq[String]  = scriptArgz
+      val argzGlobs: Boolean = argz.drop(1).exists { isGlob(_) }
+      val argvSpace: Boolean = argv.drop(1).exists { hasSpace(_) }
       if (verbose) {
         printf("argz [%s]\n", argz.mkString("|"))
         printf("argv [%s]\n", argv.mkString("|"))
+        printf("argzGlobs [%s]\n", argzGlobs)
+        printf("argvSpace [%s]\n", argvSpace)
       }
-
-      val argzGlobs: Boolean = argz.drop(1).exists { isGlob(_) }
-      val argvSpace: Boolean = argv.drop(1).exists { hasSpace(_) }
-      if (argzGlobs) {
-        argv // no problems
-      } else if (argvSpace) {
+      (argzGlobs, argvSpace) match {
+      case (true, false) =>
         argz // no problems
-      } else {
+      case (false, true) =>
+        argv // no problems
+      case _ =>
         if (true) {
           // rebuild args: get args-with-spaces from argv, globs from argz
           vastblue.Unexpand.unexpandArgs(argv, argz)
