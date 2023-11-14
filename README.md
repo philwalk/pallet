@@ -260,8 +260,8 @@ Things that maximize the odds of your script running on another system:
   * create `java.nio.file.Path` objects in either of two ways:
     * `Paths.get("/etc/fstab")
     * `"/etc/fstab".path
-  * in `main()` prep args via `val argv = prepArgs(args.toSeq)`
+  * if client needs glob expression command line arguments, `val argv = prepArgs(args.toSeq)`
     * this avoids exposure to the `Windows` jvm glob expansion bug, and
     * inserts `script` path or `main` method class as `argv(0)` (as in C/C++)
-    * script name can be an input parameter affecting script behaviour
+    * argv(0) script name available as input parameter affecting script behaviour
 
