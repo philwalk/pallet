@@ -1,7 +1,7 @@
 //#!/usr/bin/env -S scala3
 package vastblue
 
-import vastblue.pathextend._
+import vastblue.pallet._
 
 object Args {
   def main(args: Array[String]): Unit = {

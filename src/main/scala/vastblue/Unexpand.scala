@@ -1,7 +1,7 @@
 package vastblue
 
 import java.nio.file.{Paths => JPaths}
-import vastblue.pathextend._
+import vastblue.pallet._
 
 object Unexpand {
   def unexpandArgs(argv: Seq[String], argz: Seq[String]): Seq[String] = {

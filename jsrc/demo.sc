@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala @./atFile
 //package vastblue.demo
 
-import vastblue.pathextend._
+import vastblue.pallet._
 import vastblue.MainArgs
 
 object Demo {

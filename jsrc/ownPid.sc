@@ -1,8 +1,7 @@
 #!/usr/bin/env -S scala @./.scala3cp -deprecation
 package vastblue
 
-import vastblue.pathextend._
-import vastblue.Platform._
+import vastblue.pallet._
 import vastblue.MainArgs
 
 object OwnPid {

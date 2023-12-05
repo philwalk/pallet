@@ -7,7 +7,7 @@ lazy val supportedScalaVersions = List(scala331, scala213)
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.9.2"
+ThisBuild / version       := "0.10.1"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -61,9 +61,11 @@ lazy val root = (project in file(".")).settings(
 )
 
 libraryDependencies ++= Seq(
-  "org.scalacheck" %% "scalacheck"      % "1.17.0" % Test,
-  "org.scalatest"  %% "scalatest"       % "3.2.17" % Test,
-  "com.github.sbt"  % "junit-interface" % "0.13.3" % Test
+  "org.simpleflatmapper"   % "sfm-csv-jre6"    % "8.2.3",
+  "com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
+  "org.scalatest"         %% "scalatest"       % "3.2.17" % Test,
+  "org.scalacheck"        %% "scalacheck"      % "1.17.0" % Test,
+  "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
 )
 
 /*
@@ -90,12 +92,22 @@ scalacOptions := {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-deprecation",
-    "-Xsource:3", // ignore scala3 complaint
 
     // Linting options
     "-unchecked"
   )
 }
+scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+case Some((2, n)) if n >= 13 =>
+  Seq(
+    "-Xsource:3",
+    "-Xmaxerrs",
+    "10",
+    "-Yscala3-implicit-resolution",
+    "-language:implicitConversions",
+  )
+case _ => Nil
+})
 
 // key identifier, otherwise this field is ignored; passwords supplied by pinentry
 credentials += Credentials(

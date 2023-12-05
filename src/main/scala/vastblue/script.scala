@@ -1,8 +1,7 @@
 package vastblue
 
-import vastblue.Platform._
-import vastblue.file.Util.{Path}
-import vastblue.pathextend._
+import vastblue.pallet._
+import vastblue.file.Util.Path
 
 object script {
 
@@ -68,7 +67,7 @@ object script {
     case true =>
       // var data = scalaScriptFile.getLinesIgnoreEncodingErrors(encoding).dropWhile( !_.startsWith(scriptFileDataTag) )
       // val charset = java.nio.charset.Charset.forName(encoding)
-      var data = scalaScriptFile.lines(encoding).dropWhile(!_.startsWith(scriptFileDataTag)).toList
+      var data = scalaScriptFile.lines.dropWhile(!_.startsWith(scriptFileDataTag)).toList
       if (data.isEmpty) {
         ePrintf("# no data section found (expecting start delimiter line: [%s]\n", scriptFileDataTag)
         List[String]() // no data section found

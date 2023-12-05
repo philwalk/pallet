@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala @./atFile
 
-import vastblue.pathextend.*
+import vastblue.pallet.*
 
 lazy val (psep, cp) = {
   val ps = sys.props("path.separator")

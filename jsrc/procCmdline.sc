@@ -1,18 +1,28 @@
-#!/usr/bin/env -S scala @./atFile
+#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.1/classes
 
-import vastblue.pathextend._
+import vastblue.pallet._
+import vastblue.file.ProcfsPaths._
 
-def main(args: Array[String]): Unit = {
-  try {
-    val proc = Paths.get("/proc")
-    if (proc.exists) {
-      proc.paths.foreach { println }
-    } else {
-      printf("not found: [%s]\n", proc)
+object ProcCmdline {
+  var verbose = false
+  def main(args: Array[String]): Unit = {
+    for (arg <- args) {
+      arg match {
+      case "-v" =>
+        verbose = true
+      }
     }
-  } catch {
-    case t: Throwable =>
-      showLimitedStack(t)
-      sys.exit(1)
+    if (isLinux || isWinshell) {
+      printf("script name: %s\n\n", scriptName)
+      // find /proc/[0-9]+/cmdline files
+      for ((procfile, cmdline) <- cmdlines) {
+        if (verbose || cmdline.contains(scriptName)) {
+          printf("%s\n", procfile)
+          printf("%s\n\n", cmdline)
+        }
+      }
+    } else {
+      printf("procfs filesystem not supported in os [%s]\n", osType)
+    }
   }
 }

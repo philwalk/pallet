@@ -2,7 +2,7 @@
 package vastblue.file
 
 import vastblue.file.EzPath._
-//import vastblue.pathextend._
+//import vastblue.pallet._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

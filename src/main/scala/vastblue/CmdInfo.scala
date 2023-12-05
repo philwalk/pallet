@@ -1,7 +1,7 @@
 //#!/usr/bin/env -S scala
 package vastblue
 
-import vastblue.pathextend._
+import vastblue.pallet._
 
 object CmdInfo {
   def main(args: Array[String]): Unit = {

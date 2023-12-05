@@ -10,7 +10,10 @@ import scala.util.control.Breaks._
 import java.io.{BufferedReader, FileReader}
 import scala.util.Using
 import scala.sys.process._
-import vastblue.pathextend.hook
+import vastblue.pallet.hook
+import scala.jdk.CollectionConverters._
+import vastblue.file.ProcfsPaths
+import ProcfsPaths._
 
 /*
  * Enable access to the synthetic winshell filesystem provided by
@@ -78,7 +81,7 @@ object Paths {
   // Windows paths are normalized to forward slash
   def get(fnamestr: String): Path = {
     val pathstr = derefTilde(fnamestr) // replace leading tilde with sys.props("user.home")
-    if (notWindows || fnamestr.matches("/proc(/.*)?")) {
+    if (_notWindows || fnamestr.matches("/proc(/.*)?")) {
       JPaths.get(pathstr)
     } else if (pathstr == ".") {
       herepath // based on sys.props("user.dir")
@@ -236,7 +239,7 @@ object Paths {
   }
 
   def jget(fnamestr: String): Path = {
-    if (isWindows && fnamestr.contains(";")) {
+    if (_isWindows && fnamestr.contains("::") || fnamestr.contains(";")) {
       sys.error(s"internal error: called JPaths.get with a filename containing a semicolon")
     }
     JPaths.get(fnamestr)
@@ -273,6 +276,7 @@ object Paths {
 //    // windows filesystem case-sensitivity is not common (yet?)
 //    cmd.lazyLines_!.mkString("").trim.endsWith(" enabled")
 //  }
+
   // verified on linux and Windows 11; still needed: Darwin/OSX
   def dirIsCaseSensitive(p: Path): Boolean = {
     val pf = p.toFile
@@ -304,12 +308,19 @@ object Paths {
     case LetterPath(letter, path) =>
       (s"$letter:", path)
     case _ =>
-      ("", shellRoot)
+      ("", _shellRoot)
     }
   }
 
+  def segments(p: Path): Seq[Path] = p.iterator().asScala.toSeq
+
   def isDirectory(path: String): Boolean = {
-    Paths.get(path).toFile.isDirectory
+    lazy val pfs = Procfs(path)
+    if (_isWinshell && pfs.segs == "proc" :: Nil) {
+      pfs.isDir
+    } else {
+      Paths.get(path).toFile.isDirectory
+    }
   }
 
   def userhome: String = sys.props("user.home").replace('\\', '/')
@@ -387,7 +398,7 @@ object Paths {
   def dropshellDrive(str: String)  = str.replaceFirst(s"^${shellDrive}:", "")
   def dropDriveLetter(str: String) = str.replaceFirst("^[a-zA-Z]:", "")
   def asPosixPath(str: String)     = dropDriveLetter(str).replace('\\', '/')
-  def asLocalPath(str: String) = if (notWindows) str
+  def asLocalPath(str: String) = if (_notWindows) str
   else
     str match {
     case PosixCygdrive(dl, tail) => s"$dl:/$tail"
@@ -401,50 +412,13 @@ object Paths {
   def norm(str: String) =
     str.replace('\\', '/') // Paths.get(str).normalize.toString.replace('\\', '/')
 
-//  lazy val mountMap: Map[String, String] = reverseMountMap.map { (k: String, v: String) => (v -> k)}
-
-//  lazy val cygdrive = mountMap.get("/cygdrive").getOrElse("/cygdrive")
-
-  def cygpathM(path: Path): Path = {
-    val cygstr = cygpathM(path.normalize.toString)
-    JPaths.get(cygstr)
-  }
-  def cygpathM(pathstr: String): String = {
-    val normed = pathstr.replace('\\', '/')
-    val tupes: Option[(String, String)] = reverseMountMap.find { case (k, v) =>
-      val normtail = normed.drop(k.length)
-      // detect whether a fstab prefix is an exactly match of a normed path string.
-      normed.startsWith(k) && (normtail.isEmpty || normtail.startsWith("/"))
-    }
-    val cygMstr: String = tupes match {
-    case Some((k, v)) =>
-      val normtail = normed.drop(k.length)
-      s"$v$normtail"
-    case None =>
-      // apply the convention that single letter paths below / are cygdrive references
-      if (normed.take(3).matches("/./?")) {
-        val dl: String = normed.drop(1).take(1) + ":"
-        normed.drop(2) match {
-          case "" =>
-            s"$dl/" // trailing slash is required here
-          case str =>
-            s"$dl$str"
-        }
-      } else {
-        normed
-      }
-    }
-    // replace multiple slashes with single slash
-    cygMstr.replaceAll("//+", "/")
-  }
-
   def readWinshellMounts: Map[String, String] = {
     // Map must be ordered: no key may contain an earlier key as a prefix.
     // With an ordered Map, the first match terminates the search.
     var localMountMap = ListMap.empty[String, String]
 
     // default mounts for cygwin, potentially overridden in fstab
-    val bareRoot = shellRoot
+    val bareRoot = _shellRoot
     localMountMap += "/usr/bin" -> s"$bareRoot/bin"
     localMountMap += "/usr/lib" -> s"$bareRoot/lib"
     // next 2 are convenient, but MUST be added before reading fstab
@@ -454,10 +428,10 @@ object Paths {
     var (cygdrive, usertemp) = ("", "")
     val fpath                = "/proc/mounts"
     val lines: Seq[String] = {
-      if (notWindows || shellRoot.isEmpty) {
+      if (_notWindows || _shellRoot.isEmpty) {
         Nil
       } else {
-        execBinary("cat.exe", "/proc/mounts")
+        _execLines("cat.exe", "/proc/mounts")
       }
     }
 
@@ -510,7 +484,7 @@ object Paths {
       localMountMap += s"/$letter" -> winpath
     }
     // printf("bareRoot[%s]\n", bareRoot)
-    localMountMap += "/" -> shellRoot // this must be last
+    localMountMap += "/" -> _shellRoot // this must be last
     localMountMap
   }
 
@@ -534,8 +508,8 @@ object Paths {
 
   def fileLines(f: JFile): Seq[String] = {
     val fnorm = f.toString.replace('\\', '/')
-    if (isWindows && fnorm.matches("/(proc|sys)(/.*)?")) {
-      execBinary("cat.exe", fnorm)
+    if (_isWindows && fnorm.matches("/(proc|sys)(/.*)?")) {
+      _execLines("cat.exe", fnorm)
     } else {
       Using
         .resource(new BufferedReader(new FileReader(f))) { reader =>

@@ -6,7 +6,7 @@
 // export SCALA_OPTS="@/Users/username/.scala3cp -save"
 // .scala3cp contains '-cp <path-to-pallet.jar>'
 
-import vastblue.pathextend._
+import vastblue.pallet._
 
 // partial implementation of the gnu find utility
 object Find {

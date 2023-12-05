@@ -1,7 +1,7 @@
 package vastblue.file
 
 //import vastblue.file.EzPath.notWindows
-//import vastblue.pathextend.ExtendString
+//import vastblue.pallet.ExtendString
 
 import java.nio.file.Path
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala
 
-import vastblue.pathextend.*
+import vastblue.pallet.*
 
 object PathStrings {
   def main(args: Array[String]): Unit = {

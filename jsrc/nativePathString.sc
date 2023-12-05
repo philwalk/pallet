@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala
 
-import vastblue.pathextend.*
+import vastblue.pallet.*
 import vastblue.file.Util.*
 
 def main(args: Array[String]): Unit =

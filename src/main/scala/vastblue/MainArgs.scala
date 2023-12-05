@@ -1,8 +1,8 @@
 //#!/usr/bin/env -S scala @$HOME/.scala3cp
 package vastblue
 
-import vastblue.pathextend.{osType, _}
-import vastblue.Platform._
+import vastblue.pallet._
+import vastblue.Platform.{_catExe, _psExe, spawnCmd}
 import vastblue.script.legalMainClass
 import vastblue.Unexpand._
 
@@ -16,7 +16,7 @@ import scala.sys.process._
  *
  * The `args` parameter of `main` can be incorrect in `Windows` jvm:
  *   in a Windows `posix` shell, jvm expands quoted `glob` args
- *   (quoted `glob` args are okay in `CMD` or `powershell`)
+ *   (quoted `glob` args are non expanded in `CMD` or `powershell`)
  */
 // format: on
 object MainArgs {
@@ -87,7 +87,12 @@ object MainArgs {
   }
 
   def scriptArgs: Seq[String] = thisProc.argv
-  def scriptName: String      = scriptArgs.headOption.getOrElse(scriptProp)
+  def scriptPath: String      = propOrElse("script.path", scriptProp)
+
+  def scriptName: String = scriptPath match {
+  case ""   => scriptArgs.headOption.getOrElse(scriptProp)
+  case name => name
+  }
 
   private lazy val scriptProp: String = script.scriptProp(new Exception())
 
@@ -126,7 +131,7 @@ object MainArgs {
       pid
     case "windows" =>
       val handle = pid.toString
-      val cmd    = Seq(psExe, "-W")
+      val cmd    = Seq(_psExe, "-W")
       val winproc: Option[WinProc] = {
         val pslines = cmd.lazyLines_!.tail.filter { s =>
           // minimize number of WinProc objects created
@@ -171,7 +176,7 @@ object MainArgs {
   def procfsCmdline(pid: Long, argv: Seq[String]): String = {
     if (pid > 0L) {
       val cmdlineFile = s"/proc/$pid/cmdline"
-      val cmd         = Seq(catExe, "-v", cmdlineFile)
+      val cmd         = Seq(_catExe, "-v", cmdlineFile)
       // avoid error messages to Stdout if proc goes away
       val (exit, stdout, stderr) = spawnCmd(cmd, false)
       stdout.headOption.getOrElse {

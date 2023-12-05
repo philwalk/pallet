@@ -1,8 +1,7 @@
 package vastblue
 
-//import vastblue.Platform._
 import java.nio.file.{Paths => JPaths}
-import vastblue.pathextend._
+import vastblue.pallet._
 import vastblue.MainArgs._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers

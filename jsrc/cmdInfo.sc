@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala
 
-import vastblue.pathextend._
+import vastblue.pallet._
 
 def main(args: Array[String]): Unit = {
   printf("# args [%s]\n", args.toSeq.mkString("|"))

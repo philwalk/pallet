@@ -1,7 +1,7 @@
 //#!/usr/bin/env -S scala @./atFile -deprecation
 package vastblue.demo
 
-import vastblue.pathextend.*
+import vastblue.pallet.*
 
 object GlobArg {
   // if glob args are passed, they should be preserved in argv

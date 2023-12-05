@@ -3,8 +3,7 @@
 //> using scala "3.3.1"
 //> using lib "org.vastblue::pallet::0.9.2"
 
-import vastblue.pathextend._
-import vastblue.Platform._
+import vastblue.pallet._
 
 object FstabCli {
   def main(args: Array[String]): Unit = {

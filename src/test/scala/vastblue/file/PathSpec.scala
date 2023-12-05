@@ -3,9 +3,9 @@ package vastblue.file
 import org.scalatest._
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import vastblue.pathextend._
+import vastblue.pallet._
 import vastblue.file.Paths.{canExist, normPath}
-import vastblue.Platform.{driveRoot, cwd, cygdrive, isWinshell, posixroot, isWindows}
+import vastblue.Platform.{driveRoot, cwd, cygdrive, _isWinshell, posixroot, _isWindows, _isLinux}
 
 class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   val verbose   = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
@@ -26,7 +26,7 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   }
   describe("Paths.get") {
     it("should correctly apply `posixroot`") {
-      if (isWinshell) {
+      if (_isWinshell) {
         val etcFstab = Paths.get("/etc/fstab").norm
         assert(etcFstab.startsWith(posixroot))
       }
@@ -82,7 +82,7 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
         assert(ok, s"error: can still see file '$testfileb'")
       }
     }
-    if (isWindows) {
+    if (_isWindows) {
       printf("gdrive.exists: %s\n", gdrive.exists)
       printf("gdrive.isDirectory: %s\n", gdrive.isDirectory)
       printf("gdrive.isRegularFileg: %s\n", gdrive.isDirectory)
@@ -197,6 +197,32 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
               assert(sameFile, s"not sameFile: f1[$f1] != variant v[$v]")
               assert(f1.equals(v), s"f1[$f1] != variant v[$v]")
             }
+          }
+        }
+      }
+    }
+  }
+  describe("/proc files") {
+    val procFiles = Seq(
+      "/proc/cpuinfo",
+      "/proc/devices",
+      "/proc/filesystems",
+      "/proc/loadavg",
+      "/proc/meminfo",
+      "/proc/misc",
+      "/proc/partitions",
+      "/proc/stat",
+      "/proc/swaps",
+      "/proc/uptime",
+      "/proc/version",
+    )
+    for (fname <- procFiles) {
+      describe(s"# $fname") {
+        it(s"should be readable in Linux or Windows shell") {
+          if (_isLinux || _isWinshell) {
+            val text = fname.path.contentAsString.takeWhile(_ != '\n')
+            System.err.printf("# %s :: [%s]\n", fname, text)
+            assert(text.nonEmpty)
           }
         }
       }

@@ -1,7 +1,6 @@
 #!/usr/bin/env -S scala
 
-import vastblue.pathextend._
-import vastblue.Platform._
+import vastblue.pallet._
 
 object Fstab {
   def main(args: Array[String]): Unit = {

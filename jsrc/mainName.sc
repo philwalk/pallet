@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala @./atFile -deprecation
 //package vastblue.demo
 
-import vastblue.pathextend.*
+import vastblue.pallet.*
 
 object MainName {
   def main(args: Array[String]): Unit = {
