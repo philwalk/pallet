@@ -3,5 +3,5 @@
 import vastblue.pallet.*
 
 def main(args: Array[String]): Unit = {
-  ".".path.paths.filter { _.isDirectory }.foreach { (p: Path) => printf("%s\n", p.norm) }
+  ".".path.paths.filter { _.isDirectory }.foreach { (p: Path) => printf("%s\n", p.posx) }
 }

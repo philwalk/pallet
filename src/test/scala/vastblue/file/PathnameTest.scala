@@ -1,7 +1,6 @@
 package vastblue.file
 
-import vastblue.pallet._
-import vastblue.file.Paths._
+import vastblue.pallet.*
 import vastblue.Platform
 import vastblue.file.Util
 
@@ -38,10 +37,10 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
     testpath.path.toString,
     Util.nativePathString(testpath.path),
     Util.nativePathString(testpath.path.relpath),
-    testpath.path.relpath.norm,
+    testpath.path.relpath.posx,
     testpath.path.relativePath,
     testpath.path.stdpath,
-    testpath.path.norm,
+    testpath.path.posx,
     testpath.path.localpath,
   )
   describe("file paths") {

@@ -1,11 +1,11 @@
 #!/usr/bin/env -S scala @./atFile -deprecation
-//package vastblue.demo
+package vastblue.demo
 
 import vastblue.pallet.*
 
 object MainName {
   def main(args: Array[String]): Unit = {
-    val argv = prepArgs(args.toSeq)
+    val argv = prepArgv(args.toSeq)
     printf("scriptName: [%s]\n", argv.head)
     printf("scriptArgs: [%s]\n", argv.tail.mkString("|"))
     printf("thisProc: %s\n", thisProc)

@@ -8,22 +8,14 @@ lazy val (psep, cp) = {
   (ps, clp)
 }
 lazy val homedir = sys.props("user.home").replace('\\', '/')
-lazy val scriptName = sys.props("script.path").norm.replaceAll(".*/", "")
+lazy val scriptName = sys.props("script.path").posx.replaceAll(".*/", "")
 
 def usage(msg: String=""): Nothing = {
-  if ( msg.nonEmpty ) {
-    printf("%s\n", msg)
-  }
-  printf("%s [<options>]\n", scriptName)
-  val info = Seq(
+  _usage(msg, Seq("[<options>]",
     "-d           ; list classpath directories",
     "-j           ; list classpath jars",
     "-v           ; verbose",
-  )
-  for (s <- info) {
-    printf("%s\n", s)
-  }
-  sys.exit(0)
+  ))
 }
 
 // analyze classpath, selectively showing dirs, jars and bad entries
@@ -43,6 +35,7 @@ def main(args: Array[String]): Unit =
   if (!dirs && !jars && !verbose) {
     usage()
   }
+  printf("scriptName[%s]\n", scriptName)
   if (verbose) {
     printf("psep[%s]\n", psep)
   }
@@ -53,17 +46,17 @@ def main(args: Array[String]): Unit =
       e
     }
     if (verbose) {
-      printf("%s\n", fname.norm)
+      printf("%s\n", fname.posx)
     }
     val p = java.nio.file.Paths.get(fname)
     val isdir = p.toFile.isDirectory
     val isfil = p.toFile.isFile
     (isfil, isdir) match {
     case (true, false) =>
-      if (jars) printf("jar: %s\n", p.norm)
+      if (jars) printf("jar: %s\n", p.posx)
     case (false, true) =>
-      if (dirs) printf("dir: %s\n", p.norm)
+      if (dirs) printf("dir: %s\n", p.posx)
     case _ =>
-      printf("%5s: %5s: %s\n", isdir, isfil, p.norm)
+      printf("%5s: %5s: %s\n", isdir, isfil, p.posx)
     }
   }

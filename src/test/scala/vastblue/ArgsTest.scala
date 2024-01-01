@@ -1,12 +1,13 @@
 package vastblue
 
+import vastblue.pallet.*
+import vastblue.MainArgs.*
+import vastblue.Unexpand.*
 import java.nio.file.{Paths => JPaths}
-import vastblue.pallet._
-import vastblue.MainArgs._
+import java.nio.file.{FileSystems, PathMatcher}
+
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import java.nio.file.{FileSystems, PathMatcher}
-import vastblue.Unexpand._
 
 class ArgsTest extends AnyFunSpec with Matchers {
   var hook    = 0

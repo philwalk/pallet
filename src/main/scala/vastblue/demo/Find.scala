@@ -1,12 +1,12 @@
 //#!/usr/bin/env -S scala @${HOME}/.scala3cp
 package vastblue.demo
 
-// shebang line error on OSX/Darwin due to non-gnu /usr/bin/env
+// hash bang line error on OSX/Darwin due to non-gnu /usr/bin/env
 // portable way to set classpath:
 // export SCALA_OPTS="@/Users/username/.scala3cp -save"
-// .scala3cp contains '-cp <path-to-pallet.jar>'
+// .scala3cp contains '-cp <path-to-thislib.jar>'
 
-import vastblue.pallet._
+import vastblue.pallet.*
 
 // partial implementation of the gnu find utility
 object Find {
@@ -18,7 +18,7 @@ object Find {
         for (f <- walkTree(dir.toFile, maxdepth = parms.maxdepth)) {
           val p = f.toPath
           if (parms.matches(p)) {
-            printf("%s\n", p.relpath.posixpath)
+            printf("%s\n", p.relpath.posx)
           }
         }
       }
@@ -51,7 +51,7 @@ object Find {
   }
 
   /**
-   * prepArgs returns `argv`, equivalent to C language main arguments vector.
+   * prepArgv returns `argv`, equivalent to C language main arguments vector.
    * jvm main#args and `argv.tail` identical if no `glob` args are passed.
    * `argv` always delivers unexpanded glob arguments, unlike main#args.
    */
@@ -59,7 +59,7 @@ object Find {
   def parseArgs(_args: Seq[String]): CmdParams = {
     val cmdParms = new CmdParams()
 
-    val argv       = prepArgs(_args) // derive C-style argv
+    val argv       = prepArgv(_args) // derive C-style argv
     val thisScript = argv.head
     var args       = argv.tail.toList
 

@@ -7,7 +7,6 @@ Provides support for expressive idioms typical of scripting languages, for writi
 
 * Supported Scala Versions
   * `scala 3.x`
-  * `scala 2.13`
 
 * Tested Target environments
   * `Linux`
@@ -23,7 +22,7 @@ Provides support for expressive idioms typical of scripting languages, for writi
 
 To use `pallet` in an `SBT` project, add this dependency to `build.sbt`
 ```sbt
-  "org.vastblue" % "pallet" % "0.10.0"
+  "org.vastblue" % "pallet_3" % "0.10.4"
 ```
 For `scala` or `scala-cli` scripts, see examples below.
 
@@ -36,8 +35,8 @@ Simplicity and Universal Portability:
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using lib "org.vastblue::pallet::0.10.0"
-import vastblue.pallet._
+//> using lib "org.vastblue::pallet::0.10.4"
+import vastblue.pallet.*
 
   printf("uname / osType / osName:\n%s\n", s"platform info: ${unameLong} / ${osType} / ${osName}")
   if (isLinux) {
@@ -61,7 +60,7 @@ Example: read process command lines from `/proc/$PID/cmdline` files
 ```scala
 #!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.1/classes
 
-import vastblue.pallet._
+import vastblue.pallet.*
 import vastblue.file.ProcfsPaths.cmdlines
 
 var verbose = false
@@ -227,7 +226,7 @@ Some differences to be aware of between `scala-cli` scripts and conventional `sc
 For a per-user classpath `atFile`, define your classpath in a file named, e.g., `/Users/username/.scala3cp`.
 To include the `scala3` version of this library, for example, the `@file` might contain:
 ```
--classpath /Users/username/.ivy2/local/org.vastblue/pallet_3/0.10.0/jars/pallet_3.jar
+-classpath /Users/username/.ivy2/local/org.vastblue/pallet_3/0.10.4/jars/pallet_3.jar
 ```
 With this configuration, your scala 3 `shebang` line will look like this:
 ```scala
@@ -247,8 +246,8 @@ This example might surprise developers working in a `Windows` posix shell, since
 ```scala
 #!/ usr / bin / env -S scala
 
-import vastblue.pallet._
-import vastblue.Platform._
+import vastblue.pallet.*
+import vastblue.Platform.*
 
 object Fstab {
   def main(args: Array[String]): Unit = {
@@ -266,10 +265,10 @@ object Fstab {
 #!/ usr / bin / env -S scala -cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.10.0"
+//> using lib "org.vastblue::pallet::0.10.4"
 
-import vastblue.pallet._
-import vastblue.Platform._
+import vastblue.pallet.*
+import vastblue.Platform.*
 
 object FstabCli {
   def main(args: Array[String]): Unit = {
@@ -298,9 +297,9 @@ Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extensio
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.10.0"
+//> using lib "org.vastblue::pallet::0.10.4"
 
-import vastblue.pallet._
+import vastblue.pallet.*
 
 def main(args: Array[String]): Unit = {
   // list child directories of "."
@@ -336,7 +335,7 @@ This script demonstrates a consistent, portable way to get command line argument
 #!/usr/bin/env -S scala
 package vastblue
 
-import vastblue.pallet._
+import vastblue.pallet.*
 
 def main(args: Array[String]): Unit = {
   // display default args

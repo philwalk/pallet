@@ -9,6 +9,6 @@ object Fstab {
     val p = Paths.get("/etc/fstab")
     // format: off
     printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
-      uname("-o"), posixroot, p.norm, p.lines.size)
+      uname("-o"), posixroot, p.posx, p.lines.size)
   }
 }

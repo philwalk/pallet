@@ -16,23 +16,23 @@ import Slash.*
 
 trait EzPath(val initstring: String, val sl: Slash) {
   val p: Path = {
-    def str: String = if notWindows then initstring.norm else initstring
+    def str: String = if notWindows then initstring.posx else initstring
     Paths.get(str)
   }
   def ab: Path    = p.toAbsolutePath.normalize
   def abs: String = ab.toString.slash(sl)
-  def norm: String = {
+  def posx: String = {
     if (sl == Win) {
       initstring
     } else {
-      initstring.norm
+      initstring.posx
     }
   }
   def slash: String = {
     if (sl == Win) {
       initstring.replace('/', '\\')
     } else {
-      initstring.norm
+      initstring.posx
     }
   }
 }
@@ -40,14 +40,14 @@ object EzPath {
   // val winu = EzPath("c:\\opt", Unx) // valid
   // val winw = EzPath("c:\\opt", Win) // valid
   def apply(p: Path, sl: Slash) = {
-    val pstr: String = if notWindows then p.toString.norm else p.toString
+    val pstr: String = if notWindows then p.toString.posx else p.toString
     sl match {
     case Unx => new PathUnx(pstr)
     case Win => new PathWin(pstr)
     }
   }
   def apply(s: String, sl: Slash): EzPath = {
-    def str: String = if notWindows then s.norm else s
+    def str: String = if notWindows then s.posx else s
     if (sl == Unx) {
       new PathUnx(str)
     } else {
@@ -55,7 +55,7 @@ object EzPath {
     }
   }
   def apply(s: String): EzPath = {
-    def str: String = if notWindows then s.norm else s
+    def str: String = if notWindows then s.posx else s
     if (notWindows) {
       new PathUnx(str)
     } else {
@@ -106,14 +106,14 @@ extension (p: Path) {
   }
 }
 extension (s: String) {
-  def norm: String = {
+  def posx: String = {
     s.replace('\\', '/')
   }
   def slash(sl: Slash): String = {
     if (sl == Win) {
       s.replace('/', '\\')
     } else {
-      s.norm
+      s.posx
     }
   }
 }

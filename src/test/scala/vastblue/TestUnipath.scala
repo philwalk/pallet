@@ -1,13 +1,24 @@
-import org.junit.Test
-import vastblue.pallet._
-import vastblue.Platform // .{where, } // isWinshell
+package vastblue
 
-class TestUniPath {
+import org.junit.Test
+import vastblue.pallet.*
+import vastblue.file.MountMapper
+
+// TODO: 
+// convert to scalatest 
+// add verification tests:
+//    at most one of `isCygwin`, `isMsys`, etc. are true
+//    uname is known or believable
+//    etc.
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+
+class TestUniPath extends AnyFunSpec with Matchers {
   val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
 
   def testArgs = Seq.empty[String]
   @Test def test1(): Unit = {
-    val wherebash = where("bash")
+    val wherebash: String = where("bash")
     val test      = Paths.get(wherebash)
     printf("bash [%s]\n", test)
     val bashVersion: String = exec(where("bash"), "-version")
@@ -38,7 +49,7 @@ class TestUniPath {
       printf(" found at %-36s : ", s"[$path]")
       printf("--version: [%s]\n", exec(path.toString, "--version").takeWhile(_ != '('))
     }
-    for ((key, valu) <- Platform.reverseMountMap) {
+    for ((key, valu) <- MountMapper.reverseMountMap) {
       printf("mount %-22s -> %s\n", key, valu)
     }
     assert(bashPath.exists == bashPath.isFile, s"bash not found")

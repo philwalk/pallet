@@ -40,7 +40,7 @@ object FastCsv {
   }
   def apply(p: Path, delimiter: String = ""): FastCsv = {
     if (!p.isFile) {
-      throw new java.nio.file.NoSuchFileException(s"${p.norm}")
+      throw new java.nio.file.NoSuchFileException(s"${p.posx}")
     }
     val lines         = readLines(p)
     def autoDelimiter = autoDetectDelimiter(lines.take(20).mkString("\n"), p.toString, ignoreErrors = false)

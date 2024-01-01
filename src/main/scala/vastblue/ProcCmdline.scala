@@ -1,8 +1,8 @@
 //#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.1/classes
-package vastblue
+package vastblue.demo
 
-import vastblue.pallet._
-import vastblue.file.ProcfsPaths._
+import vastblue.pallet.*
+import vastblue.file.ProcfsPaths.*
 
 object ProcCmdline {
   var verbose = false

@@ -1,5 +1,5 @@
 //#!/usr/bin/env -S scala -cp target/scala-3.3.1/classes
-package vastblue
+package vastblue.demo
 
 import vastblue.pallet.*
 
@@ -19,7 +19,7 @@ object CsvWriteRead {
       }
 
       assert(testFile.isFile)
-      printf("\n# filename: %s\n", testFile.norm)
+      printf("\n# filename: %s\n", testFile.posx)
       // display file text lines
       for ((line: String, i: Int) <- testFile.lines.zipWithIndex) {
         printf("%d: %s\n", i, line)

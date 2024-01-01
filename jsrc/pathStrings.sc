@@ -11,7 +11,7 @@ object PathStrings {
       for (a <- argv) {
         printf("========== arg[%s]\n", a)
         printf("stdpath   [%s]\n", Paths.get(a).stdpath)
-        printf("normpath  [%s]\n", Paths.get(a).norm)
+        printf("normpath  [%s]\n", Paths.get(a).posx)
         printf("dospath   [%s]\n", Paths.get(a).dospath)
       }
     }
