@@ -2,7 +2,7 @@
 package vastblue.file
 
 import vastblue.file.EzPath._
-//import vastblue.pathextend._
+//import vastblue.pallet._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -34,7 +34,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val unxa = PathUnx(upathstr) // should match java.nio.file.Paths.get
       printf("unxa.pstr [%s], ", unxa.initstring)
-      printf("unxa.norm [%s], ", unxa.norm)
+      printf("unxa.norm [%s], ", unxa.posx)
       printf("unxa.sl   [%s], ", unxa.sl)
       printf("unxa.abs  [%s]\n", unxa.abs)
       // printf("\n")
@@ -44,7 +44,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val unxb = PathUnx(upathstr) // should match java.nio.file.Paths.get
       printf("unxb.pstr [%s], ", unxb.initstring)
-      printf("unxb.norm [%s], ", unxb.norm)
+      printf("unxb.norm [%s], ", unxb.posx)
       printf("unxb.sl   [%s], ", unxb.sl)
       printf("unxb.abs  [%s]\n", unxb.abs)
       // printf("\n")
@@ -57,7 +57,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
     it("PathWin should display with constructed slash type") {
       val wina = PathWin(upathstr) // should match java.nio.file.Paths.get
       printf("wina.pstr [%s], ", wina.initstring)
-      printf("wina.norm [%s], ", wina.norm)
+      printf("wina.norm [%s], ", wina.posx)
       printf("wina.sl   [%s], ", wina.sl)
       printf("wina.abs  [%s]\n", wina.abs)
       // printf("\n")
@@ -67,7 +67,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val winb = PathWin(upathstr) // should match java.nio.file.Paths.get
       printf("winb.pstr [%s], ", winb.initstring)
-      printf("winb.norm [%s], ", winb.norm)
+      printf("winb.norm [%s], ", winb.posx)
       printf("winb.sl   [%s], ", winb.sl)
       printf("winb.abs  [%s]\n", winb.abs)
       // printf("\n")
@@ -77,7 +77,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val winw = PathWin(windowsAbsstr)
       printf("winw.pstr [%s], ", winw.initstring)
-      printf("winw.norm [%s], ", winw.norm)
+      printf("winw.norm [%s], ", winw.posx)
       printf("winw.sl   [%s], ", winw.sl)
       printf("winw.abs  [%s]\n", winw.abs)
       // printf("\n")
@@ -90,7 +90,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
     it("EzPath should display with os-appropriate slash type") {
       val ezpc = EzPath(wpathstr) // should match java.nio.file.Paths.get
       printf("ezpc.pstr [%s], ", ezpc.initstring)
-      printf("ezpc.norm [%s], ", ezpc.norm)
+      printf("ezpc.norm [%s], ", ezpc.posx)
       printf("ezpc.sl   [%s], ", ezpc.sl)
       printf("ezpc.abs  [%s]\n", ezpc.abs)
       // printf("\n")
@@ -105,7 +105,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val ezpd = EzPath(wpathstr) // should match java.nio.file.Paths.get
       printf("ezpd.pstr [%s], ", ezpd.initstring)
-      printf("ezpd.norm [%s], ", ezpd.norm)
+      printf("ezpd.norm [%s], ", ezpd.posx)
       printf("ezpd.sl   [%s], ", ezpd.sl)
       printf("ezpd.abs  [%s]\n", ezpd.abs)
       // printf("\n")
@@ -120,7 +120,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val ezxw = EzPath(wpathstr, Slash.Win) // should match specified (same as default) slash
       printf("ezxw.pstr [%s], ", ezxw.initstring)
-      printf("ezxw.norm [%s], ", ezxw.norm)
+      printf("ezxw.norm [%s], ", ezxw.posx)
       printf("ezxw.sl   [%s], ", ezxw.sl)
       printf("ezxw.abs  [%s]\n", ezxw.abs)
       // printf("\n")
@@ -135,7 +135,7 @@ class EzPathTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
       val ezpu = EzPath(wpathstr, Slash.Unx) // should match non-default slash
       printf("ezpu.pstr [%s], ", ezpu.initstring)
-      printf("ezpu.norm [%s], ", ezpu.norm)
+      printf("ezpu.norm [%s], ", ezpu.posx)
       printf("ezpu.sl   [%s], ", ezpu.sl)
       printf("ezpu.abs  [%s]\n", ezpu.abs)
       // printf("\n")

@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala @./atFile
 
+import vastblue.pallet._
 import vastblue.Platform
-import vastblue.Platform._
 
 def main(args: Array[String]): Unit =
   if (isDarwin || args.contains("-verbose")) {

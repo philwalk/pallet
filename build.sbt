@@ -1,13 +1,15 @@
-lazy val scala213 = "2.13.12"
+//lazy val scala213 = "2.13.12"
 lazy val scala331 = "3.3.1"
 lazy val scalaVer = scala331
 
-lazy val supportedScalaVersions = List(scala331, scala213)
+lazy val supportedScalaVersions = List(scala331)
 // lazy val supportedScalaVersions = List(scalaVer)
+
+javacOptions ++= Seq("-source", "11", "-target", "11")
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.9.2"
+ThisBuild / version       := "0.10.4"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -55,15 +57,23 @@ resolvers += Resolver.mavenLocal
 
 publishTo := sonatypePublishToBundle.value
 
-lazy val root = (project in file(".")).settings(
-  crossScalaVersions := supportedScalaVersions,
-  name               := "pallet"
-)
+lazy val root = (project in file(".")).
+  enablePlugins(BuildInfoPlugin).
+  settings(
+    crossScalaVersions := supportedScalaVersions,
+    name               := "pallet",
+ // mainClass          := Some("vast.apps.ShowSysProps"),
+    buildInfoKeys      := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    buildInfoPackage   := "pallet", // available as "import pallet.BuildInfo"
+  )
 
 libraryDependencies ++= Seq(
-  "org.scalacheck" %% "scalacheck"      % "1.17.0" % Test,
-  "org.scalatest"  %% "scalatest"       % "3.2.17" % Test,
-  "com.github.sbt"  % "junit-interface" % "0.13.3" % Test
+  "org.simpleflatmapper"   % "sfm-csv-jre6"    % "8.2.3",
+  "com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
+  "org.scalatest"         %% "scalatest"       % "3.2.17" % Test,
+  "org.scalacheck"        %% "scalacheck"      % "1.17.0" % Test,
+  "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
+  "org.vastblue"           % "unifile_3"       % "0.2.4",
 )
 
 /*
@@ -90,12 +100,24 @@ scalacOptions := {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-deprecation",
-    "-Xsource:3", // ignore scala3 complaint
 
     // Linting options
     "-unchecked"
   )
 }
+scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+case Some((2, n)) if n >= 13 =>
+  Seq(
+    "-Ytasty-reader",
+    "-Xsource:3",
+    "-Xmaxerrs",
+    "10",
+    "-Yscala3-implicit-resolution",
+    "-language:implicitConversions",
+  )
+case _ =>
+  Nil
+})
 
 // key identifier, otherwise this field is ignored; passwords supplied by pinentry
 credentials += Credentials(

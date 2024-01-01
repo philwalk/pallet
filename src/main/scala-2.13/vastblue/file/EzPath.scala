@@ -1,7 +1,7 @@
 package vastblue.file
 
 //import vastblue.file.EzPath.notWindows
-//import vastblue.pathextend.ExtendString
+//import vastblue.pallet.ExtendString
 
 import java.nio.file.Path
 
@@ -25,11 +25,11 @@ class EzPath(val initstring: String, val sl: Slash) {
   }
   def ab: Path    = p.toAbsolutePath.normalize
   def abs: String = ab.slash(sl)
-  def norm: String = {
+  def posx: String = {
     if (sl == Win) {
       initstring
     } else {
-      initstring.norm
+      initstring.posx
     }
   }
   def slash: String = {
@@ -117,7 +117,7 @@ object EzPath {
     }
   }
   implicit class StrExt(s: String) {
-    def norm: String = {
+    def posx: String = {
       s.replace('\\', '/')
     }
 
@@ -125,7 +125,7 @@ object EzPath {
       if (sl == Win) {
         s.replace('/', '\\')
       } else {
-        s.norm
+        s.posx
       }
     }
   }

@@ -1,11 +1,13 @@
 package vastblue.file
 
-import vastblue.Platform._
-import vastblue.pathextend._
-import vastblue.file.Paths._
+//import vastblue.Platform.*
+import vastblue.pallet.*
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
+import vastblue.file.MountMapper.reverseMountMap
+import vastblue.util.Utils
+import vastblue.util.Utils.sameFile
 
 class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
@@ -24,7 +26,7 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       for (testdir <- testdirs) {
         it(s"should correctly resolve Windows rootRelative path [$testdir]") {
           val mounts  = reverseMountMap.keySet.toArray
-          val mounted = mounts.find((dir: String) => sameFile(dir, testdir))
+          val mounted: Option[String] = mounts.find((dir: String) => Utils.sameFile(dir, testdir))
 
           val thisPath = mounted match {
           case Some(str) =>
@@ -33,7 +35,7 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
             testdir
           }
           val jf = Paths.get(thisPath)
-          printf("[%s]: exists [%s]\n", jf.norm, jf.exists)
+          printf("[%s]: exists [%s]\n", jf.posx, jf.exists)
           val sameDriveLetter = jf.toString.take(2).equalsIgnoreCase(cwdDrive)
           if (mounted.isEmpty && !sameDriveLetter) {
             hook += 1
@@ -51,7 +53,7 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
       if (mounts.nonEmpty) {
         val testdirs = Seq("/opt", "/optx")
         for (dir <- testdirs) {
-          val mounted = mounts.find((s: String) => sameFile(s, dir))
+          val mounted: Option[String] = mounts.find((s: String) => sameFile(s, dir))
           val thisPath = mounted match {
           case Some(str) =>
             reverseMountMap(str)
@@ -59,7 +61,7 @@ class RootRelativeTest extends AnyFunSpec with Matchers with BeforeAndAfter {
             dir
           }
           val jf = java.nio.file.Paths.get(thisPath)
-          printf("[%s]: exists [%s]\n", jf.norm, jf.exists)
+          printf("[%s]: exists [%s]\n", jf.posx, jf.exists)
           val testdir = java.nio.file.Paths.get(dir)
           if (mounted.nonEmpty != testdir.exists) {
             hook += 1

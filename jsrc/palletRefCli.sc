@@ -1,13 +1,13 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.2"
+//> using lib "org.vastblue::pallet::0.10.4"
 
-import vastblue.pathextend._
+import vastblue.pallet.*
 
 def main(args: Array[String]): Unit = {
   // show system memory info
-  if (vastblue.Platform.osType != "darwin") {
+  if (osType != "darwin") {
     // osx doesn't have /proc/meminfo
     for (line <- "/proc/meminfo".path.lines) {
       printf("%s\n", line)
@@ -16,7 +16,7 @@ def main(args: Array[String]): Unit = {
   // list child directories of "."
   val cwd: Path = ".".path
   for ((p: Path) <- cwd.paths.filter { _.isDirectory }) {
-    printf("%s\n", p.norm)
+    printf("%s\n", p.posx)
   }
 }
 main(args)

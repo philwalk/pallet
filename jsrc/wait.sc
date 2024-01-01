@@ -1,8 +1,7 @@
 #!/usr/bin/env -S scala
 package vastblue
 
-import vastblue.pathextend._
-import vastblue.Platform._
+import vastblue.pallet._
 
 object Wait {
   def main(args: Array[String]): Unit = {

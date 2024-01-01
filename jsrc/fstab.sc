@@ -1,7 +1,6 @@
 #!/usr/bin/env -S scala
 
-import vastblue.pathextend._
-import vastblue.Platform._
+import vastblue.pallet._
 
 object Fstab {
   def main(args: Array[String]): Unit = {
@@ -10,6 +9,6 @@ object Fstab {
     val p = Paths.get("/etc/fstab")
     // format: off
     printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
-      uname("-o"), posixroot, p.norm, p.lines.size)
+      uname("-o"), posixroot, p.posx, p.lines.size)
   }
 }

@@ -1,10 +1,9 @@
 #!/usr/bin/env -S scala
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.2"
+//> using lib "org.vastblue::pallet::0.10.4"
 
-import vastblue.pathextend.*
-import vastblue.Platform.*
+import vastblue.pallet.*
 
 lazy val bashPath = where("bash").path
 

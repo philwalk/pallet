@@ -1,9 +1,9 @@
 package vastblue.file
 
-import vastblue.pathextend._
-import vastblue.file.Paths._
-import vastblue.Platform.osType
-import vastblue.file.Util._
+import vastblue.pallet.*
+import vastblue.Platform
+import vastblue.file.Util
+
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,7 +11,7 @@ import org.scalatest.matchers.should.Matchers
 class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   val verbose = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
   lazy val TMP = {
-    val gdir = vastblue.pathextend.Paths.get("/g")
+    val gdir = vastblue.pallet.Paths.get("/g")
     gdir.isDirectory && gdir.paths.nonEmpty match {
     case true =>
       "/g/tmp"
@@ -35,12 +35,12 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   val testpath = "./bin"
   val testPaths = Seq(
     testpath.path.toString,
-    nativePathString(testpath.path),
-    nativePathString(testpath.path.relpath),
-    testpath.path.relpath.norm,
+    Util.nativePathString(testpath.path),
+    Util.nativePathString(testpath.path.relpath),
+    testpath.path.relpath.posx,
     testpath.path.relativePath,
     testpath.path.stdpath,
-    testpath.path.norm,
+    testpath.path.posx,
     testpath.path.localpath,
   )
   describe("file paths") {
@@ -58,7 +58,7 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
   describe("special-chars") {
     for (testfilename <- testfilenames) {
       it(s"should correctly handle filename [$testfilename] ") {
-        val testfile = vastblue.pathextend.Paths.get(testfilename)
+        val testfile = vastblue.pallet.Paths.get(testfilename)
         val testPossible = testfile.parentFile match {
         case dir if dir.isDirectory =>
           true

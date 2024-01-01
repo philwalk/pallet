@@ -1,10 +1,9 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.9.2"
+//> using lib "org.vastblue::pallet::0.10.4"
 
-import vastblue.pathextend._
-import vastblue.Platform._
+import vastblue.pallet._
 
 object FstabCli {
   def main(args: Array[String]): Unit = {
@@ -13,7 +12,7 @@ object FstabCli {
     val p = Paths.get("/etc/fstab")
     // format: off
     printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
-      uname("-o"), posixroot, p.norm, p.lines.size)
+      uname("-o"), posixroot, p.posx, p.lines.size)
   }
 }
 FstabCli.main(args)

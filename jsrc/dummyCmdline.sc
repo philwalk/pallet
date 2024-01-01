@@ -1,6 +1,6 @@
 #!/usr/bin/env -S scala
 
-import vastblue.script.legalMainClass
+import vastblue.ScriptInfo.legalMainClass
 
 // test code to skip java portion of "sun.command.line" property
 // especially legalMainClass(s)

@@ -1,60 +1,103 @@
 package vastblue.file
 
-import org.scalatest._
+import vastblue.pallet.*
+import vastblue.Platform
+import vastblue.Platform.{_pwd, here, hereDrive, pwdposx, uhere, driveRoot, _shellRoot}
+import vastblue.util.Utils.isSameFile
+import org.scalatest.*
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
-import vastblue.pathextend._
-import vastblue.file.Paths.{canExist, normPath}
-import vastblue.Platform.{driveRoot, cwd, cygdrive, isWinshell, posixroot, isWindows}
 
 class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
-  val verbose   = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
+  lazy val verbose   = Option(System.getenv("VERBOSE_TESTS")).nonEmpty
   var hook: Int = 0
 
-  val cygroot: String = cygdrive match {
-  case str if str.endsWith("/") => str
-  case str                      => s"$str/"
-  }
-
   before {
-    testFile.withWriter() { (w: PrintWriter) =>
-      testFileLines.foreach { line =>
+    withFileWriter(testFile) { w =>
+      testDataLines.foreach { line =>
         w.print(line + "\n")
       }
     }
     printf("testFile: %s\n", testFile)
   }
-  describe("Paths.get") {
-    it("should correctly apply `posixroot`") {
-      if (isWinshell) {
-        val etcFstab = Paths.get("/etc/fstab").norm
-        assert(etcFstab.startsWith(posixroot))
+
+  describe ("invariants") {
+    // verify test invariants
+    describe ("working drive") {
+      it (" should be correct for os") {
+        val hd = Platform.hereDrive
+        val workingDrive: String = Platform.workingDrive.string
+        assert(hd equalsIgnoreCase workingDrive)
+        if (isWindows) {
+          assert(hd.matches("[a-zA-Z]:"))
+        } else {
+          assert(hd.isEmpty)
+        }
+      }
+    }
+    describe("pwd") {
+      it ("should be correct wrt rootDrive for os") {
+        val workingDrive: String = Platform.workingDrive.string
+        if (isWindows) {
+          val currentWorkingDrive = Platform.here.take(2).mkString
+          assert(currentWorkingDrive.matches("[a-zA-Z]:"))
+          assert(workingDrive.equalsIgnoreCase(currentWorkingDrive))
+        } else {
+          assert(workingDrive.isEmpty)
+        }
       }
     }
   }
-  describe("Path.relpath.posixpath") {
-    it("should correctly relativize Path, if below `cwd`") {
-      val p     = Paths.get(s"${cwd.norm}/src")
-      val pnorm = p.norm
-      val relp  = p.relpath
-      val posx  = relp.posixpath
-      assert(posx.length < pnorm.length && pnorm.endsWith(posx))
+
+  describe("Paths.get") {
+    it("should correctly apply `shellRoot`") {
+      if (isWinshell) {
+        val etcFstab = Paths.get("/etc/fstab").posx
+        val sr = shellRoot
+        if (!etcFstab.startsWith(sr)) {
+          hook += 1
+        }
+        assert(etcFstab.startsWith(sr))
+      }
     }
-    // TODO: should NOT relativize .. blah-blah-blah
   }
+
+  describe("Path.relpath.posixpath") {
+    it("should correctly relativize Path, if below `pwd`") {
+      val p     = Paths.get(s"${_pwd.posx}/src")
+      val pabs: String = p.toAbsolutePath.normalize.toString.replace('\\', '/')
+      val relp  = p.relpath
+      val stdp  = relp.stdpath
+      if (pabs.length >= stdp.length) {
+        hook += 1
+      }
+      val ok = (stdp == pabs) || (stdp.length >= pabs.length) && pabs.endsWith(stdp)
+      if (!ok) {
+        hook += 1
+      }
+      printf("p.pabs: %s\n", pabs)
+      printf("p.relpath: %s\n", relp)
+      printf("p.relpath.stdpath: %s\n", stdp)
+      assert(pabs == pabs || (pabs.length >= stdp.length) && pabs.endsWith(stdp))
+    }
+    // TODO: should NOT relativize when .. blah-blah-blah
+  }
+
   describe("File") {
     describe("#eachline") {
       it("should correctly deliver all file lines") {
         // val lines = testFile.lines
         System.out.printf("testFile[%s]\n", testFile)
-        for ((line, lnum) <- testFile.lines.toSeq.zipWithIndex) {
-          val expected = testFileLines(lnum)
+        for ((line, lnum) <- testFile.lines.zipWithIndex) {
+          printf("%d: %s\n", lnum, line)
+          val expected = testDataLines(lnum)
           if (line != expected) {
             System.err.println(s"line ${lnum}:\n  [$line]\n  [$expected]")
           }
         }
-        for ((line, lnum) <- testFile.lines.toSeq.zipWithIndex) {
-          val expected = testFileLines(lnum)
+
+        for ((line, lnum) <- testFile.lines.zipWithIndex) {
+          val expected = testDataLines(lnum)
           if (line != expected) {
             System.err.println(s"failure: line ${lnum}:\n  [$line]\n  [$expected]")
           } else {
@@ -82,29 +125,46 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
         assert(ok, s"error: can still see file '$testfileb'")
       }
     }
+
     if (isWindows) {
-      printf("gdrive.exists: %s\n", gdrive.exists)
-      printf("gdrive.isDirectory: %s\n", gdrive.isDirectory)
-      printf("gdrive.isRegularFileg: %s\n", gdrive.isDirectory)
+      printf("cdrive.exists:         %s\n", cdrive.exists)
+      printf("cdrive.isDirectory:    %s\n", cdrive.isDirectory)
+      printf("cdrive.isRegularFile:  %s\n", cdrive.isDirectory)
+      printf("cdrive.isSymbolicLink: %s\n", cdrive.isSymbolicLink)
+
+      printf("fdrive.exists:         %s\n", fdrive.exists)
+      printf("fdrive.isDirectory:    %s\n", fdrive.isDirectory)
+      printf("fdrive.isRegularFile:  %s\n", fdrive.isDirectory)
+      printf("fdrive.isSymbolicLink: %s\n", fdrive.isSymbolicLink)
+
+      printf("gdrive.exists:         %s\n", gdrive.exists)
+      printf("gdrive.isDirectory:    %s\n", gdrive.isDirectory)
+      printf("gdrive.isRegularFile:  %s\n", gdrive.isDirectory)
       printf("gdrive.isSymbolicLink: %s\n", gdrive.isSymbolicLink)
+
       var loop = -1
       for ((fname, expected) <- pathDospathPairs) {
         printf("# fname [%s], expected [%s]\n", fname, expected)
         it(s"should correctly handle posix drive for dos path $fname") {
           loop += 1
           printf("fname[%s], expected[%s]\n", fname, expected)
+          if (fname == "/q") {
+            hook += 1
+          }
           val file = Paths.get(fname)
           printf("%-22s : %s\n", file.stdpath, file.exists)
-          val a = expected.toLowerCase
+          val a = expected.toLowerCase.replace('/', '\\')
           // val b = file.toString.toLowerCase
           // val c = file.localpath.toLowerCase
-          val d        = file.dospath.toLowerCase
-          val df       = normPath(d)
-          val af       = normPath(a)
-          val sameFile = Paths.isSameFile(af, df)
-          if (sameFile || a == d) {
+          val d: String = file.dospath.toLowerCase
+          val df       = Paths.get(a)
+          val af       = Paths.get(d)
+          val sameFile = isSameFile(af, df)
+          def isPwd(s: String): Boolean = s == "." || s == pwdposx
+          val equivalent = a == d || a.path.abs == d.path.abs
+          if (sameFile && equivalent) {
             println(s"a [$a] == d [$d]")
-            assert(a == d)
+            assert(equivalent)
           } else {
             System.err.printf("expected[%s]\n", expected.toLowerCase)
             System.err.printf("file.localpath[%s]\n", file.localpath.toLowerCase)
@@ -123,25 +183,28 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
           }
         }
       }
+
       describe("# stdpath test") {
         val upairs = toStringPairs.toArray.toSeq
         var loop   = -1
+        printf("%d pairs\n", upairs.size)
         for ((fname, expected) <- upairs) {
           val testName = "%-32s should map [%-12s] to [%s]".format(s"Paths.get(\"$fname\").toString", fname, expected)
-          it(testName) {
+          printf("%s\n", testName)
+          it(testName) { // <<<<<<<<<<<<<< it should blah-blah-blah
             printf("%d pairs\n", upairs.size)
             loop += 1
-            if (true || verbose) {
+            if (verbose) {
               printf("=====================\n")
               printf("fname[%s]\n", fname)
               printf("expec[%s]\n", expected)
             }
-            val file: Path = Paths.get(fname).toAbsolutePath.normalize()
-            printf("file.norm[%-22s] : %s\n", file.norm, file.exists)
-            printf("file.stdpath[%-22s] : %s\n", file.stdpath, file.exists)
+            val abspath: Path = Paths.get(fname).toAbsolutePath.normalize()
+            printf("file.posx[%-22s] : %s\n", abspath.posx, abspath.exists)
+            printf("file.stdpath[%-22s] : %s\n", abspath.stdpath, abspath.exists)
             val exp = expected.toLowerCase
-            val std = file.stdpath.toLowerCase
-            val nrm = file.norm.toLowerCase
+            val std = abspath.stdpath.toLowerCase
+            val nrm = abspath.posx.toLowerCase
             printf("exp[%s] : std[%s] : nrm[%s]\n", exp, std, nrm)
             // val loc = file.localpath.toLowerCase
             // val dos = file.dospath.toLowerCase
@@ -175,28 +238,58 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
           }
         }
       }
+    }
+  }
 
-      describe("# Path consistency") {
-        for (
-          fname <-
-            (toStringPairs.toMap.keySet ++ pathDospathPairs.toMap.keySet).toList.distinct.sorted
-        ) {
-          val f1: Path            = Paths.get(fname)
-          val variants: Seq[Path] = getVariants(f1).distinct
-          for (v <- variants) { // not necessarily 4 variants (duplicates removed before map to Path)
-            val matchtag = "%-12s to %s".format(fname, v)
-            it(s"round trip conversion should match [$matchtag]") {
-              // val (k1, k2) = (f1.key, v.key)
-              val sameFile = Paths.isSameFile(f1, v)
-              if (f1 != v || !sameFile) {
-                System.err.printf("f1[%s]\nv[%s]\n", f1, v)
-              }
-              if (f1.equals(v)) {
-                println(s"f1[$f1] == v[$v]")
-              }
-              assert(sameFile, s"not sameFile: f1[$f1] != variant v[$v]")
-              assert(f1.equals(v), s"f1[$f1] != variant v[$v]")
+  describe("Path") {
+    describe("# round trip consistency") {
+      for (fname <- distinctKeys) {
+        val f1: Path            = Paths.get(fname)
+        val variants: Seq[Path] = getVariants(f1).distinct
+        assert(f1.posx.nonEmpty)
+        for (v <- variants) { // not necessarily 4 variants (duplicates removed before map to Path)
+          printf("v[%s]\n", v)
+          val matchtag = "%-12s to %s".format(fname, v)
+          it(s"round trip conversion should match [$matchtag]") {
+            // val (k1, k2) = (f1.key, v.key)
+            val sameFile = isSameFile(f1, v)
+            val bothPwd = isPwd(f1) && isPwd(v)
+            if (f1 != v || !sameFile) {
+              printf("f1[%s]\nv[%s]\n", f1, v)
             }
+            if (f1.equals(v)) {
+              println(s"f1[$f1] == v[$v]")
+            }
+            assert(sameFile, s"not sameFile: f1[$f1] != variant v[$v]")
+            assert(f1.equals(v) || bothPwd, s"f1[$f1] != variant v[$v]")
+          }
+        }
+      }
+    }
+  }
+
+  describe("/proc files") {
+    val procFiles = Seq(
+      "/proc/cpuinfo",
+      "/proc/devices",
+      "/proc/filesystems",
+//    "/proc/loadavg", // too slow
+      "/proc/meminfo",
+      "/proc/misc",
+      "/proc/partitions",
+      "/proc/stat",
+      "/proc/swaps",
+      "/proc/uptime",
+      "/proc/version",
+    )
+    for (fname <- procFiles) {
+      describe(s"# $fname") {
+        it(s"should be readable in Linux or Windows shell") {
+          if (isLinux || isWinshell) {
+            val p = fname.path
+            val text: String = p.contentAsString.takeWhile(_ != '\n')
+            System.out.printf("# %s :: [%s]\n", fname, text)
+            assert(text.nonEmpty)
           }
         }
       }
@@ -205,11 +298,11 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
 
   def getVariants(p: Path): Seq[Path] = {
     val pstr = p.toString.toLowerCase
-    import vastblue.DriveRoot._
+    import vastblue.file.DriveRoot.*
     val stdpathToo = if (nonCanonicalDefaultDrive) Nil else Seq(p.stdpath)
 
     val variants: Seq[String] = Seq(
-      p.norm,
+      p.posx,
       p.toString,
       p.localpath,
       p.dospath
@@ -231,7 +324,7 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   }
 
   lazy val maxLines      = 10
-  lazy val testFileLines = (0 until maxLines).toList.map { _.toString }
+  lazy val testDataLines = (0 until maxLines).toList.map { _.toString }
 
   lazy val homeDirTestFile = "~/shellExecFileTest.out"
   lazy val testfileb: Path = {
@@ -240,20 +333,20 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     p
   }
 
-  lazy val here  = cwd.normalize.toString.toLowerCase
-  lazy val uhere = here.replaceAll("[a-zA-Z]:", "").replace('\\', '/')
-
-  lazy val hereDrive = here.replaceAll(":.*", ":") match {
-  case drive if drive >= "a" && drive <= "z" =>
-    drive
-  case _ =>
-    ""
-  }
-
   lazy val dosHomeDir: String   = sys.props("user.home")
-  lazy val posixHomeDir: String = dosHomeDir.path.stdpath
+  lazy val posixHomeDir: String = dosHomeDir.jpath.stdpath
 
+  lazy val cdrive = Paths.get("c:/")
   lazy val gdrive = Paths.get("g:/")
+  lazy val fdrive = Paths.get("f:/")
+
+  // cygroot describes how to translate `driveRelative` like this:
+  //     /cygdrive/c          # if cygroot == '/cygdrive'
+  //     /c                   # if cygroot == '/'
+  lazy val cygroot: String = Platform.cygdrive match {
+  case str if str.endsWith("/") => str
+  case str                      => s"$str/"
+  }
 
   lazy val gdriveTests = List(
     (s"${cygroot}g", "g:\\"),
@@ -261,9 +354,9 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
   )
 
   lazy val pathDospathPairs = {
-    List(
-      (".", here),
-      (hereDrive, here),         // jvm treats this as cwd, if on c:
+    var pairs = List(
+      (".", "."),
+      (hereDrive, here),         // jvm treats bare "C:" as pwd for that drive
       (s"${cygroot}q/", "q:\\"), // assumes /etc/fstab mounts /cygroot to /
       (s"${cygroot}q", "q:\\"),  // assumes /etc/fstab mounts /cygroot to /
       (s"${cygroot}c", "c:\\"),
@@ -274,6 +367,15 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
       (s"${cygroot}g/", "g:\\"),
       (s"${cygroot}c/data/", "c:\\data")
     ) ::: gdriveTests
+    pairs = pairs.distinct
+
+    val empty = pairs.find { case ((a: String, b: String)) =>
+      b.trim == ""
+    }
+    if (empty.nonEmpty) {
+      hook += 1
+    }
+    pairs
   }.distinct
 
   lazy val nonCanonicalDefaultDrive = driveRoot.toUpperCase != "C:"
@@ -307,6 +409,24 @@ class PathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
     } else {
       "/tmp"
     }
+  }
+  lazy val distinctKeys: Seq[String] = {
+    val pairs: Seq[String] = (toStringPairs.toMap.keySet ++ pathDospathPairs.toMap.keySet).toList.distinct.sorted
+    for (pair <- pairs) {
+      printf("pair: [%s]\n", pair)
+    }
+    pairs
+  }
+
+  lazy val testPwd = java.nio.file.Paths.get(".").toAbsolutePath.normalize.toString
+
+  def isPwd(p: Path): Boolean = isPwd(p.toString)
+
+  def isPwd(s: String): Boolean = s match {
+    case "" | "." =>
+      true
+    case s =>
+      s == testPwd
   }
 
   /** similar to gnu 'touch <filename>' */
