@@ -1,9 +1,10 @@
 package vastblue.time
 
 import vastblue.pallet.*
-import vastblue.time.ParsDate
+import vastblue.time.TimeParser
+import vastblue.time.ChronoParse
 
-import java.time.{ZoneId}
+import java.time.ZoneId
 import java.time.format.*
 import io.github.chronoscala.Imports.*
 
@@ -11,14 +12,14 @@ import java.time.temporal.{ChronoField, TemporalAdjuster, TemporalAdjusters}
 import scala.util.matching.Regex
 
 object TimeDate extends vastblue.time.TimeExtensions {
-  def zoneid     = ZoneId.systemDefault
-  def zoneOffset = zoneid.getRules().getStandardOffset(now.toInstant())
+  private[vastblue] def zoneid     = ZoneId.systemDefault
+  private[vastblue] def zoneOffset = zoneid.getRules().getStandardOffset(now.toInstant())
 
   type DateTimeZone = java.time.ZoneId
   type DateTime     = LocalDateTime
   val DateTime = LocalDateTime
 
-  def parseLocalDate(_datestr: String, offset: Int = 0): DateTime = {
+  private[vastblue] def parseLocalDate(_datestr: String, offset: Int = 0): DateTime = {
     dateParser(_datestr, offset) // .toLocalDate
   }
 
@@ -36,33 +37,39 @@ object TimeDate extends vastblue.time.TimeExtensions {
 
   lazy val standardTimestampFormat = datetimeFmt6
 
+  lazy val datetimeFmt9  = "yyyy-MM-dd HH:mm:ss [-+][0-9]{4}"
   lazy val datetimeFmt8  = "yyyy-MM-dd HH:mm:ss-ss:S"
   lazy val datetimeFmt7  = "yyyy-MM-dd HH:mm:ss.S"
   lazy val datetimeFmt6  = "yyyy-MM-dd HH:mm:ss" // date-time-format
   lazy val datetimeFmt6B = "dd-MM-yyyy HH:mm:ss" // day first!
   lazy val datetimeFmt6C = "MM-dd-yyyy HH:mm:ss" // month first
+  lazy val datetimeFmt6D = "M-dd-yyyy HH:mm:ss"  // month first
   lazy val datetimeFmt5  = "yyyy-MM-dd HH:mm"    // 12-hour format
   lazy val datetimeFmt5b = "yyyy-MM-dd kk:mm"    // 24-hour format
   lazy val dateonlyFmt   = "yyyy-MM-dd"          // date-only-format
+  lazy val dateonlyFmtB  = "MM-dd-yyyy"           // month-first date-only-format
 
+  lazy val datetimeFormatter9: DateTimeFormatter = dateTimeFormatPattern(datetimeFmt9)
   lazy val datetimeFormatter8: DateTimeFormatter  = dateTimeFormatPattern(datetimeFmt8)
   lazy val datetimeFormatter7: DateTimeFormatter  = dateTimeFormatPattern(datetimeFmt7)
   lazy val datetimeFormatter6: DateTimeFormatter  = dateTimeFormatPattern(datetimeFmt6)
   lazy val datetimeFormatter6B: DateTimeFormatter = dateTimeFormatPattern(datetimeFmt6B)
   lazy val datetimeFormatter6C: DateTimeFormatter = dateTimeFormatPattern(datetimeFmt6C)
+  lazy val datetimeFormatter6D: DateTimeFormatter = dateTimeFormatPattern(datetimeFmt6D)
   lazy val datetimeFormatter5: DateTimeFormatter  = dateTimeFormatPattern(datetimeFmt5)
   lazy val datetimeFormatter5b: DateTimeFormatter = dateTimeFormatPattern(datetimeFmt5b)
   lazy val dateonlyFormatter: DateTimeFormatter   = dateTimeFormatPattern(dateonlyFmt)
+  lazy val dateonlyFormatterB: DateTimeFormatter = dateTimeFormatPattern(dateonlyFmtB)
 
   lazy val EasternTime: ZoneId  = java.time.ZoneId.of("America/New_York")
   lazy val MountainTime: ZoneId = java.time.ZoneId.of("America/Denver")
   lazy val UTC: ZoneId          = java.time.ZoneId.of("UTC")
 
-  def LastDayAdjuster: TemporalAdjuster = TemporalAdjusters.lastDayOfMonth()
+  private[vastblue] def LastDayAdjuster: TemporalAdjuster = TemporalAdjusters.lastDayOfMonth()
 
   // ==============================
 
-  def dateTimeFormatPattern(fmt: String, zone: ZoneId = ZoneId.systemDefault()): DateTimeFormatter = {
+  private[vastblue] def dateTimeFormatPattern(fmt: String, zone: ZoneId = ZoneId.systemDefault()): DateTimeFormatter = {
     val dtf1 = DateTimeFormatter.ofPattern(fmt).withZone(zone)
     val dtf = if (fmt.length <= "yyyy-mm-dd".length) {
       import java.time.temporal.ChronoField
@@ -185,7 +192,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
     ageInDays(new java.io.File(fname))
   }
 
-  def parse(str: String, format: String): DateTime = {
+  private[vastblue] def parse(str: String, format: String): DateTime = {
     if (timeDebug) System.err.print("parse(str=[%s], format=[%s]\n".format(str, format))
     if (format.length <= "yyyy-mm-dd".length) {
       DateTime.parse(str, dateTimeFormatPattern(format))
@@ -194,7 +201,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
     }
   }
 
-  /** The new parser does not depend on ParsDate */
+  /** The new parser does not depend on TimeParser */
   def parseDateNew(_datestr: String, format: String = ""): DateTime = {
     // format: off
     val datestr = _datestr.
@@ -231,9 +238,19 @@ object TimeDate extends vastblue.time.TimeExtensions {
   lazy val ThreeIntegerFields3 = """(\d{1,2})\D(\d{1,2})\D(\d{2,4})""".r
   lazy val ThreeIntegerFields2 = """(\d{2,2})\D(\d{1,2})\D(\d{1,2})""".r
 
-  // TODO: this doesn't depend on joda time anymore (and should not have been named this way)
-  def dateParser(_inputdatestr: String, offset: Int = 0): DateTime = {
-    val _datestr = _inputdatestr.trim.replaceAll("\"", "").replaceAll(" [-+][0-9]{4}$", "")
+  def dateParser(inpDateStr: String, offset: Int = 0): DateTime = {
+    val flds = vastblue.time.ChronoParse(inpDateStr)
+    flds.dateTime // might be BadDate!
+  }
+  private[vastblue] def _dateParser(inpDateStr: String, offset: Int = 0): DateTime = {
+    if (inpDateStr.startsWith("31/05/2009")) {
+      hook += 1
+    }
+    if (inpDateStr.contains("-07")) {
+      hook += 1
+    }
+    val _datestr = inpDateStr.trim.replaceAll("\"", "").replaceAll(" [-+][0-9]{4}$", "")
+    val zonestr: String = inpDateStr.drop(_datestr.length)
     if (_datestr.isEmpty) {
       BadDate
     } else {
@@ -275,7 +292,6 @@ object TimeDate extends vastblue.time.TimeExtensions {
         // next, treat yyyyMMdd (8 digits, no field separators)
         if (_datestr.matches("""2\d{7}""")) {
           new RichString(_datestr.replaceAll("(....)(..)(..)", "$1-$2-$3")).toDateTime
-
         } else if (_datestr.matches("""\d{2}\D\d{2}\D\d{2}""")) {
           // MM-dd-yy
           val fixed = _datestr.split("\\D").toList match {
@@ -289,17 +305,26 @@ object TimeDate extends vastblue.time.TimeExtensions {
           DateTime.parse(fixed, datetimeFormatter6)
         } else if (_datestr.matches("""2\d{3}\D\d{2}\D\d{2}\.\d{4}""")) {
           // yyyy-MM-dd.HHMM
-
           val fixed = _datestr.replaceAll("""(....)\D(..)\D(..)\.(\d\d)(\d\d)""", "$1-$2-$3 $4:$5:00")
           DateTime.parse(fixed, datetimeFormatter6)
         } else {
           val datestr = _datestr.replaceAll("/", "-")
           try {
-            parseDateString(datestr.replaceAll(" [-+][0-9]{4}$", ""))
+            val fixed = _datestr.
+              replaceAll(" [-+][0-9]{4}$", "").
+              replaceAll("([0-9])([A-Z])", "$1 $2").
+              replaceAll("([a-z])([0-9])", "$1 $2")
+            parseDateString(fixed)
           } catch {
+            case r: RuntimeException if r.getMessage.toLowerCase.contains("bad date format") =>
+              if (TimeParser.debug) System.err.printf("e[%s]\n", r.getMessage)
+              BadDate
+            case p: DateTimeParseException =>
+              if (TimeParser.debug) System.err.printf("e[%s]\n", p.getMessage)
+              BadDate
             case e: Exception =>
-              if (ParsDate.debug) System.err.printf("e[%s]\n", e.getMessage)
-              val mdate: ParsDate = ParsDate.parseDate(datestr).getOrElse(ParsDate.BadParsDate)
+              if (TimeParser.debug) System.err.printf("e[%s]\n", e.getMessage)
+              val mdate: TimeParser = TimeParser.parseDate(datestr).getOrElse(TimeParser.BadParsDate)
               // val timestamp = new DateTime(mdate.getEpoch)
               val standardFormat = mdate.toString(standardTimestampFormat)
               val timestamp      = standardFormat.toDateTime
@@ -332,7 +357,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
   def getDaysElapsed(datestr1: String, datestr2: String): Long = {
     getDaysElapsed(dateParser(datestr1), dateParser(datestr2))
   }
-  def selectZonedFormat(_datestr: String): java.time.format.DateTimeFormatter = {
+  private[vastblue] def selectZonedFormat(_datestr: String): java.time.format.DateTimeFormatter = {
     val datestr   = _datestr.replaceAll("/", "-")
     val numfields = datestr.split("\\D+")
     numfields.length <= 3 match {
@@ -340,7 +365,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
     case false => datetimeFormatter6
     }
   }
-  def ti(s: String): Int = {
+  private[vastblue] def ti(s: String): Int = {
     s match {
     case n if n.matches("0\\d+") =>
       n.replaceAll("0+(.)", "$1").toInt
@@ -349,28 +374,50 @@ object TimeDate extends vastblue.time.TimeExtensions {
     }
   }
   def numerifyNames(datestr: String) = {
-    val noweekdayName = datestr.replaceAll("(Sun[day]*|Mon[day]*|Tue[sday]*|Wed[nesday]*|Thu[rsday]*|Fri[day]*|Sat[urday]*),? *", "")
+    val noweekdayName = datestr.replaceAll("(?i)(Sun[day]*|Mon[day]*|Tue[sday]*|Wed[nesday]*|Thu[rsday]*|Fri[day]*|Sat[urday]*),? *", "")
+//    val nomonthName = datestr.replaceAll("(?i)(Jan[ury]*|Feb[ruay]*|Mar[ch]*|Apr[il]*|May|Jun[e]*|Jul[y]*|Aug[st]*|Sep[tmbr]*|Oct[ober]*|Nov[embr]*|Dec[mbr]*),? *", "")
+//    if (noweekdayName != datestr || nomonthName != datestr){
+//      hook += 1
+//    }
     noweekdayName match {
     case str if str.matches("(?i).*[JFMASOND][aerpuco][nbrylgptvc][a-z]*.*") =>
-      var ff = str.split("[,\\s]+")
-      if (ff(0).matches("\\d+")) {
-        // swap 1st and 2nd fields (e.g., convert "01 Jan" to "Jan 01")
-        val tmp = ff(0)
-        ff(0) = ff(1)
-        ff(1) = tmp
+      var ff = str.replaceFirst("([a-zA-Z])([0-9])", "$1 $2").split("[-/,\\s]+")
+      val monthIndex = ff.indexWhere {(s: String) => s.matches("(?i).*[JFMASOND][aerpuco][nbrylgptvc][a-z]*.*")}
+      if (monthIndex >= 0){
+        val monthName = ff(monthIndex)
+        val month: Int = TimeParser.monthAbbrev2Number(ff(monthIndex))
+        val nwn = noweekdayName.replaceAll(monthName, "%02d ".format(month))
+        nwn
+      } else {
+        // format: off
+        if (ff(0).matches("\\d+")) {
+          // swap 1st and 2nd fields (e.g., convert "01 Jan" to "Jan 01")
+          val tmp = ff(0)
+          ff(0) = ff(1)
+          ff(1) = tmp
+        }
+        val mstr = ff.head.take(3)
+        if (!mstr.toLowerCase.matches("[a-z]{3}")) {
+          hook += 1
+        }
+        val month = TimeParser.monthAbbrev2Number(mstr)
+        ff = ff.drop(1)
+        // format: off
+        val (day, year, timestr, tz) = ff.toList match {
+        case d :: y :: Nil =>
+          (d.toInt, y.toInt, "", "")
+        case d :: y :: ts :: tz :: Nil if ts.contains(":") =>
+          (d.toInt, y.toInt, " "+ts, " "+tz)
+        case d :: ts :: y :: tail if ts.contains(":") =>
+          (d.toInt, y.toInt, " "+ts, "")
+        case d :: y :: ts :: tail =>
+          (d.toInt, y.toInt, " "+ts, "")
+        case other => 
+          sys.error(s"bad date [$other]")
+        }
+        // format: on
+        "%4d-%02d-%02d%s%s".format(year, month, day, timestr, tz)
       }
-      val month = ParsDate.monthAbbrev2Number(ff.head.take(3))
-      ff = ff.drop(1)
-      // format: off
-      val (day, year, timestr, tz) = ff.toList match {
-      case d :: y :: Nil                                 => (d.toInt, y.toInt, "", "")
-      case d :: y :: ts :: tz :: Nil if ts.contains(":") => (d.toInt, y.toInt, " "+ts, " "+tz)
-      case d :: ts :: y :: tail if ts.contains(":")      => (d.toInt, y.toInt, " "+ts, "")
-      case d :: y :: ts :: tail                          => (d.toInt, y.toInt, " "+ts, "")
-      case other                                         => sys.error(s"bad date [$other]")
-      }
-      // format: on
-      "%4d-%02d-%02d%s%s".format(year, month, day, timestr, tz)
     case str =>
       str
     }
@@ -378,18 +425,22 @@ object TimeDate extends vastblue.time.TimeExtensions {
 
   lazy val mmddyyyyPattern: Regex          = """(\d{1,2})\D(\d{1,2})\D(\d{4})""".r
   lazy val mmddyyyyTimePattern: Regex      = """(\d{1,2})\D(\d{1,2})\D(\d{4})(\D\d\d:\d\d(:\d\d)?)""".r
-  lazy val mmddyyyyTimePattern2: Regex     = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D(\d\d): (\d\d)""".r
-  lazy val mmddyyyyTimePattern3: Regex     = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D(\d\d): (\d\d): (\d\d)""".r
-  lazy val mmddyyyyTimePattern3tz: Regex   = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D(\d\d): (\d\d): (\d\d)\D(-?[0-9]{4})""".r
+  lazy val mmddyyyyTimePattern2: Regex     = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D(\d\d):(\d\d)""".r
+  lazy val mmddyyyyTimePattern3: Regex     = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D(\d\d):(\d\d):(\d\d)""".r
+  lazy val mmddyyyyTimePattern3tz: Regex   = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D(\d\d):(\d\d):(\d\d)\D(-?[0-9]{4})""".r
   lazy val yyyymmddPattern: Regex          = """(\d{4})\D(\d{1,2})\D(\d{1,2})""".r
   lazy val yyyymmddPatternWithTime: Regex  = """(\d{4})\D(\d{1,2})\D(\d{1,2})(\D.+)""".r
-  lazy val yyyymmddPatternWithTime2: Regex = """(\d{4})\D(\d{1,2})\D(\d{1,2}) +(\d{2}): (\d{2})""".r
-  lazy val yyyymmddPatternWithTime3: Regex = """(\d{4})\D(\d{1,2})\D(\d{1,2})\D(\d{2}): (\d{2}): (\d{2})""".r
+  lazy val yyyymmddPatternWithTime2: Regex = """(\d{4})\D(\d{1,2})\D(\d{1,2})\D+(\d{2}):(\d{2})""".r
+  lazy val yyyymmddPatternWithTime3: Regex = """(\d{4})\D(\d{1,2})\D(\d{1,2})\D+(\d{2}):(\d{2}):(\d{2})""".r
+  lazy val mmddyyyyPatternWithTime3: Regex = """(\d{1,2})\D(\d{1,2})\D(\d{4})\D+(\d{2}):(\d{2}):(\d{2})""".r
 
   lazy val validYearPattern = """(1|2)\d{3}""" // only consider years between 1000 and 2999
 
   // format: off
-  def parseDateString(_datestr: String): LocalDateTime = {
+  private[vastblue] def parseDateString(_datestr: String): LocalDateTime = {
+    if (_datestr.startsWith("31")) {
+      hook += 1
+    }
     var datestr = _datestr.
       replaceAll("/", "-").
       replaceAll("#", "").
@@ -406,10 +457,21 @@ object TimeDate extends vastblue.time.TimeExtensions {
       "%s-%02d-%02d %02d:%02d".format(y, ti(m), h, min)
 
     case mmddyyyyTimePattern3(m, d, y, h, min, s) if m.toInt <= 12 && y.matches(validYearPattern) =>
-      "%s-%02d-%02d %02d:%02d:02d".format(y, ti(m), h, min, s)
+      "%s-%02d-%02d %02d:%02d:02d".format(y, ti(m), ti(d), h, min, s)
 
     case mmddyyyyTimePattern3tz(m, d, y, h, min, s, tz) if y.matches(validYearPattern) =>
-      "%s-%02d-%02d %02d:%02d:02d %s".format(y, ti(m), h, min, s)
+      "%s-%02d-%02d %02d:%02d:02d %s".format(y, ti(m), ti(d), h, min, s)
+
+    case mmddyyyyPatternWithTime3(dm, md, y, h, min, s) if y.matches(validYearPattern) =>
+      val Seq(tyr, tmd, tdm, th, tmin, ts) = Seq(y, md, dm, h, min, s).map ( ti(_) )
+      val dstr = if (tdm > 12) {
+        // dm is day, md is month
+        "%04d-%02d-%04d %02d:%02d:%02d %d".format(tyr, tmd, tdm, th, tmin, ts)
+      } else {
+        // md is day, dm is month
+        "%04d-%02d-%04d %02d:%02d:%02d %d".format(tyr, tdm, tmd, th, tmin, ts)
+      }
+      dstr
 
     case yyyymmddPattern(y, m, d) if y.matches(validYearPattern) =>
       "%s-%02d-%02d".format(y, ti(m), ti(d))
@@ -435,45 +497,56 @@ object TimeDate extends vastblue.time.TimeExtensions {
       val withNums = numerifyNames(other)
       withNums
     }
-
-    val numfields = datestr.split("\\D+").map { _.trim }.filter { _.nonEmpty }.map { _.toInt}
+    val numstrings = datestr.split("\\D+").map { _.trim }.filter { _.nonEmpty }
+    val numfields = numstrings.map { _.toInt}
+    val numWidths = numstrings.map { _.length }
     numfields.length match {
-    case 1  =>
-      val dstr = if (datestr.startsWith("2")) {
-        // e.g., 20220330
-        datestr.replaceAll("(\\d{4})(\\d{2})(\\d{2})", "$1-$2-$3")
-      } else if (datestr.drop(4).startsWith("2")) {
-        // e.g., 03302022
-        datestr.replaceAll("(\\d{2})(\\d{2})(\\d{4})", "$3-$1-$2")
-      } else {
-        sys.error(s"bad date format [$datestr]")
-      }
-      val fmtr = datetimeFormatter6
-      DateTime.parse(s"${dstr} 00:00:00", fmtr)
-    case 3 =>
-      val fmtr = datetimeFormatter6
-      DateTime.parse(s"${datestr} 00:00:00", fmtr)
-    case 5 =>
-      if (numfields(3) <= 12) {
-        DateTime.parse(datestr, datetimeFormatter5)
-      } else {
-        DateTime.parse(datestr, datetimeFormatter5b)
-      }
-    case 6 =>
-      if (numfields(0) < 1000) {
-        if (numfields(0) > 12) {
-          DateTime.parse(datestr, datetimeFormatter6B)
+      case 1 =>
+        val dstr = if (datestr.startsWith("2")) {
+          // e.g., 20220330
+          datestr.replaceAll("(\\d{4})(\\d{2})(\\d{2})", "$1-$2-$3")
+        } else if (datestr.drop(4).startsWith("2")) {
+          // e.g., 03302022
+          datestr.replaceAll("(\\d{2})(\\d{2})(\\d{4})", "$3-$1-$2")
         } else {
-          DateTime.parse(datestr, datetimeFormatter6C)
+          sys.error(s"bad date format [$datestr]")
         }
-      } else {
+        val fmtr = datetimeFormatter6
+        DateTime.parse(s"${dstr} 00:00:00", fmtr)
+      case 3 =>
+        datestr = datestr.replaceAll("\\D+", "-")
+        val fmtr = if (numWidths.mkString == "224") {
+          datetimeFormatter6B
+        } else {
+          datetimeFormatter6
+        }
+        DateTime.parse(s"$datestr 00:00:00", fmtr)
+      case 5 =>
+        if (numfields(3) <= 12) {
+          DateTime.parse(datestr, datetimeFormatter5)
+        } else {
+          DateTime.parse(datestr, datetimeFormatter5b)
+        }
+      case 6 =>
+        if (numfields(2) > 1000) {
+          // partial ambiguity elimination
+          if (numfields(0) > 12) {
+            DateTime.parse(datestr, datetimeFormatter6B)
+          } else {
+            if (numWidths(0) > 1) {
+              DateTime.parse(datestr, datetimeFormatter6C)
+            } else {
+              DateTime.parse(datestr, datetimeFormatter6D)
+            }
+          }
+        } else {
+          DateTime.parse(datestr, datetimeFormatter6)
+        }
+      case 7 =>
+        DateTime.parse(datestr, datetimeFormatter7)
+      case _ =>
+        // System.err.printf("%d datetime fields: [%s] [%s]\n".format(numfields.size, numfields.mkString("|"), datestr))
         DateTime.parse(datestr, datetimeFormatter6)
-      }
-    case 7 =>
-      DateTime.parse(datestr, datetimeFormatter7)
-    case _ =>
-      // System.err.printf("%d datetime fields: [%s] [%s]\n".format(numfields.size, numfields.mkString("|"), datestr))
-      DateTime.parse(datestr, datetimeFormatter6)
     }
   }
   // format: on

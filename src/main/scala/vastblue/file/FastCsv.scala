@@ -87,20 +87,6 @@ object FastCsv {
       )
     }
   }
-
-  /*
-  def readLines(p: Path): Seq[String] = {
-    try {
-      JFiles.readAllLines(p).asScala.toSeq
-    } catch {
-      case t: Throwable =>
-        sys.error(s"${p.norm}")
-    }
-  }
-  def contentAsString(p: Path): String = {
-    readLines(p).mkString("\n")
-  }
-   */
 }
 
 case class FastCsv(val reader: Reader, identifier: String, delimiter: String) {

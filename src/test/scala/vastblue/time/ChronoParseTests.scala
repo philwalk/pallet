@@ -1,7 +1,7 @@
 package vastblue.time
 
-import vastblue.pallet.*
-import vastblue.time.ParsDate
+//import vastblue.pallet.*
+import vastblue.time.TimeParser
 import vastblue.time.TimeDate.{parseDateTime => parseDate}
 import vastblue.time.TimeDate.*
 
@@ -12,13 +12,13 @@ import TestDates.*
 
 import TestDates.hook
 
-class ParsDateTests extends AnyFunSpec with Matchers {
-  // TODO: ParsDate(datestring: String, monthDayOrder: String = "MD")
+class ChronoParseTests extends AnyFunSpec with Matchers {
+  // TODO: TimeParser(datestring: String, monthDayOrder: String = "MD")
 
   describe("parseDateTime") {
     for ((teststr, expected) <- TestDates.testDates) {
       it(s"should properly parse input timestamp ${teststr}") {
-        var pdDate = parseDate(teststr)
+        val pdDate = parseDate(teststr)
         val pds    = pdDate.toString("yyyy/MM/dd")
         if (pds != expected) {
           hook += 1
@@ -28,14 +28,14 @@ class ParsDateTests extends AnyFunSpec with Matchers {
     }
   }
 
-  describe("ParsDate") {
-    for ((teststr, expected) <- TestDates.testStamps) {
+  describe("TimeParser") {
+    for ((teststr, expected) <- TestDates.dateStrings) {
       if (!badDates.contains(teststr)) {
         it(s"should properly parse input date string ${teststr}") {
           if (teststr.startsWith("08/04/2009")) {
             hook += 1
           }
-          var pdDate = ParsDate(teststr)
+          val pdDate = TimeParser(teststr)
           val pds    = pdDate.toString("yyyy/MM/dd")
           if (pds != expected) {
             hook += 1
@@ -47,7 +47,7 @@ class ParsDateTests extends AnyFunSpec with Matchers {
     for (teststr <- TestDates.testDates2) {
       if (!badDates.contains(teststr)) {
         it(s"should properly parse input timestamp ${teststr}") {
-          val pdDate: ParsDate  = ParsDate(teststr)
+          val pdDate: TimeParser  = TimeParser(teststr)
           val Array(ys, ms, ds) = pdDate.toString("yyyy/MM/dd").split("/")
 
           val y: Int = toInt(ys)
@@ -88,13 +88,13 @@ object TestDates {
     ("31/05/2009 08:59:59 -0000",  "2009/05/31"), // MM/dd/yyyy hh:mm:ss -0000
     ("31/05/2009 02:20:13 -0700",  "2009/05/31"), // MM/dd/yyyy hh:mm:ss -0700
     ("2/11/2009 16:34:32 -0800",   "2009/02/11"), // M/dd/yyyy HH:mm:ss -0800
- // ("04/08 18:17:08 2009",        "2009/04/08"), // MM/dd HH:mm:ss yyyy
+    ("04/08 18:17:08 2009",        "2009/04/08"), // MM/dd HH:mm:ss yyyy
     ("05/06/1993",                 "1993/05/06"), // MM/dd/yyyy
     ("2009/03/24 21:48:25.0",      "2009/03/24"), // yyyy/MM:dd HH:mm:ss.S
     ("2009/03/30 22:10:03",        "2009/03/30"), // yyyy/MM/dd HH:mm:ss
   )
 
-  lazy val testStamps = List(
+  lazy val dateStrings = List(
     ("Fri Jan 10 2014 2:34:17 PM EST",         "2014/01/10"),
     ("04/13/1992 11:59 PM",                    "1992/04/13"),
     ("04/13/1992 12:01 PM",                    "1992/04/13"),
@@ -165,7 +165,7 @@ object TestDates {
     ("2009/03/31 22:48:00",                    "2009/03/31"),
     ("2009/03/31 22:49:15",                    "2009/03/31"),
     ("2009/03/31 23:13:10",                    "2009/03/31"),
-  //("04/08 18:17:08 2009",                    "2009/04/08"),
+    ("04/08 18:17:08 2009",                    "2009/04/08"),
     ("4/10/2009 6:52:34 PM",                   "2009/04/10"),
     ("4/10/2009 12:00:00 AM",                  "2009/04/10"),
     ("2009/04/20 04:36:03",                    "2009/04/20"),

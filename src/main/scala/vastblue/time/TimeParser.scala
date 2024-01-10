@@ -2,7 +2,7 @@ package vastblue.time
 
 /**
  * This is useful for converting between a wide variety
- * of Date and Time Strings and the ParsDate class.
+ * of Date and Time Strings and the TimeParser class.
  */
 import vastblue.pallet.*
 import java.io.{File => JFile}
@@ -16,7 +16,7 @@ import scala.collection.immutable.*
 import scala.util.matching.Regex
 import scala.util.control.Breaks.*
 
-object ParsDate {
+object TimeParser {
   var verbose        = ".verbose".path.isFile
   var debug: Boolean = ".debug".path.isFile
   var yearFirstFlag  = true
@@ -86,7 +86,7 @@ object ParsDate {
   def setFormat(fmt: DateFormat): Unit = { outfmt = fmt }
   def setFormat(fmt: String): Unit     = { outfmt = new SimpleDateFormat(fmt) }
 
-  def extractDateFromText(rawline: String): Option[ParsDate] = {
+  def extractDateFromText(rawline: String): Option[TimeParser] = {
     // debug: test before toLowerCase
     val text = rawline.replaceAll("""[^-a-zA-Z:/_0-9\s]+""", " ").replaceAll("""\s+""", " ").trim
     if (debug) {
@@ -105,7 +105,7 @@ object ParsDate {
     val result = if (lc.contains("@")) {
       // ignore email
       if (verbose) printf("ignore email[%s]\n", text)
-      None // Some(ParsDate("2019:01:01"))
+      None // Some(TimeParser("2019:01:01"))
     } else if (lc.matches(""".*\bapprov.*""")) {
       if (verbose) printf("ignore approval of minutes [%s]\n", text)
       None
@@ -129,7 +129,7 @@ object ParsDate {
       case YYMMddDensePattern(yy, mm, dd) if okYMD(yy, mm, dd) =>
         Some(normalizedMdate(yy, mm, dd))
       case _ =>
-        None // Some(ParsDate("2019:02:02"))
+        None // Some(TimeParser("2019:02:02"))
       }
     }
     result
@@ -154,11 +154,11 @@ object ParsDate {
     val valid = (num >= 1 && num <= 12)
     (num, valid)
   }
-  def normalizedMdate(yy: String, mm: String, dd: String): ParsDate = {
+  def normalizedMdate(yy: String, mm: String, dd: String): TimeParser = {
     val (y, m, d)  = numericFields(yy, mm, dd)
     val normalized = "%04d/%02d/%02d".format(y, m, d)
     if (verbose) printf("normalized: [%s]\n", normalized)
-    ParsDate(normalized)
+    TimeParser(normalized)
   }
   lazy val YYMMddDensePattern: Regex = """.*(\b2[01]\d{2})(\d{2})(\d{2})\b.*""".r
   lazy val LcMonthPattern: Regex     = (s"(?i)${MonthPattern.toString}").r
@@ -202,16 +202,16 @@ object ParsDate {
     "November",
     "December",
   )
-  lazy val weekdayNames: List[String] = List(
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  )
-  lazy val monthAbbreviationsLowerCase: List[String] = monthNames.map { _.toLowerCase.substring(0, 3) }
+//  lazy val weekdayNames: List[String] = List(
+//    "Sunday",
+//    "Monday",
+//    "Tuesday",
+//    "Wednesday",
+//    "Thursday",
+//    "Friday",
+//    "Saturday",
+//  )
+//  lazy val monthAbbreviationsLowerCase: List[String] = monthNames.map { _.toLowerCase.substring(0, 3) }
   def indexedLetters(idx: Int, list: List[String]): String = {
     new String({
       var uniqChars = List[Char]()
@@ -230,19 +230,19 @@ object ParsDate {
     s"[$cc0][$cc1][$cc2][\\.\\w]*"
   }
 
-  def apply(): ParsDate = {
-    ParsDate(new Date)
+  def apply(): TimeParser = {
+    TimeParser(new Date)
   }
 
-  def apply(time: Long): ParsDate = {
-    new ParsDate(time)
+  def apply(time: Long): TimeParser = {
+    new TimeParser(time)
   }
 
-  def apply(date: Date): ParsDate = {
-    ParsDate(date.getTime)
+  def apply(date: Date): TimeParser = {
+    TimeParser(date.getTime)
   }
 
-  def apply(tupleDate: ((Int, Int, Int), (Int, Int, Int))): ParsDate = {
+  def apply(tupleDate: ((Int, Int, Int), (Int, Int, Int))): TimeParser = {
     val (date, time)  = tupleDate
     val (yy, mm, day) = date
     val (hr, mn, sec) = time
@@ -251,17 +251,17 @@ object ParsDate {
 
   lazy val BadParsDate = apply(-1L)
 
-  def apply(datestr: String): ParsDate = {
+  def apply(datestr: String): TimeParser = {
     parseDate(datestr).getOrElse(BadParsDate)
   }
 
-  def apply(yy: Int, mm: Int, dd: Int): ParsDate = {
+  def apply(yy: Int, mm: Int, dd: Int): TimeParser = {
     // Calendar month is zero-based
     val cal = java.util.Calendar.getInstance
     cal.set(yy, mm - 1, dd)
     apply(cal.getTime)
   }
-  def apply(date: Any): ParsDate = {
+  def apply(date: Any): TimeParser = {
     date match {
     case tt: Long   => apply(tt)
     case tt: Date   => apply(tt)
@@ -290,7 +290,6 @@ object ParsDate {
     s"$number"
   }
 
-  lazy val MonthNamePattern: Regex = """(?i)(.*)\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b(.*)""".r
 
   def monthAbbrev2Number(name: String): Int = {
     name.toLowerCase.substring(0, 3) match {
@@ -306,6 +305,9 @@ object ParsDate {
     case "oct" => 10
     case "nov" => 11
     case "dec" => 12
+    case _ =>
+      hook += 1
+      -1
     }
   }
   def monthName2Number(rawname: String): Int = {
@@ -318,6 +320,7 @@ object ParsDate {
     result
   }
 
+  lazy val MonthNamePattern: Regex = """(?i)(.*)\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b(.*)""".r
   lazy val QuadrixBackIssuesFilenameFormat: Regex = """(?i)([jfmasond][aepuco][nbrylgptvc])\D?(\d{1,2})\D(\d{1,4})""".r
   def toNumericFormat(dateStrRaw: String): String = {
     // "Wed Apr 08 18:17:08 2009"
@@ -363,7 +366,17 @@ object ParsDate {
       "" // junk
     }
   }
-  def reorderYearFirst(ff: Array[String]): Array[String] = {
+  def reorderYearFirst(_ff: Array[String]): Array[String] = {
+    var ff = _ff
+    _ff.indexWhere((s: String) => s.length >= 4 && !s.contains(":") && !s.startsWith("0")) match {
+      case -1 =>
+        // mostly
+      case yidx =>
+        val yr = _ff(yidx)
+        val residue = _ff.take(yidx) ++ ff.drop(yidx+1)
+        ff = (Seq(yr) ++ residue).toArray
+    }
+
     if (ff(2).length == 4) {
       // reorder first 3 from mm/dd/yyyy to yyyy/mm/dd
       def zpad(s: String): String = {
@@ -425,8 +438,8 @@ object ParsDate {
     (dateStr, zone)
   }
 
-  def parseDate(date: Date): ParsDate     = ParsDate(date)
-  def parseDate(date: ParsDate): ParsDate = ParsDate(date.getTime)
+  def parseDate(date: Date): TimeParser     = TimeParser(date)
+  def parseDate(date: TimeParser): TimeParser = TimeParser(date.getTime)
 
   def prepDateString(str: String): (Boolean, String, String) = {
     if (str.contains(":") && str.matches(".* 2[0-9]{3}")) {
@@ -486,7 +499,7 @@ object ParsDate {
   def isDate(text: String): Boolean = {
     try {
       if (text.matches(""".*\d\d.*""")) {
-        ParsDate(text)
+        TimeParser(text)
         true
       } else {
         // a date string requires at least 2 consecutive digits (the year)
@@ -501,10 +514,10 @@ object ParsDate {
 
   lazy val legalCharacters: Set[Char] = "0123456789-:/ abcdefghijklmnopqrstuvwxyz.,+()".toSet // time zones can be in parentheses
 
-  def tryFormat(dateStr: String, fmt: SimpleDateFormat): Option[ParsDate] = {
+  def tryFormat(dateStr: String, fmt: SimpleDateFormat): Option[TimeParser] = {
     try {
       val dt    = fmt.parse(dateStr)
-      val pdate = ParsDate(dt)
+      val pdate = TimeParser(dt)
       Some(pdate)
     } catch {
       case ee: Exception =>
@@ -515,7 +528,7 @@ object ParsDate {
   /**
   * Parse date String.
   */
-  def parseDate(rawdate: String): Option[ParsDate] = {
+  def parseDate(rawdate: String): Option[TimeParser] = {
     if (rawdate.startsWith("08/04/")) {
       hook += 1
     }
@@ -529,11 +542,11 @@ object ParsDate {
     // standardize format to use hyphenated y-m-d rather than y/m/d
     val (yearFirst, dateStr, zone) = prepDateString(rawdate)
 
-    var parsOpt: Option[ParsDate] = None
+    var parsOpt: Option[TimeParser] = None
 
     val dateFormats = relevantFormats(dateStr, yearFirst)
     dateFormats.find { testfmt =>
-      tryFormat(dateStr, testfmt).foreach { (pd: ParsDate) =>
+      tryFormat(dateStr, testfmt).foreach { (pd: TimeParser) =>
         parsOpt = Some(pd)
         // save most recent successful format (try it on first attempt next time)
         currentFormat = testfmt
@@ -586,17 +599,17 @@ object ParsDate {
   * Guess date format.
   * TODO: currently unable to parse "January 12, 1972" !!!!
   */
-  def guessFormat(date: String): ParsDate = {
+  def guessFormat(date: String): TimeParser = {
     val dateStr = date
     val sf      = selfFormat(date)
     val fmt     = simpleFormat(sf)
     try {
       val dt = fmt.parse(date)
-      ParsDate(dt)
+      TimeParser(dt)
     } catch {
       case _: Exception =>
         if (debug) eprintf("failed self-format: [%s] : [%s]\n", date, fmt)
-        var mdate: ParsDate = null
+        var mdate: TimeParser = null
 
         // year is easy
         var onthefly = date.replaceFirst("""\d\d\d\d""", "yyyy")
@@ -640,7 +653,7 @@ object ParsDate {
         }
         try {
           val testFormat = new SimpleDateFormat(onthefly)
-          mdate = ParsDate(testFormat.parse(dateStr))
+          mdate = TimeParser(testFormat.parse(dateStr))
           currentFormat = testFormat // successful
           yearFirstFlag = onthefly.startsWith("yyyy")
           if (!newFormats.contains(onthefly)) {
@@ -663,7 +676,7 @@ object ParsDate {
     val list = if (punctuationMap.contains(punct)) {
       punctuationMap(punct).sortBy { sdf => -sdf.toPattern.length } // longest patterns first
     } else {
-      if (ParsDate.debug || ParsDate.verbose) {
+      if (TimeParser.debug || TimeParser.verbose) {
         eprintf("no date format for punct[%s], literalDate[%s]\n", punct, literalDate)
       }
       List[SimpleDateFormat]()
@@ -748,7 +761,7 @@ object ParsDate {
   def simpleFormat(fmt: String): SimpleDateFormat = new SimpleDateFormat(fmt, Locale.US)
 
   /// ============================================================== former object Main
-  def parse(line: String, zeroTime: Boolean = false): ParsDate = {
+  def parse(line: String, zeroTime: Boolean = false): TimeParser = {
     val simplified = line.replaceAll("""[\s\(\),]+""", " ").trim
 
     simplified match {
@@ -757,14 +770,14 @@ object ParsDate {
       val tm             = if (zeroTime) "00:00:00" else time
       val stdfmt         = "%4d/%02d/%02d %s".format(yyyy, mm, dd, tm)
       // eprintf("dystr:[%s], moName:[%s], yr:[%s], time:[%s], tz:[%s], stdfmt[%s]".format(dystr, moName, yr, time, tz, stdfmt))
-      ParsDate(stdfmt)
+      TimeParser(stdfmt)
 
     case DateRegex_02(dummy @ _, dystr, moName, yr, time, tz @ _) =>
       val (yyyy, mm, dd) = getNumbers(yr, moName, dystr)
       val tm             = if (zeroTime) "00:00:00" else time
       val stdfmt         = "%4d/%02d/%02d %s".format(yyyy, mm, dd, tm)
       // eprintf("dystr:[%s], moName:[%s], yr:[%s], time:[%s], tz:[%s], stdfmt[%s] (%s)".format(dystr, moName, yr, time, tz, stdfmt, dummy))
-      ParsDate(stdfmt)
+      TimeParser(stdfmt)
 
     case other =>
       sys.error(s"unparseable date:[$other]")
@@ -816,35 +829,35 @@ object ParsDate {
   def ymdDate: String => DateTime = quikDate // alias
 }
 
-class ParsDate(msec: Long) extends Ordered[ParsDate] {
-  import ParsDate.*
+class TimeParser(msec: Long) extends Ordered[TimeParser] {
+  import TimeParser.*
 
   var zone: String       = ""
-  var outfmt: DateFormat = ParsDate.outfmt // inherit the current default
+  var outfmt: DateFormat = TimeParser.outfmt // inherit the current default
 
   // return self, to permit this usage:  date.dateOnly.toString
-  def dateAndTime: ParsDate = {
-    outfmt = dateTimeFormat
-    this
-  }
+//  def dateAndTime: TimeParser = {
+//    outfmt = dateTimeFormat
+//    this
+//  }
 
   // TODO: this sets global mode for default printing of date format
-  def dateOnly: ParsDate = {
-    outfmt = dateOnlyFormat
-    this
-  }
+//  def dateOnly: TimeParser = {
+//    outfmt = dateOnlyFormat
+//    this
+//  }
 
   private val cal = java.util.Calendar.getInstance
   cal.setTimeInMillis(msec)
   private val date = cal.getTime
 
-  val stringValue: String = dateTimeFormat.format(date).replaceAll("""\s+00:00:00""", "")
+//  val stringValue: String = dateTimeFormat.format(date).replaceAll("""\s+00:00:00""", "")
 
-  def toTuple: ((Int, Int, Int), (Int, Int, Int)) = {
-    val date = (getYear, getMonth, getDay)
-    val time = (getHour, getMinute, getSecond)
-    (date, time)
-  }
+//  def toTuple: ((Int, Int, Int), (Int, Int, Int)) = {
+//    val date = (getYear, getMonth, getDay)
+//    val time = (getHour, getMinute, getSecond)
+//    (date, time)
+//  }
 
   def getTime: Long = date.getTime
 
@@ -858,20 +871,20 @@ class ParsDate(msec: Long) extends Ordered[ParsDate] {
     tcal.setTimeInMillis(getEpoch)
     tcal
   }
-//  def compareTo(that: ParsDate): Int = {
+//  def compareTo(that: TimeParser): Int = {
 //    if (this < that) -1
 //    else if (this > that) 1
 //    else 0
 //  }
-//  def compare(x: ParsDate, y: ParsDate) = x compareTo y
-  def compare(that: ParsDate): Int = this compareTo that
+//  def compare(x: TimeParser, y: TimeParser) = x compareTo y
+  def compare(that: TimeParser): Int = this compareTo that
 
-  def isLeapYear: Boolean = gcal.isLeapYear(getYear)
+//  def isLeapYear: Boolean = gcal.isLeapYear(getYear)
 
-//  def < (other: ParsDate): Boolean = { getTime <  other.getTime }
-//  def <= (other: ParsDate): Boolean = { getTime <= other.getTime }
-//  def > (other: ParsDate): Boolean = { getTime >  other.getTime }
-//  def >= (other: ParsDate): Boolean = { getTime >= other.getTime }
+//  def < (other: TimeParser): Boolean = { getTime <  other.getTime }
+//  def <= (other: TimeParser): Boolean = { getTime <= other.getTime }
+//  def > (other: TimeParser): Boolean = { getTime >  other.getTime }
+//  def >= (other: TimeParser): Boolean = { getTime >= other.getTime }
 
   override def toString: String = {
     outfmt.format(date).replaceAll("""\s+00:00:00""", "")
@@ -882,26 +895,26 @@ class ParsDate(msec: Long) extends Ordered[ParsDate] {
     df.format(date)
   }
 
-  def nextDay: ParsDate = addDays(1)
+  def nextDay: TimeParser = addDays(1)
 
-  def addMilliseconds(milliseconds: Int): ParsDate = ParsDate(getEpoch + milliseconds)
+  def addMilliseconds(milliseconds: Int): TimeParser = TimeParser(getEpoch + milliseconds)
 
-  def addSeconds(seconds: Int): ParsDate = addMilliseconds(seconds * 1000)
-  def addMinutes(minutes: Int): ParsDate = addSeconds(minutes * 60)
-  def addHours(hours: Int): ParsDate     = addMinutes(hours * 60)
+  def addSeconds(seconds: Int): TimeParser = addMilliseconds(seconds * 1000)
+  def addMinutes(minutes: Int): TimeParser = addSeconds(minutes * 60)
+//  def addHours(hours: Int): TimeParser     = addMinutes(hours * 60)
 
-  def between(a: ParsDate, b: ParsDate): Boolean = {
+  def between(a: TimeParser, b: TimeParser): Boolean = {
     assert(a <= b)
     this >= a && this <= b
   }
 
-  def addDays(days: Int): ParsDate = {
+  def addDays(days: Int): TimeParser = {
     val tcal = copyCalendar()
     tcal.add(Calendar.DAY_OF_YEAR, days)
-    ParsDate(tcal.getTime)
+    TimeParser(tcal.getTime)
   }
   // time elapsed since previousTime
-  def elapsedMilliSeconds(previousTime: ParsDate): Long = {
+  def elapsedMilliSeconds(previousTime: TimeParser): Long = {
     val t0: Long = previousTime.getTime
     val t1: Long = this.getTime
     if (t0 > t1) {
@@ -910,25 +923,25 @@ class ParsDate(msec: Long) extends Ordered[ParsDate] {
       t1 - t0
     }
   }
-  def elapsedSeconds(previousTime: ParsDate): Long = {
+  def elapsedSeconds(previousTime: TimeParser): Long = {
     elapsedMilliSeconds(previousTime) / 1000
   }
-  def elapsedMinutes(previousTime: ParsDate): BigDecimal = {
+  def elapsedMinutes(previousTime: TimeParser): BigDecimal = {
     BigDecimal(elapsedSeconds(previousTime) / 60.0)
   }
-  def elapsedHours(previousTime: ParsDate): BigDecimal = {
+  def elapsedHours(previousTime: TimeParser): BigDecimal = {
     elapsedMinutes(previousTime) / 60.0
   }
-  def elapsedDays(previousTime: ParsDate): BigDecimal = {
+  def elapsedDays(previousTime: TimeParser): BigDecimal = {
     elapsedHours(previousTime) / 24.0
   }
 
   // duration methods that return approximate answers
   lazy val averageMonthSize: Double = (31 + 28.25 + 31 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) / 12.0
-  def elapsedMonths(previousTime: ParsDate): BigDecimal = {
+  def elapsedMonths(previousTime: TimeParser): BigDecimal = {
     elapsedDays(previousTime) / averageMonthSize
   }
-  def elapsedYears(previousTime: ParsDate): BigDecimal = {
+  def elapsedYears(previousTime: TimeParser): BigDecimal = {
     elapsedDays(previousTime) / 365.25
   }
 
@@ -974,7 +987,7 @@ object LongIso {
   def main(args: Array[String]): Unit = {
     try {
       for (arg <- args) {
-        printf("%s\n", ParsDate(arg))
+        printf("%s\n", TimeParser(arg))
       }
     } catch {
       case ee: Exception =>
