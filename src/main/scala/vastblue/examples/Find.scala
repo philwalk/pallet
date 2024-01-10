@@ -1,5 +1,5 @@
 //#!/usr/bin/env -S scala @${HOME}/.scala3cp
-package vastblue.demo
+package vastblue.examples
 
 // hash bang line error on OSX/Darwin due to non-gnu /usr/bin/env
 // portable way to set classpath:

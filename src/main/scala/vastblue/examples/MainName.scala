@@ -1,5 +1,5 @@
 //#!/usr/bin/env -S scala @./atFile -deprecation
-package vastblue.demo
+package vastblue.examples
 
 import vastblue.pallet.*
 

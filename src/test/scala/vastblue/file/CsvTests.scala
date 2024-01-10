@@ -13,7 +13,7 @@ class CsvTests extends AnyFunSpec with Matchers with BeforeAndAfter {
     val fnamestr = s"${TMP}/youMayDeleteThisDebrisCsvParser.csv"
     printf("csvTestFile[%s]\n", fnamestr)
     val path = Paths.get(fnamestr)
-    if (path.parentFile.isDirectory) {
+    if (path.parentPath.isDirectory) {
       path.withWriter() { w =>
         // format: off
         w.print(s"""
