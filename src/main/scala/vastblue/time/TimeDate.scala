@@ -1,7 +1,7 @@
 package vastblue.time
 
 import vastblue.pallet.*
-import vastblue.time.TimeParser
+//import vastblue.time.TimeParser
 import vastblue.time.ChronoParse
 
 import java.time.ZoneId
@@ -239,8 +239,18 @@ object TimeDate extends vastblue.time.TimeExtensions {
   lazy val ThreeIntegerFields2 = """(\d{2,2})\D(\d{1,2})\D(\d{1,2})""".r
 
   def dateParser(inpDateStr: String, offset: Int = 0): DateTime = {
-    val flds = vastblue.time.ChronoParse(inpDateStr)
-    flds.dateTime // might be BadDate!
+    if (inpDateStr.trim.isEmpty) {
+      BadDate
+    } else {
+      def isDigit(c: Char): Boolean = c >= '0' && c <= '9'
+      val digitcount = inpDateStr.filter { (c: Char) => isDigit(c) }.size
+      if (digitcount < 3 || digitcount > 19) {
+        BadDate
+      } else {
+        val flds = vastblue.time.ChronoParse(inpDateStr)
+        flds.dateTime // might be BadDate!
+      }
+    }
   }
   private[vastblue] def _dateParser(inpDateStr: String, offset: Int = 0): DateTime = {
     if (inpDateStr.startsWith("31/05/2009")) {
@@ -317,13 +327,15 @@ object TimeDate extends vastblue.time.TimeExtensions {
             parseDateString(fixed)
           } catch {
             case r: RuntimeException if r.getMessage.toLowerCase.contains("bad date format") =>
-              if (TimeParser.debug) System.err.printf("e[%s]\n", r.getMessage)
+//              if (TimeParser.debug) System.err.printf("e[%s]\n", r.getMessage)
               BadDate
             case p: DateTimeParseException =>
-              if (TimeParser.debug) System.err.printf("e[%s]\n", p.getMessage)
+//              if (TimeParser.debug) System.err.printf("e[%s]\n", p.getMessage)
               BadDate
             case e: Exception =>
-              if (TimeParser.debug) System.err.printf("e[%s]\n", e.getMessage)
+//              if (TimeParser.debug) System.err.printf("e[%s]\n", e.getMessage)
+              BadDate
+/*
               val mdate: TimeParser = TimeParser.parseDate(datestr).getOrElse(TimeParser.BadParsDate)
               // val timestamp = new DateTime(mdate.getEpoch)
               val standardFormat = mdate.toString(standardTimestampFormat)
@@ -334,6 +346,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
               val hours      = (offset + extraHours).toLong
               timestamp.plusHours(hours)
               // format: on
+ */
           }
         }
       }
@@ -385,7 +398,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
       val monthIndex = ff.indexWhere {(s: String) => s.matches("(?i).*[JFMASOND][aerpuco][nbrylgptvc][a-z]*.*")}
       if (monthIndex >= 0){
         val monthName = ff(monthIndex)
-        val month: Int = TimeParser.monthAbbrev2Number(ff(monthIndex))
+        val month: Int = ChronoParse.monthAbbrev2Number(ff(monthIndex))
         val nwn = noweekdayName.replaceAll(monthName, "%02d ".format(month))
         nwn
       } else {
@@ -400,7 +413,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
         if (!mstr.toLowerCase.matches("[a-z]{3}")) {
           hook += 1
         }
-        val month = TimeParser.monthAbbrev2Number(mstr)
+        val month = ChronoParse.monthAbbrev2Number(mstr)
         ff = ff.drop(1)
         // format: off
         val (day, year, timestr, tz) = ff.toList match {

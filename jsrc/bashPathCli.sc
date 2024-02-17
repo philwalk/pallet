@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.3.1"
-//> using lib "org.vastblue::pallet::0.10.6"
+//> using lib "org.vastblue::pallet::0.10.7"
 
 import vastblue.pallet.*
 
@@ -21,6 +21,6 @@ def main(args: Array[String]): Unit =
   printf("%s\n", bashPath.realpath)
   printf("%s\n", bashPath.toRealPath())
   printf("posixroot: %s\n", posixroot)
-  printf("sys root:  %s\n", where("bash").norm.replaceAll("(/usr)?/bin/bash.*", ""))
+  printf("sys root:  %s\n", where("bash").posx.replaceAll("(/usr)?/bin/bash.*", ""))
 
 main(args)

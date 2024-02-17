@@ -2,8 +2,7 @@
 package vastblue.time
 
 import vastblue.pallet.*
-//import vastblue.time.TimeDate.*
-
+//import vastblue.time.TimeParser
 import java.time.LocalDateTime
 import scala.runtime.RichInt
 
@@ -17,9 +16,8 @@ object ChronoParse {
   lazy val now: LocalDateTime = LocalDateTime.now()
   lazy val MonthNamesPattern = "(?i)(.*)(Jan[uary]*|Feb[ruary]*|Mar[ch]*|Apr[il]*|May|June?|July?|Aug[ust]*|Sep[tember]*|Oct[ober]*|Nov[ember]*|Dec[ember]*)(.*)".r
 
-
   // by default, prefer US format, but swap month and day if unavoidable
-  // (e.g., 24/12/2022 incompatible with US format, not with Int'l format
+  // (e.g., 24/12/2022 invalid US format, valid Int'l format)
   def usage(m: String=""): Nothing = {
     _usage(m, Seq(
       "[<inputFile>]   ; one datetime string per line",
@@ -137,15 +135,15 @@ object ChronoParse {
   // If month name present, convert to numeric equivalent.
   // month-day order is also implied and must be captured.
   // Return array of numbers plus month index (can be -1).
-  private[vastblue] def numerifyNames(_cleanFields: Array[String]): (Int, Seq[String]) = {
-    var cleanFields = _cleanFields
+  def numerifyNames(_cleanFields: Array[String]): (Int, Seq[String]) = {
+    var cleanFields = _cleanFields.filter { _.trim.nonEmpty }
     //val clean = datestr.replaceAll("(?i)(Sun[day]*|Mon[day]*|Tue[sday]*|Wed[nesday]*|Thu[rsday]*|Fri[day]*|Sat[urday]*),? *", "")
     //val cleanFields: Array[String] = clean.split("[-/,\\s]+")
     val clean = cleanFields.mkString(" ")
 
     val monthIndex = clean match {
     case MonthNamesPattern(pre, monthName, post) =>
-      val month: Int = TimeParser.monthAbbrev2Number(monthName)
+      val month: Int = monthAbbrev2Number(monthName)
       //val numerified = s"$pre $month $post"
       val midx = cleanFields.indexWhere( _.contains(monthName) )
 //        val midx = cleanFields.indexWhere { (s: String) => s.matches("(?i).*[JFMASOND][aerpuco][nbrylgptvc][a-z]*.*") }
@@ -194,7 +192,7 @@ object ChronoParse {
           ff.partition {
             case s if s.contains(":") =>
               false // HH mm or ss
-            case s if s.matches("[-+][0-9]{4}") =>
+            case s if s.matches("(?i)([AP]M)?[-+][0-9]{4}") =>
               false // time zone
             case s if s.matches("[.][0-9]+") =>
               false // decimal time field
@@ -204,7 +202,9 @@ object ChronoParse {
               true // date
           }
         }
-        val (times, zones) = tms.partition { _.contains(":") }
+        val (times, zones) = tms.partition { (s: String) =>
+          s.contains(":") // || s.matches("(?i)([AP]M)?[-+][0-9]{4}")
+        }
         (dts, times, zones.mkString(" "))
       }
 
@@ -247,470 +247,508 @@ object ChronoParse {
     (datefields, timestring, timezone, monthIndex, yearIndex)
   }
 
+  lazy val BadChrono = new ChronoParse(BadDate, "", "", Nil, false)
+  def isDigit(c: Char): Boolean = c >= '0' && c <= '9'
+
   /*
    * ChronoParse constructor.
    */
   def apply(_rawdatetime: String): ChronoParse = {
-    if (_rawdatetime.startsWith("10:")) {
-      hook += 1
-    }
-    var valid = true
-    var confident = true
-
-    val (datefields, timestring, timezone, _monthIndex, _yearIndex) = cleanPrep(_rawdatetime)
-
-    var (monthIndex: Int, yearIndex: Int) = (_monthIndex, _yearIndex)
-    
-//    def timestring = s"$timestring $timezone"
-    val rawdatetime = s"${datefields.mkString(" ")} ${timestring} $timezone".trim
-
-    var _datenumstrings: IndexedSeq[String] = Nil.toIndexedSeq
-    if (datefields.nonEmpty) {
-      setDatenums(
-        datefields.mkString(" ").replaceAll("\\D+", " ").trim.split(" +").toIndexedSeq
-      )
-    }
-
-    def setDatenums(newval: Seq[String]): Unit = {
-      if (newval.isEmpty) {
+    if (!isPossibleDateString(_rawdatetime)) {
+      BadChrono
+    } else {
+      if (_rawdatetime.startsWith("10:")) {
         hook += 1
       }
-      val bad = newval.exists{ (s: String) =>
-        s.trim.isEmpty || !s.matches("[0-9]+")
+      var valid = true
+      var confident = true
+
+      val (datefields, timestring, timezone, _monthIndex, _yearIndex) = cleanPrep(_rawdatetime)
+
+      var (monthIndex: Int, yearIndex: Int) = (_monthIndex, _yearIndex)
+      
+  //    def timestring = s"$timestring $timezone"
+      val rawdatetime = s"${datefields.mkString(" ")} ${timestring} $timezone".trim
+
+      var _datenumstrings: IndexedSeq[String] = Nil.toIndexedSeq
+      if (datefields.nonEmpty) {
+        setDatenums(
+          datefields.mkString(" ").replaceAll("\\D+", " ").trim.split(" +").toIndexedSeq
+        )
       }
-      if (bad){
+
+      def setDatenums(newval: Seq[String]): Unit = {
+        if (newval.isEmpty) {
+          hook += 1
+        }
+        val bad = newval.exists{ (s: String) =>
+          s.trim.isEmpty || !s.matches("[0-9]+")
+        }
+        if (bad){
+          hook += 1
+        }
+        _datenumstrings = newval.toIndexedSeq
+      }
+      def datenumstrings = _datenumstrings
+
+      def swapDayAndMonth(dayIndex: Int, monthIndex: Int, monthStr: String, numstrings: IndexedSeq[String]): IndexedSeq[String] = {
+        val maxIndex = numstrings.length - 1
+        assert(dayIndex >= 0 && monthIndex >= 0 && dayIndex <= maxIndex && monthIndex <= maxIndex)
+        val day = numstrings(dayIndex)
+        var newnumstrings = numstrings.updated(monthIndex, day)
+        newnumstrings = newnumstrings.updated(dayIndex, monthStr)
+        newnumstrings
+      }
+
+      val widenums = datenumstrings.filter { _.length >= 4 }
+      widenums.toList match {
+      case Nil => // no wide num fields
+      case year :: _ if year.length == 4 && year.toInt >= 1000 =>
+        yearIndex = datenumstrings.indexOf(year)
+        if (yearIndex > 3) {
+          val (left, rite) = datenumstrings.splitAt(yearIndex)
+          val newnumstrings = Seq(year) ++ left ++ rite.drop(1)
+          setDatenums(newnumstrings.toIndexedSeq)
+        }
         hook += 1
-      }
-      _datenumstrings = newval.toIndexedSeq
-    }
-    def datenumstrings = _datenumstrings
-
-    def swapDayAndMonth(dayIndex: Int, monthIndex: Int, monthStr: String, numstrings: IndexedSeq[String]): IndexedSeq[String] = {
-      val maxIndex = numstrings.length - 1
-      assert(dayIndex >= 0 && monthIndex >= 0 && dayIndex <= maxIndex && monthIndex <= maxIndex)
-      val day = numstrings(dayIndex)
-      var newnumstrings = numstrings.updated(monthIndex, day)
-      newnumstrings = newnumstrings.updated(dayIndex, monthStr)
-      newnumstrings
-    }
-
-    val widenums = datenumstrings.filter { _.length >= 4 }
-    widenums.toList match {
-    case Nil => // no wide num fields
-    case year :: _ if year.length == 4 =>
-      yearIndex = datenumstrings.indexOf(year)
-      if (yearIndex > 3) {
-        val (left, rite) = datenumstrings.splitAt(yearIndex)
-        val newnumstrings = Seq(year) ++ left ++ rite.drop(1)
+      case ymd :: _ =>
+        hook += 1       // maybe 20240213 or similar
+        var (y, m, d) = ("", "", "")
+        if (ymd.toInt >= 1000 && ymd.length == 8) {
+          // assume yyyy/mm/dd
+          y = ymd.take(4)
+          m = ymd.drop(4).take(2)
+          d = ymd.drop(6)
+        } else if (ymd.drop(4).matches("2[0-9]{3}") ){
+          if (monthFirst) {
+            // assume mm/dd/yyyy
+            m = ymd.take(2)
+            d = ymd.drop(2).take(2)
+            y = ymd.drop(4)
+          } else {
+            // assume dd/mm/yyyy
+            d = ymd.take(2)
+            m = ymd.drop(2).take(2)
+            y = ymd.drop(4)
+          }
+        }
+        val newymd = Seq(y, m, d)
+        val newnumstrings: Seq[String] = {
+          val head: String = datenumstrings.head
+          if (head == ymd) {
+            val rite: Seq[String] = datenumstrings.tail
+            val (mid: Seq[String], tail: Seq[String]) = rite.splitAt(1)
+            val hrmin: String = mid.mkString
+            if (hrmin.matches("[0-9]{3,4}")) {
+              val (hr: String, min: String) = hrmin.splitAt(hrmin.length-2)
+              val hour = if (hr.length == 1) {
+                s"0$hr"
+              } else {
+                hr
+              }
+              val lef: Seq[String] = newymd
+              val mid: Seq[String] = Seq(hour, min)
+              newymd ++ mid ++ tail
+            } else {
+              newymd ++ rite
+            }
+          } else {
+            val i = datenumstrings.indexOf(ymd)
+            val (left, rite) = datenumstrings.splitAt(i)
+            val newhrmin = rite.drop(1)
+            left ++ newymd ++ newhrmin
+          }
+        }
         setDatenums(newnumstrings.toIndexedSeq)
       }
-      hook += 1
-    case ymd :: _ =>
-      hook += 1       // maybe 20240213 or similar
-      var (y, m, d) = ("", "", "")
-      if (ymd.startsWith("2") && ymd.length == 8) {
-        // assume yyyy/mm/dd
-        y = ymd.take(4)
-        m = ymd.drop(4).take(2)
-        d = ymd.drop(6)
-      } else if (ymd.drop(4).matches("2[0-9]{3}") ){
-        if (monthFirst) {
-          // assume mm/dd/yyyy
-          m = ymd.take(2)
-          d = ymd.drop(2).take(2)
-          y = ymd.drop(4)
-        } else {
-          // assume dd/mm/yyyy
-          d = ymd.take(2)
-          m = ymd.drop(2).take(2)
-          y = ymd.drop(4)
+
+      if (yearIndex > 2) {
+        new ChronoParse(BadDate, _rawdatetime, "", Nil, false)
+      } else {
+        if (monthIndex < 0) {
+          // TODO : wrap this as a return value
+          (yearIndex, monthFirst) match {
+            case (-1, _) => // not enough info
+            case (0,  true) => // y-m-d
+              monthIndex = 1
+            case (0, false) => // y-d-m
+              monthIndex = 2
+            case (2,  true) => // m-d-y
+              monthIndex = 0
+            case (2, false) => // d-m-y
+              monthIndex = 1
+            case (1,  true) => // m-y-d // ambiguous!
+              confident = false
+              monthIndex = 0
+            case (1, false) => // d-y-m // ambiguous!
+              confident = false
+              monthIndex = 2
+            case _ =>
+              hook += 1 // TODO
+          }
         }
-      }
-      val newymd = Seq(y, m, d)
-      val newnumstrings: Seq[String] = {
-        val head: String = datenumstrings.head
-        if (head == ymd) {
-          val rite: Seq[String] = datenumstrings.tail
-          val (mid: Seq[String], tail: Seq[String]) = rite.splitAt(1)
-          val hrmin: String = mid.mkString
-          if (hrmin.matches("[0-9]{3,4}")) {
-            val (hr: String, min: String) = hrmin.splitAt(hrmin.length-2)
-            val hour = if (hr.length == 1) {
-              s"0$hr"
-            } else {
-              hr
+        def centuryPrefix(year: Int = now.getYear): String = {
+          century(year).toString.take(2)
+        }
+        def century(y: Int = now.getYear): Int = {
+          (y - y % 100)
+        }
+        (monthIndex, yearIndex) match {
+          case (_, -1) =>
+            datenumstrings.take(3) match {
+            case Seq(m: String, d: String, y:String) if m.length <= 2 & d.length <= 2 && y.length <= 2 =>
+              if (monthFirst) {
+                val fullyear = s"${centuryPrefix()}$y"
+                setDatenums(datenumstrings.updated(2, fullyear))
+              }
+            case _ =>
+              // TODO verify this cannot happen (year index not initialized yet, so previous case is complete)
+              hook += 1
             }
-            val lef: Seq[String] = newymd
-            val mid: Seq[String] = Seq(hour, min)
-            newymd ++ mid ++ tail
-          } else {
-            newymd ++ rite
-          }
-        } else {
-          val i = datenumstrings.indexOf(ymd)
-          val (left, rite) = datenumstrings.splitAt(i)
-          val newhrmin = rite.drop(1)
-          left ++ newymd ++ newhrmin
+
+          case (-1, _) =>
+            hook += 1
+          case (0, 2) | (1, 0) => // m-d-y | y-m-d (month precedes day)
+            val month = toNum(datenumstrings(monthIndex))
+            if (!monthFirst && month <= 12) {
+              val dayIndex = monthIndex + 1
+              // swap month and day, if preferred and possible
+              val day = datenumstrings(dayIndex)
+              var newnums = datenumstrings.updated(monthIndex, day)
+              newnums = newnums.updated(dayIndex, month.toString)
+              setDatenums(newnums)
+            }
+          case (1, 2) => // d-m-y
+            val month = toNum(datenumstrings(monthIndex))
+            if (monthFirst && month <= 12) {
+              // swap month and day, if preferred and possible
+              val dayIndex = monthIndex - 1
+              val swapped = swapDayAndMonth(dayIndex, monthIndex, month.toString, datenumstrings)
+              setDatenums(swapped)
+              // swap month and day, if preferred and possible
+    //          val day = datenumstrings(dayIndex)
+    //          setDatenums(datenumstrings.updated(monthIndex, day))
+    //          setDatenums(datenumstrings.updated(dayIndex, month.toString))
+            }
+          case (m, y) => // d-m-y
+            hook += 1 // TODO
         }
-      }
-      setDatenums(newnumstrings.toIndexedSeq)
-    }
-    if (monthIndex < 0) {
-      assert(yearIndex <= 2, s"year index > 2: $yearIndex") // TODO : wrap this as a return value
-      (yearIndex, monthFirst) match {
-        case (-1, _) => // not enough info
-        case (0,  true) => // y-m-d
-          monthIndex = 1
-        case (0, false) => // y-d-m
-          monthIndex = 2
-        case (2,  true) => // m-d-y
-          monthIndex = 0
-        case (2, false) => // d-m-y
-          monthIndex = 1
-        case (1,  true) => // m-y-d // ambiguous!
-          confident = false
-          monthIndex = 0
-        case (1, false) => // d-y-m // ambiguous!
-          confident = false
-          monthIndex = 2
-        case _ =>
-          hook += 1 // TODO
-      }
-    }
-    def centuryPrefix(year: Int = now.getYear): String = {
-      century(year).toString.take(2)
-    }
-    def century(y: Int = now.getYear): Int = {
-      (y - y % 100)
-    }
-    (monthIndex, yearIndex) match {
-      case (_, -1) =>
-        datenumstrings.take(3) match {
-        case Seq(m: String, d: String, y:String) if m.length <= 2 & d.length <= 2 && y.length <= 2 =>
-          if (monthFirst) {
-            val fullyear = s"${centuryPrefix()}$y"
-            setDatenums(datenumstrings.updated(2, fullyear))
+        if (monthIndex >= 0) {
+          val month = toNum(datenumstrings(monthIndex))
+          if (!monthFirst && month <= 12) {
+            // swap month and day, if preferred and possible
+            val day = datenumstrings(monthIndex + 1)
+            var newnums = datenumstrings.updated(monthIndex, day)
+            newnums = newnums.updated(monthIndex+1, month.toString)
+            setDatenums(newnums)
           }
-        case _ =>
-          // TODO verify this cannot happen (year index not initialized yet, so previous case is complete)
+        }
+        //var nums: Array[Int] = datefields.map { (s: String) => toI(s) }
+        var nums: Seq[Int] = datenumstrings.filter { _.trim.nonEmpty }.map { (numstr: String) =>
+          if (!numstr.matches("[0-9]+")) {
+            hook += 1
+          }
+          toNum(numstr)
+        }
+
+        val timeOnly: Boolean = datenumstrings.size <= 4 && rawdatetime.matches("[0-9]{2}:[0-9]{2}.*")
+        if ( !timeOnly ) {
+          def adjustYear(year: Int): Unit = {
+            nums = nums.take(2) ++ Seq(year) ++ nums.drop(3)
+            val newnums = nums.map { _.toString }
+            setDatenums(newnums)
+          }
+          val dateFields = nums.take(3)
+          dateFields match {
+          case Seq(a, b, c) if a > 31 || b > 31 || c > 31 =>
+            hook += 1 // the typical case where 4-digit year is provided
+          case Seq(a, b) =>
+            // the problem case; assume no year provided
+            adjustYear(now.getYear) // no year provided, use current year
+          case Seq(mOrD, dOrM, relyear) =>
+            // the problem case; assume M/d/y or d/M/y format
+            val y = now.getYear
+            val century = y - y % 100
+            adjustYear(century + relyear)
+          case _ =>
+            hook += 1 // huh?
+          }
+        }
+
+        val fields: Seq[(String, Int)] = datenumstrings.zipWithIndex
+        var (yval, mval, dval) = (0, 0, 0)
+        val farr = fields.toArray
+        var formats: Array[String] = farr.map { (s: String, i: Int) =>
+          if (i < 3 && !timeOnly) {
+            toNum(s) match {
+            case y if y > 31 || s.length == 4 =>
+              yval = y
+              s.replaceAll(".", "y")
+            case d if d > 12 && s.length <= 2 =>
+              dval = d
+              s.replaceAll(".", "d")
+            case _ => // can't resolve month without more context
+              s
+            }
+          } else {
+            i match {
+            case 3 => s.replaceAll(".", "H")
+            case 4 => s.replaceAll(".", "m")
+            case 5 => s.replaceAll(".", "s")
+            case 6 => s.replaceAll(".", "Z")
+            case _ =>
+              s // not expecting any more numeric fields
+            }
+          }
+        }
+        def indexOf(s: String): Int = {
+          formats.indexWhere((fld: String) =>
+            fld.startsWith(s)
+          )
+        }
+        def numIndex: Int = {
+          formats.indexWhere((s: String) => s.matches("[0-9]+"))
+        }
+        def setFirstNum(s: String): Int = {
+          val i = numIndex
+          if (i < 0) {
+            hook += 1
+          }
+          val numval = formats(i)
+          val numfmt = numval.replaceAll("[0-9]", s)
+          formats(i) = numfmt
+          toNum(numval)
+        }
+        // if two yyyy-MM-dd fields already fixed, the third is implied
+        formats.take(3).map { _.distinct }.sorted match {
+          case Array(_, "M", "y") => dval = setFirstNum("d")
+          case Array(_, "d", "y") => mval = setFirstNum("M")
+          case Array(_, "M", "d") => yval = setFirstNum("y")
+          case _arr =>
+            hook += 1 // more than one numeric fields, so not ready to resolve
+        }
+        hook += 1
+        def is(s: String, v: String): Boolean = s.startsWith(v)
+
+        val yidx = indexOf("y")
+        val didx = indexOf("d")
+        val midx = indexOf("M")
+
+        def hasY = yidx >= 0
+        def hasM = midx >= 0
+        def hasD = didx >= 0
+        def needsY = yidx < 0
+        def needsM = midx < 0
+        def needsD = didx < 0
+
+        def replaceFirstNumericField(s: String): Unit = {
+          val i = numIndex
+          if (i < 0) {
+            hook += 1 // no numerics found
+          } else {
+            assert(i >= 0 && i < 3, s"internal error: $_rawdatetime [i: $i, s: $s]")
+            s match {
+              case "y" =>
+                assert(yval == 0, s"yval: $yval")
+                yval = toNum(formats(i))
+              case "M" =>
+                assert(mval == 0, s"mval: $mval")
+                mval = toNum(formats(i))
+              case "d" =>
+                if (dval > 0) {
+                  hook += 1
+                }
+                assert(dval == 0, s"dval: $dval")
+                dval = toNum(formats(i))
+              case _ =>
+                sys.error(s"internal error: bad format indicator [$s]")
+            }
+            setFirstNum(s)
+          }
+        }
+
+        val needs = Seq(needsY, needsM, needsD)
+        (needsY, needsM, needsD) match {
+        case (false, false, true) =>
+          replaceFirstNumericField("d")
+        case (false, true, false) =>
+          replaceFirstNumericField("M")
+        case (true, false, false) =>
+          replaceFirstNumericField("y")
+
+        case (false, true,  true) =>
+          // has year, needs month and day
+          yidx match {
+          case 1 =>
+            // might as well support bizarre formats (M-y-d or d-M-y)
+            if (monthFirst) {
+              replaceFirstNumericField("M")
+              replaceFirstNumericField("d")
+            } else {
+              replaceFirstNumericField("d")
+              replaceFirstNumericField("M")
+            }
+          case 0 | 2 =>
+            // y-M-d
+            if (monthFirst) {
+              replaceFirstNumericField("M")
+              replaceFirstNumericField("d")
+            } else {
+              replaceFirstNumericField("d")
+              replaceFirstNumericField("M")
+            }
+
+          }
+        case (true,  true, false) =>
+          // has day, needs month and year
+          didx match {
+          case 0 =>
+            // d-M-y
+            replaceFirstNumericField("M")
+            replaceFirstNumericField("y")
+          case 2 =>
+            // y-M-d
+            replaceFirstNumericField("y")
+            replaceFirstNumericField("M")
+          case 1 =>
+            // AMBIGUOUS ...
+            if (monthFirst) {
+              // M-d-y
+              replaceFirstNumericField("d")
+              replaceFirstNumericField("M")
+            } else {
+              // d-M-y
+              replaceFirstNumericField("M")
+              replaceFirstNumericField("d")
+            }
+          }
+        case (false, false, false) =>
+          hook += 1 // done
+        case (true, true, true) if timeOnly =>
+          hook += 1 // done
+        case (yy, mm, dd) =>
+          formats.toList match {
+          case a :: b :: Nil =>
+            val (ta, tb) = (toNum(a), toNum(b))
+            // interpret as missing day or missing year
+            // missing day if either field is > 31
+            if (monthFirst && ta <= 12) {
+              mval = ta
+              dval = tb
+            } else {
+              mval = tb
+              dval = tb
+            }
+            if (mval > 31) {
+              // assume day is missing
+              yval = mval
+              mval = dval
+              dval = 1 // convention
+            } else if (dval > 31) {
+              // assume day is missing
+              yval = dval
+              dval = 1 // convention
+            } else {
+              if (mval > 12) {
+                // the above swap might make this superfluous
+                // swap month and day
+                val temp = mval
+                mval = dval
+                dval = temp
+              }
+              yval = now.getYear // supply missing year
+            }
+            // TODO: reorder based on legal field values, if appropriate
+            formats = Array("yyyy", "MM", "dd")
+            setDatenums(IndexedSeq(yval, mval, dval).map { _.toString })
+          case _ =>
+            if (datenumstrings.nonEmpty) {
+              sys.error(s"yy[$yy], mm[$mm], dd[$dd] datetime[$_rawdatetime], formats[${formats.mkString("|")}]")
+            }
+          }
+        }
+        if (datenumstrings.endsWith("2019") ){
           hook += 1
         }
 
-      case (-1, _) =>
-        hook += 1
-      case (0, 2) | (1, 0) => // m-d-y | y-m-d (month precedes day)
-        val month = toNum(datenumstrings(monthIndex))
-        if (!monthFirst && month <= 12) {
-          val dayIndex = monthIndex + 1
-          // swap month and day, if preferred and possible
-          val day = datenumstrings(dayIndex)
-          var newnums = datenumstrings.updated(monthIndex, day)
-          newnums = newnums.updated(dayIndex, month.toString)
-          setDatenums(newnums)
+        val bareformats = formats.map { _.distinct }.toList
+        nums = {
+          val tdnums = (datenumstrings ++ timestring.split("[+: ]+"))
+            tdnums.filter { _.trim.nonEmpty }.map { toNum(_) }
         }
-      case (1, 2) => // d-m-y
-        val month = toNum(datenumstrings(monthIndex))
-        if (monthFirst && month <= 12) {
-          // swap month and day, if preferred and possible
-          val dayIndex = monthIndex - 1
-          val swapped = swapDayAndMonth(dayIndex, monthIndex, month.toString, datenumstrings)
-          setDatenums(swapped)
-          // swap month and day, if preferred and possible
-//          val day = datenumstrings(dayIndex)
-//          setDatenums(datenumstrings.updated(monthIndex, day))
-//          setDatenums(datenumstrings.updated(dayIndex, month.toString))
-        }
-      case (m, y) => // d-m-y
-        hook += 1 // TODO
-    }
-    if (monthIndex >= 0) {
-      val month = toNum(datenumstrings(monthIndex))
-      if (!monthFirst && month <= 12) {
-        // swap month and day, if preferred and possible
-        val day = datenumstrings(monthIndex + 1)
-        var newnums = datenumstrings.updated(monthIndex, day)
-        newnums = newnums.updated(monthIndex+1, month.toString)
-        setDatenums(newnums)
-      }
-    }
-    //var nums: Array[Int] = datefields.map { (s: String) => toI(s) }
-    var nums: Seq[Int] = datenumstrings.map { (numstr: String) =>
-      if (!numstr.matches("[0-9]+")) {
-        hook += 1
-      }
-      toNum(numstr)
-    }
-
-    val timeOnly: Boolean = datenumstrings.size <= 4 && rawdatetime.matches("[0-9]{2}:[0-9]{2}.*")
-    if ( !timeOnly ) {
-      def adjustYear(year: Int): Unit = {
-        nums = nums.take(2) ++ Seq(year) ++ nums.drop(3)
-        val newnums = nums.map { _.toString }
-        setDatenums(newnums)
-      }
-      val dateFields = nums.take(3)
-      dateFields match {
-      case Seq(a, b, c) if a > 31 || b > 31 || c > 31 =>
-        hook += 1 // the typical case where 4-digit year is provided
-      case Seq(a, b) =>
-        // the problem case; assume no year provided
-        adjustYear(now.getYear) // no year provided, use current year
-      case Seq(mOrD, dOrM, relyear) =>
-        // the problem case; assume M/d/y or d/M/y format
-        val y = now.getYear
-        val century = y - y % 100
-        adjustYear(century + relyear)
-      case _ =>
-        hook += 1 // huh?
-      }
-    }
-
-    val fields: Seq[(String, Int)] = datenumstrings.zipWithIndex
-    var (yval, mval, dval) = (0, 0, 0)
-    val farr = fields.toArray
-    var formats: Array[String] = farr.map { (s: String, i: Int) =>
-      if (i < 3 && !timeOnly) {
-        toNum(s) match {
-        case y if y > 31 || s.length == 4 =>
-          yval = y
-          s.replaceAll(".", "y")
-        case d if d > 12 && s.length <= 2 =>
-          dval = d
-          s.replaceAll(".", "d")
-        case _ => // can't resolve month without more context
-          s
-        }
-      } else {
-        i match {
-        case 3 => s.replaceAll(".", "H")
-        case 4 => s.replaceAll(".", "m")
-        case 5 => s.replaceAll(".", "s")
-        case 6 => s.replaceAll(".", "Z")
-        case _ =>
-          s // not expecting any more numeric fields
-        }
-      }
-    }
-    def indexOf(s: String): Int = {
-      formats.indexWhere((fld: String) =>
-        fld.startsWith(s)
-      )
-    }
-    def numIndex: Int = {
-      formats.indexWhere((s: String) => s.matches("[0-9]+"))
-    }
-    def setFirstNum(s: String): Int = {
-      val i = numIndex
-      val numval = formats(i)
-      val numfmt = numval.replaceAll("[0-9]", s)
-      formats(i) = numfmt
-      toNum(numval)
-    }
-    // if two yyyy-MM-dd fields already fixed, the third is implied
-    formats.take(3).map { _.distinct }.sorted match {
-      case Array(_, "M", "y") => dval = setFirstNum("d")
-      case Array(_, "d", "y") => mval = setFirstNum("M")
-      case Array(_, "M", "d") => yval = setFirstNum("y")
-      case _arr =>
-        hook += 1 // more than one numeric fields, so not ready to resolve
-    }
-    hook += 1
-    def is(s: String, v: String): Boolean = s.startsWith(v)
-
-    val yidx = indexOf("y")
-    val didx = indexOf("d")
-    val midx = indexOf("M")
-
-    def hasY = yidx >= 0
-    def hasM = midx >= 0
-    def hasD = didx >= 0
-    def needsY = yidx < 0
-    def needsM = midx < 0
-    def needsD = didx < 0
-
-    def replaceFirstNumericField(s: String): Unit = {
-      val i = numIndex
-      if (i < 0) {
-        hook += 1 // no numerics found
-      } else {
-        assert(i >= 0 && i < 3, s"internal error: $_rawdatetime [i: $i, s: $s]")
-        s match {
-          case "y" =>
-            assert(yval == 0, s"yval: $yval")
-            yval = toNum(formats(i))
-          case "M" =>
-            assert(mval == 0, s"mval: $mval")
-            mval = toNum(formats(i))
-          case "d" =>
-            if (dval > 0) {
-              hook += 1
-            }
-            assert(dval == 0, s"dval: $dval")
-            dval = toNum(formats(i))
-          case _ =>
-            sys.error(s"internal error: bad format indicator [$s]")
-        }
-        setFirstNum(s)
-      }
-    }
-
-    val needs = Seq(needsY, needsM, needsD)
-    (needsY, needsM, needsD) match {
-    case (false, false, true) =>
-      replaceFirstNumericField("d")
-    case (false, true, false) =>
-      replaceFirstNumericField("M")
-    case (true, false, false) =>
-      replaceFirstNumericField("y")
-
-    case (false, true,  true) =>
-      // has year, needs month and day
-      yidx match {
-      case 1 =>
-        // might as well support bizarre formats (M-y-d or d-M-y)
-        if (monthFirst) {
-          replaceFirstNumericField("M")
-          replaceFirstNumericField("d")
-        } else {
-          replaceFirstNumericField("d")
-          replaceFirstNumericField("M")
-        }
-      case 0 | 2 =>
-        // y-M-d
-        if (monthFirst) {
-          replaceFirstNumericField("M")
-          replaceFirstNumericField("d")
-        } else {
-          replaceFirstNumericField("d")
-          replaceFirstNumericField("M")
-        }
-
-      }
-    case (true,  true, false) =>
-      // has day, needs month and year
-      didx match {
-      case 0 =>
-        // d-M-y
-        replaceFirstNumericField("M")
-        replaceFirstNumericField("y")
-      case 2 =>
-        // y-M-d
-        replaceFirstNumericField("y")
-        replaceFirstNumericField("M")
-      case 1 =>
-        // AMBIGUOUS ...
-        if (monthFirst) {
-          // M-d-y
-          replaceFirstNumericField("d")
-          replaceFirstNumericField("M")
-        } else {
-          // d-M-y
-          replaceFirstNumericField("M")
-          replaceFirstNumericField("d")
-        }
-      }
-    case (false, false, false) =>
-      hook += 1 // done
-    case (true, true, true) if timeOnly =>
-      hook += 1 // done
-    case (yy, mm, dd) =>
-      formats.toList match {
-      case a :: b :: Nil =>
-        val (ta, tb) = (toNum(a), toNum(b))
-        // interpret as missing day or missing year
-        // missing day if either field is > 31
-        if (monthFirst && ta <= 12) {
-          mval = ta
-          dval = tb
-        } else {
-          mval = tb
-          dval = tb
-        }
-        if (mval > 31) {
-          // assume day is missing
-          yval = mval
-          mval = dval
-          dval = 1 // convention
-        } else if (dval > 31) {
-          // assume day is missing
-          yval = dval
-          dval = 1 // convention
-        } else {
-          if (mval > 12) {
-            // the above swap might make this superfluous
-            // swap month and day
-            val temp = mval
-            mval = dval
-            dval = temp
+        def ymd(iy: Int, im: Int, id: Int, tail: List[String]): LocalDateTime = {
+          if (iy <0 || im <0 || id <0) {
+            hook += 1
+          } else if (nums.size < 3) {
+            hook += 1
           }
-          yval = now.getYear // supply missing year
+          val standardOrder = List(nums(iy), nums(im), nums(id)) ++ nums.drop(3)
+          yyyyMMddHHmmssToDate(standardOrder)
         }
-        // TODO: reorder based on legal field values, if appropriate
-        formats = Array("yyyy", "MM", "dd")
-        setDatenums(IndexedSeq(yval, mval, dval).map { _.toString })
-      case _ =>
-        if (datenumstrings.nonEmpty) {
-          sys.error(s"yy[$yy], mm[$mm], dd[$dd] datetime[$_rawdatetime], formats[${formats.mkString("|")}]")
+        val dateTime: LocalDateTime = bareformats match {
+          case "d" :: "M" :: "y" :: tail => ymd(2,1,0, tail)
+          case "M" :: "d" :: "y" :: tail => ymd(2,0,1, tail)
+          case "d" :: "y" :: "M" :: tail => ymd(1,2,0, tail)
+          case "M" :: "y" :: "d" :: tail => ymd(1,0,2, tail)
+          case "y" :: "d" :: "M" :: tail => ymd(0,2,1, tail)
+          case "y" :: "M" :: "d" :: tail => ymd(0,1,2, tail)
+          case other =>
+            valid = false
+            BadDate
         }
+        new ChronoParse(dateTime, _rawdatetime, timezone, formats.toSeq, valid)
       }
     }
-    if (datenumstrings.endsWith("2019") ){
-      hook += 1
-    }
+  }
+ 
+  def validYear(y: Int): Boolean = y > 0 && y < 2500
+  def validMonth(m: Int): Boolean = m > 0 && m <= 12 
+  def validDay(d: Int): Boolean = d > 0 && d <= 31 
 
-    val bareformats = formats.map { _.distinct }.toList
-    nums = {
-      val tdnums = (datenumstrings ++ timestring.split("[+: ]+"))
-        tdnums.filter { _.trim.nonEmpty }.map { toNum(_) }
-    }
-    def ymd(iy: Int, im: Int, id: Int, tail: List[String]): LocalDateTime = {
-      if (iy <0 || im <0 || id <0) {
-        hook += 1
-      } else if (nums.size < 3) {
-        hook += 1
-      }
-      val standardOrder = List(nums(iy), nums(im), nums(id)) ++ nums.drop(3)
-      yyyyMMddHHmmssToDate(standardOrder)
-    }
-    val dateTime: LocalDateTime = bareformats match {
-      case "d" :: "M" :: "y" :: tail => ymd(2,1,0, tail)
-      case "M" :: "d" :: "y" :: tail => ymd(2,0,1, tail)
-      case "d" :: "y" :: "M" :: tail => ymd(1,2,0, tail)
-      case "M" :: "y" :: "d" :: tail => ymd(1,0,2, tail)
-      case "y" :: "d" :: "M" :: tail => ymd(0,2,1, tail)
-      case "y" :: "M" :: "d" :: tail => ymd(0,1,2, tail)
-      case other =>
-        valid = false
-        BadDate
-    }
-    new ChronoParse(dateTime, _rawdatetime, timezone, formats.toSeq, valid)
+  def validYmd(ymd: Seq[Int]): Boolean = {
+    val Seq(y: Int, m: Int, d: Int) = ymd
+    validYear(y) && validMonth(m) && validDay(d)
   }
-  
+  def validTimeFields(nums: Seq[Int]): Boolean = {
+    nums.forall { (n: Int) => n >= 0 && n <= 59 }
+  }
   def yyyyMMddHHmmssToDate(so: List[Int]): LocalDateTime = {
-    so.take(7) match {
-    case yr :: mo :: dy :: hr :: mn :: sc :: nano :: Nil =>
-      LocalDateTime.of(yr, mo, dy, hr, mn, sc, nano)
-    case yr :: mo :: dy :: hr :: mn :: sc :: Nil =>
-      if (sc > 59 || mn > 59 || hr > 59) {
-        hook += 1
+    if (!validYmd(so.take(3))) {
+      BadDate 
+    } else if(!validTimeFields(so.drop(3))) {
+      BadDate 
+    } else {
+      so.take(7) match {
+      case yr :: mo :: dy :: hr :: mn :: sc :: nano :: Nil =>
+        if (hr > 12 || mn > 12 || sc > 12) {
+          BadDate
+        } else {
+          LocalDateTime.of(yr, mo, dy, hr, mn, sc, nano)
+        }
+      case yr :: mo :: dy :: hr :: mn :: sc :: Nil =>
+        if (sc > 59 || mn > 59 || hr > 59) {
+          hook += 1
+        }
+        LocalDateTime.of(yr, mo, dy, hr, mn, sc)
+      case yr :: mo :: dy :: hr :: mn :: Nil =>
+        LocalDateTime.of(yr, mo, dy, hr, mn, 0)
+      case yr :: mo :: dy :: hr :: Nil =>
+        if (hr > 23) {
+          hook += 1
+        }
+        LocalDateTime.of(yr, mo, dy, hr, 0, 0)
+      case yr :: mo :: dy :: Nil =>
+        if (mo > 12) {
+          hook += 1
+        }
+        LocalDateTime.of(yr, mo, dy, 0, 0, 0)
+      case other =>
+        //sys.error(s"not enough date-time fields: [${so.mkString("|")}]")
+        BadDate
       }
-      LocalDateTime.of(yr, mo, dy, hr, mn, sc)
-    case yr :: mo :: dy :: hr :: mn :: Nil =>
-      LocalDateTime.of(yr, mo, dy, hr, mn, 0)
-    case yr :: mo :: dy :: hr :: Nil =>
-      if (hr > 23) {
-        hook += 1
-      }
-      LocalDateTime.of(yr, mo, dy, hr, 0, 0)
-    case yr :: mo :: dy :: Nil =>
-      if (mo > 12) {
-        hook += 1
-      }
-      LocalDateTime.of(yr, mo, dy, 0, 0, 0)
-    case other =>
-      sys.error(s"not enough date-time fields: [${so.mkString("|")}]")
     }
   }
+
   lazy val timeZoneCodes = Set(
     "ACDT",  // Australian Central Daylight Saving Time	UTC+10:30
     "ACST",  // Australian Central Standard Time	UTC+09:30
@@ -928,8 +966,61 @@ object ChronoParse {
     "YAKT",  // Yakutsk Time	UTC+09
     "YEKT",  // Yekaterinburg Time 
   )
-}
+  lazy val NumberPattern = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)".r
 
+  // quick heuristic rejection of non-date strings 
+  def isPossibleDateString(s: String): Boolean = {
+
+    def isDecimalNum: Boolean = NumberPattern.matches(s) && s.replaceAll("[^.]+", "").length == 1
+
+    if (s.length < 4 || s.length > 35 || isDecimalNum ) {
+      false
+    } else {
+      val lc = s.toLowerCase.
+        replaceAll("[jfmasond][aerpuco][nbrylgptvc][uaryrchilestmbo]{0,6}", "1").
+        replaceAll("[mtwfs][ouehra][neduit][daysneru]{0,4}", "2")
+
+      var digits = 0
+      var nondigits = 0
+      var bogus = 0
+      val validchars = lc.filter { (c: Char) =>
+        c match {
+        case c if c >= '0' && c <= '9' =>
+          digits += 1
+          true
+        case ':' | '-' | '.' | '/' =>
+          nondigits += 1
+          true
+        case _ =>
+          bogus += 1
+          false
+        }
+      }
+      val density = 100.0 * validchars.size.toDouble / s.length.toDouble
+      val proportion = 100.0 * nondigits.toDouble / (digits+1.0)
+      digits >= 3 && digits <= 19 && density >= 30.0 && proportion < 35.0
+    }
+  }
+  def monthAbbrev2Number(name: String): Int = {
+    name.toLowerCase.substring(0, 3) match {
+    case "jan" => 1
+    case "feb" => 2
+    case "mar" => 3
+    case "apr" => 4
+    case "may" => 5
+    case "jun" => 6
+    case "jul" => 7
+    case "aug" => 8
+    case "sep" => 9
+    case "oct" => 10
+    case "nov" => 11
+    case "dec" => 12
+    case _ =>
+      hook += 1
+      -1
+    }
+  }
+}
 
 // TODO: use timezone info, including CST, etc
 case class ChronoParse(dateTime: LocalDateTime, rawdatetime: String, timezone: String, formats: Seq[String], valid: Boolean) {
