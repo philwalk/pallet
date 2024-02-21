@@ -7,7 +7,7 @@ object PathStrings {
     if (args.isEmpty) {
       printf("usage: %s <filepath-1> [<filepath2> ...]\n", scriptPath.name)
     } else {
-      val argv = prepArgs(args.toSeq)
+      val argv = prepArgv(args.toSeq)
       for (a <- argv) {
         printf("========== arg[%s]\n", a)
         printf("stdpath   [%s]\n", Paths.get(a).stdpath)

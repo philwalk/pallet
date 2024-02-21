@@ -103,20 +103,22 @@ trait TimeExtensions {
     def +(p: java.time.Period) = d.plus(p)
     def -(p: java.time.Period) = d.minus(p)
 
-    def minute = d.getMinute
-    def second = d.getSecond
-    def hour   = d.getHour
-    def day    = d.getDayOfMonth
-    def month  = d.getMonth
-    def year   = d.getYear
+    def year: Int     = d.getYear
+    def month: Month  = d.getMonth
+    def monthNum: Int = d.getMonth.getValue
+    def day: Int      = d.getDayOfMonth
+    def hour: Int     = d.getHour
+    def minute: Int   = d.getMinute
+    def second: Int   = d.getSecond
 
     def setHour(h: Int): LocalDateTime   = d.plusHours((d.getHour + h).toLong)
     def setMinute(m: Int): LocalDateTime = d.plusMinutes((d.getMinute + m).toLong)
 
     def compare(that: DateTime): Int = d.getMillis() compare that.getMillis()
-    def dayOfYear                    = d.getDayOfYear
-    def getDayOfYear                 = d.getDayOfYear
-    def dayOfMonth                   = d.getDayOfMonth
+    def getDayOfYear: Int            = d.getDayOfYear
+    def dayOfYear: Int               = d.getDayOfYear
+    def dayOfMonth: Int              = d.getDayOfMonth
+    def getDay: Int                  = d.getDayOfMonth
     def getDayOfMonth                = d.getDayOfMonth
     def dayOfWeek: DayOfWeek         = d.getDayOfWeek
     def getDayOfWeek: DayOfWeek      = d.getDayOfWeek

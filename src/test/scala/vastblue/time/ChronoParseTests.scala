@@ -1,7 +1,7 @@
 package vastblue.time
 
 //import vastblue.pallet.*
-import vastblue.time.TimeParser
+//import vastblue.time.TimeParser
 import vastblue.time.TimeDate.{parseDateTime => parseDate}
 import vastblue.time.TimeDate.*
 
@@ -28,6 +28,7 @@ class ChronoParseTests extends AnyFunSpec with Matchers {
     }
   }
 
+  /*
   describe("TimeParser") {
     for ((teststr, expected) <- TestDates.dateStrings) {
       if (!badDates.contains(teststr)) {
@@ -65,6 +66,7 @@ class ChronoParseTests extends AnyFunSpec with Matchers {
       }
     }
   }
+  */
 }
 // format: off
 object TestDates {

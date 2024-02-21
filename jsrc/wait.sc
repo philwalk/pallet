@@ -1,5 +1,5 @@
 #!/usr/bin/env -S scala
-package vastblue
+//package vastblue
 
 import vastblue.pallet._
 

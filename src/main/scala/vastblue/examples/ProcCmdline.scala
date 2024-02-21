@@ -1,5 +1,5 @@
-//#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.1/classes
-package vastblue.demo
+//#!/usr/bin/env -S scala -cp target/scala-3.3.1/classes
+package vastblue.examples
 
 import vastblue.pallet.*
 import vastblue.file.ProcfsPaths.*

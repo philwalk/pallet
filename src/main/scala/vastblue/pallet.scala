@@ -14,9 +14,11 @@ object pallet extends vastblue.util.PathExtensions {
   //def Paths        = vastblue.file.Paths
   def today        = now
   def yesterday    = now - 1.day
-  
+
+  def posixroot: String = vastblue.Platform.posixroot
+
   extension (p: Path) {
-    def lastModifiedTime       = whenModified(p.toFile)
+    def lastModifiedTime          = whenModified(p.toFile)
     def lastModSecondsDbl: Double = {
       secondsBetween(lastModifiedTime, now).toDouble
     }
