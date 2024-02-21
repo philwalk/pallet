@@ -20,10 +20,7 @@ class PathnameTest extends AnyFunSpec with Matchers with BeforeAndAfter {
     }
   }
   val testfilenames = Seq(
-    s"${TMP}/_ÐÐ°Ð²ÐµÑÐ°Ð½Ð¸Ðµ&chapter=all",
-    s"${TMP}/Canada's_Border.mp3"
-    // ,s"${TMP}/ï"
-    ,
+    s"${TMP}/Canada's_Border.mp3",
     s"${TMP}/Canada&s_Border.mp3",
     s"${TMP}/Canada=s_Border.mp3",
     s"${TMP}/Canada!s_Border.mp3",

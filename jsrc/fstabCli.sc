@@ -2,7 +2,7 @@
 
 //> using scala "3.3.1"
 //> using lib "org.vastblue::unifile::0.3.1"
-//> using lib "org.vastblue::pallet::0.10.7"
+//> using lib "org.vastblue::pallet::0.10.8"
 
 //import vastblue.pallet.*
 import vastblue.unifile.*
