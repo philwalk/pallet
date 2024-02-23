@@ -1,14 +1,12 @@
 package vastblue.time
 
 import vastblue.pallet.*
-//import vastblue.time.TimeParser
-import vastblue.time.ChronoParse
 
 import java.time.ZoneId
 import java.time.format.*
 import io.github.chronoscala.Imports.*
 
-import java.time.temporal.{ChronoField, TemporalAdjuster, TemporalAdjusters}
+import java.time.temporal.{TemporalAdjuster, TemporalAdjusters}
 import scala.util.matching.Regex
 
 object TimeDate extends vastblue.time.TimeExtensions {
@@ -28,12 +26,6 @@ object TimeDate extends vastblue.time.TimeExtensions {
   case _    => true
   }
   lazy val NullDate: LocalDateTime = DateTime.parse("0000-01-01T00:00:00") // .ofInstant(Instant.ofEpochMilli(0))
-
-  // Patterns permit but don't require time fields
-  // Used to parse both date and time from column 1.
-  // Permits but does not require column to be double-quoted.
-  lazy val YMDColumnPattern: Regex = """[^#\d]?(2\d{3})[-/](\d{1,2})[-/](\d{1,2})(.*)""".r
-  lazy val MDYColumnPattern: Regex = """[^#\d]?(\d{1,2})[-/](\d{1,2})[-/](2\d{3})(.*)""".r
 
   lazy val standardTimestampFormat = datetimeFmt6
 
@@ -59,9 +51,9 @@ object TimeDate extends vastblue.time.TimeExtensions {
   lazy val datetimeFormatter5: DateTimeFormatter  = dateTimeFormatPattern(datetimeFmt5)
   lazy val datetimeFormatter5b: DateTimeFormatter = dateTimeFormatPattern(datetimeFmt5b)
   lazy val dateonlyFormatter: DateTimeFormatter   = dateTimeFormatPattern(dateonlyFmt)
-  lazy val dateonlyFormatterB: DateTimeFormatter = dateTimeFormatPattern(dateonlyFmtB)
-
-  lazy val EasternTime: ZoneId  = java.time.ZoneId.of("America/New_York")
+//  lazy val dateonlyFormatterB: DateTimeFormatter = dateTimeFormatPattern(dateonlyFmtB)
+//
+//  lazy val EasternTime: ZoneId  = java.time.ZoneId.of("America/New_York")
   lazy val MountainTime: ZoneId = java.time.ZoneId.of("America/Denver")
   lazy val UTC: ZoneId          = java.time.ZoneId.of("UTC")
 
@@ -97,6 +89,7 @@ object TimeDate extends vastblue.time.TimeExtensions {
     }
     elapsedDays
   }
+
   // private var hook = 0
   def secondsBetween(idate1: DateTime, idate2: DateTime): Long = {
     // val d2d = idate1 to idate2 // new RichDuration(duration)
@@ -252,106 +245,106 @@ object TimeDate extends vastblue.time.TimeExtensions {
       }
     }
   }
-  private[vastblue] def _dateParser(inpDateStr: String, offset: Int = 0): DateTime = {
-    if (inpDateStr.startsWith("31/05/2009")) {
-      hook += 1
-    }
-    if (inpDateStr.contains("-07")) {
-      hook += 1
-    }
-    val _datestr = inpDateStr.trim.replaceAll("\"", "").replaceAll(" [-+][0-9]{4}$", "")
-    val zonestr: String = inpDateStr.drop(_datestr.length)
-    if (_datestr.isEmpty) {
-      BadDate
-    } else {
-      // val ff = _datestr.split("\\D+")
-      // first, deal with things like "12/31/21" and "22/5/5" (year has 2 digits)
-      _datestr match {
-      case ThreeIntegerFields1(_y, _m, _d) =>
-        if (_y.length > 2) {
-          val (y, m, d) = (_y.toInt, _m.toInt, _d.toInt)
-          new RichString("%4d-%02d-%02d".format(y, m, d)).toDateTime
-        } else {
-          val nums           = List(_y, _m, _d).map { _.toInt }
-          val possibleDays   = nums.zipWithIndex.filter { case (n, i) => n <= 31 }
-          val possibleMonths = nums.zipWithIndex.filter { case (n, i) => n <= 12 }
-          val (y, m, d) = possibleMonths match {
-          case (n, 0) :: list => (nums(2), nums(0), nums(1)) // m/d/y
-          case (n, 1) :: list => (nums(2), nums(1), nums(0)) // d/m/y
-          case _ =>
-            possibleDays match {
-            case (n, 0) :: list => (nums(2), nums(1), nums(0)) // d/m/y
-            case _              => (nums(2), nums(0), nums(1)) // m/d/y
-            }
-          }
-          val year = if (y >= 1000) y else y + 2000
-          new RichString("%4d-%02d-%02d".format(year, m, d)).toDateTime
-        }
-      case ThreeIntegerFields3(_m, _d, _y) =>
-        val (y, m, d) = (_y.toInt, _m.toInt, _d.toInt)
-        val year      = if (y >= 1000) y else y + 2000
-        new RichString("%4d-%02d-%02d".format(year, m, d)).toDateTime
-      case ThreeIntegerFields2(_x, _y, _z) =>
-        val nums           = List(_x, _y, _z).map { _.toInt }
-        val possibleDays   = nums.zipWithIndex.filter { case (n, i) => n <= 31 }
-        val possibleMonths = nums.zipWithIndex.filter { case (n, i) => n <= 12 }
-        val List(y, m, d)  = nums
-        val year           = if (y >= 1000) y else y + 2000
-        new RichString("%4d-%02d-%02d".format(year, m, d)).toDateTime
-      case _ =>
-        // next, treat yyyyMMdd (8 digits, no field separators)
-        if (_datestr.matches("""2\d{7}""")) {
-          new RichString(_datestr.replaceAll("(....)(..)(..)", "$1-$2-$3")).toDateTime
-        } else if (_datestr.matches("""\d{2}\D\d{2}\D\d{2}""")) {
-          // MM-dd-yy
-          val fixed = _datestr.split("\\D").toList match {
-          case m :: d :: y :: Nil =>
-            "%04d-%02d-%02d 00:00:00".format(2000 + y.toInt, m.toInt, d.toInt)
-          case _ =>
-            _datestr // no fix
-          }
-          //      printf("%s\n", datetimeFormatter.getClass)
-          //      datetimeFormatter6.parse(fixed)
-          DateTime.parse(fixed, datetimeFormatter6)
-        } else if (_datestr.matches("""2\d{3}\D\d{2}\D\d{2}\.\d{4}""")) {
-          // yyyy-MM-dd.HHMM
-          val fixed = _datestr.replaceAll("""(....)\D(..)\D(..)\.(\d\d)(\d\d)""", "$1-$2-$3 $4:$5:00")
-          DateTime.parse(fixed, datetimeFormatter6)
-        } else {
-          val datestr = _datestr.replaceAll("/", "-")
-          try {
-            val fixed = _datestr.
-              replaceAll(" [-+][0-9]{4}$", "").
-              replaceAll("([0-9])([A-Z])", "$1 $2").
-              replaceAll("([a-z])([0-9])", "$1 $2")
-            parseDateString(fixed)
-          } catch {
-            case r: RuntimeException if r.getMessage.toLowerCase.contains("bad date format") =>
-//              if (TimeParser.debug) System.err.printf("e[%s]\n", r.getMessage)
-              BadDate
-            case p: DateTimeParseException =>
-//              if (TimeParser.debug) System.err.printf("e[%s]\n", p.getMessage)
-              BadDate
-            case e: Exception =>
-//              if (TimeParser.debug) System.err.printf("e[%s]\n", e.getMessage)
-              BadDate
-/*
-              val mdate: TimeParser = TimeParser.parseDate(datestr).getOrElse(TimeParser.BadParsDate)
-              // val timestamp = new DateTime(mdate.getEpoch)
-              val standardFormat = mdate.toString(standardTimestampFormat)
-              val timestamp      = standardFormat.toDateTime
-              val hour           = timestamp.getHour // hourOfDay.get
-              // format: off
-              val extraHours = if (datestr.contains(" PM") && hour < 12) { 12 } else { 0 }
-              val hours      = (offset + extraHours).toLong
-              timestamp.plusHours(hours)
-              // format: on
- */
-          }
-        }
-      }
-    }
-  }
+//  private[vastblue] def _dateParser(inpDateStr: String, offset: Int = 0): DateTime = {
+//    if (inpDateStr.startsWith("31/05/2009")) {
+//      hook += 1
+//    }
+//    if (inpDateStr.contains("-07")) {
+//      hook += 1
+//    }
+//    val _datestr = inpDateStr.trim.replaceAll("\"", "").replaceAll(" [-+][0-9]{4}$", "")
+//    val zonestr: String = inpDateStr.drop(_datestr.length)
+//    if (_datestr.isEmpty) {
+//      BadDate
+//    } else {
+//      // val ff = _datestr.split("\\D+")
+//      // first, deal with things like "12/31/21" and "22/5/5" (year has 2 digits)
+//      _datestr match {
+//      case ThreeIntegerFields1(_y, _m, _d) =>
+//        if (_y.length > 2) {
+//          val (y, m, d) = (_y.toInt, _m.toInt, _d.toInt)
+//          new RichString("%4d-%02d-%02d".format(y, m, d)).toDateTime
+//        } else {
+//          val nums           = List(_y, _m, _d).map { _.toInt }
+//          val possibleDays   = nums.zipWithIndex.filter { case (n, i) => n <= 31 }
+//          val possibleMonths = nums.zipWithIndex.filter { case (n, i) => n <= 12 }
+//          val (y, m, d) = possibleMonths match {
+//          case (n, 0) :: list => (nums(2), nums(0), nums(1)) // m/d/y
+//          case (n, 1) :: list => (nums(2), nums(1), nums(0)) // d/m/y
+//          case _ =>
+//            possibleDays match {
+//            case (n, 0) :: list => (nums(2), nums(1), nums(0)) // d/m/y
+//            case _              => (nums(2), nums(0), nums(1)) // m/d/y
+//            }
+//          }
+//          val year = if (y >= 1000) y else y + 2000
+//          new RichString("%4d-%02d-%02d".format(year, m, d)).toDateTime
+//        }
+//      case ThreeIntegerFields3(_m, _d, _y) =>
+//        val (y, m, d) = (_y.toInt, _m.toInt, _d.toInt)
+//        val year      = if (y >= 1000) y else y + 2000
+//        new RichString("%4d-%02d-%02d".format(year, m, d)).toDateTime
+//      case ThreeIntegerFields2(_x, _y, _z) =>
+//        val nums           = List(_x, _y, _z).map { _.toInt }
+//        val possibleDays   = nums.zipWithIndex.filter { case (n, i) => n <= 31 }
+//        val possibleMonths = nums.zipWithIndex.filter { case (n, i) => n <= 12 }
+//        val List(y, m, d)  = nums
+//        val year           = if (y >= 1000) y else y + 2000
+//        new RichString("%4d-%02d-%02d".format(year, m, d)).toDateTime
+//      case _ =>
+//        // next, treat yyyyMMdd (8 digits, no field separators)
+//        if (_datestr.matches("""2\d{7}""")) {
+//          new RichString(_datestr.replaceAll("(....)(..)(..)", "$1-$2-$3")).toDateTime
+//        } else if (_datestr.matches("""\d{2}\D\d{2}\D\d{2}""")) {
+//          // MM-dd-yy
+//          val fixed = _datestr.split("\\D").toList match {
+//          case m :: d :: y :: Nil =>
+//            "%04d-%02d-%02d 00:00:00".format(2000 + y.toInt, m.toInt, d.toInt)
+//          case _ =>
+//            _datestr // no fix
+//          }
+//          //      printf("%s\n", datetimeFormatter.getClass)
+//          //      datetimeFormatter6.parse(fixed)
+//          DateTime.parse(fixed, datetimeFormatter6)
+//        } else if (_datestr.matches("""2\d{3}\D\d{2}\D\d{2}\.\d{4}""")) {
+//          // yyyy-MM-dd.HHMM
+//          val fixed = _datestr.replaceAll("""(....)\D(..)\D(..)\.(\d\d)(\d\d)""", "$1-$2-$3 $4:$5:00")
+//          DateTime.parse(fixed, datetimeFormatter6)
+//        } else {
+//          val datestr = _datestr.replaceAll("/", "-")
+//          try {
+//            val fixed = _datestr.
+//              replaceAll(" [-+][0-9]{4}$", "").
+//              replaceAll("([0-9])([A-Z])", "$1 $2").
+//              replaceAll("([a-z])([0-9])", "$1 $2")
+//            parseDateString(fixed)
+//          } catch {
+//            case r: RuntimeException if r.getMessage.toLowerCase.contains("bad date format") =>
+////              if (TimeParser.debug) System.err.printf("e[%s]\n", r.getMessage)
+//              BadDate
+//            case p: DateTimeParseException =>
+////              if (TimeParser.debug) System.err.printf("e[%s]\n", p.getMessage)
+//              BadDate
+//            case e: Exception =>
+////              if (TimeParser.debug) System.err.printf("e[%s]\n", e.getMessage)
+//              BadDate
+///*
+//              val mdate: TimeParser = TimeParser.parseDate(datestr).getOrElse(TimeParser.BadParsDate)
+//              // val timestamp = new DateTime(mdate.getEpoch)
+//              val standardFormat = mdate.toString(standardTimestampFormat)
+//              val timestamp      = standardFormat.toDateTime
+//              val hour           = timestamp.getHour // hourOfDay.get
+//              // format: off
+//              val extraHours = if (datestr.contains(" PM") && hour < 12) { 12 } else { 0 }
+//              val hours      = (offset + extraHours).toLong
+//              timestamp.plusHours(hours)
+//              // format: on
+// */
+//          }
+//        }
+//      }
+//    }
+//  }
 
   def standardTime(datestr: String, offset: Int = 0): String = {
     dateParser(datestr, offset).toString(standardTimestampFormat)
@@ -592,5 +585,17 @@ object TimeDate extends vastblue.time.TimeExtensions {
   def date2string(d: DateTime, fmt: String = "yyyy-MM-dd"): String = d match {
   case EmptyDate => ""
   case other     => other.toString(fmt)
+  }
+
+  object sysTimer {
+    var begin         = System.currentTimeMillis
+    def reset(): Unit = { begin = System.currentTimeMillis }
+    def elapsed: Long = System.currentTimeMillis - begin
+    def elapsedMillis = elapsed
+
+    def elapsedSeconds: Double = elapsed.toDouble / 1000.0
+    def elapsedMinutes: Double = elapsed.toDouble / (60.0 * 1000.0)
+    def elapsedHours: Double   = elapsed.toDouble / (60.0 * 60.0 * 1000.0)
+    def elapsedDays: Double    = elapsed.toDouble / (24.0 * 60.0 * 60.0 * 1000.0)
   }
 }

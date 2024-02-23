@@ -1,0 +1,21 @@
+# .github/workflows/dependency-graph.yml
+name: Update Dependency Graph
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main # default branch of the project
+jobs:
+  dependency-graph:
+    name: Update Dependency Graph
+    permissions:
+      actions: read
+      contents: write # this permission is needed to submit the dependency graph
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: scalacenter/sbt-dependency-submission@v2
+        with:
+          working-directory: .
+          configs-ignore: scala-doc-tool
