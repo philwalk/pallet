@@ -43,7 +43,7 @@ object FastCsv {
       throw new java.nio.file.NoSuchFileException(s"${p.posx}")
     }
     val lines         = readLines(p)
-    def autoDelimiter = autoDetectDelimiter(lines.take(20).mkString("\n"), p.toString, ignoreErrors = false)
+    def autoDelimiter = autoDetectDelimiter(lines.take(100).mkString("\n"), p.toString, ignoreErrors = false)
     val aDelimiter    = if (delimiter.nonEmpty) delimiter else autoDelimiter
     val str           = p.contentAsString
     val reader        = new StringReader(str)
@@ -74,7 +74,8 @@ object FastCsv {
     //    3. count columns-per-row tallies using various delimiters
     //    4. the tally with the most consistency is the "winner"
     (commas, tabs, pipes, semis) match {
-    case (cms, tbs, pps, sms) if cms > tbs && cms >= pps && cms >= sms  => ","
+      // in case of a tie between commas and tabs, commas win (TODO: configurable)
+    case (cms, tbs, pps, sms) if cms >= tbs && cms >= pps && cms >= sms  => ","
     case (cms, tbs, pps, sms) if tbs >= cms && tbs >= pps && tbs >= sms => "\t"
     case (cms, tbs, pps, sms) if pps > cms && pps > tbs && pps > sms    => "|"
     case (cms, tbs, pps, sms) if sms > cms && sms > tbs && sms > pps    => ";"

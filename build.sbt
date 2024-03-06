@@ -1,4 +1,4 @@
-//lazy val scala213 = "2.13.12"
+lazy val scala213 = "2.13.13"
 lazy val scala331 = "3.3.1"
 lazy val scalaVer = scala331
 
@@ -9,7 +9,7 @@ javacOptions ++= Seq("-source", "11", "-target", "11")
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.10.8"
+ThisBuild / version       := "0.10.9"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -19,6 +19,9 @@ ThisBuild / organizationHomepage := Some(url("https://vastblue.org"))
 //cancelable in Global := true
 
 parallelExecution := false
+
+Compile / packageBin / packageOptions +=
+  Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
 
 ThisBuild / scmInfo := Some(
   ScmInfo(
@@ -70,7 +73,7 @@ lazy val root = (project in file(".")).
 libraryDependencies ++= Seq(
   "org.simpleflatmapper"   % "sfm-csv"         % "8.2.3",
   "com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
-  "org.scalatest"         %% "scalatest"       % "3.2.17" % Test,
+  "org.scalatest"         %% "scalatest"       % "3.2.18" % Test,
   "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
   "org.vastblue"           % "unifile_3"       % "0.3.1",
 //"com.github.sisyphsu"    % "dateparser"      % "1.0.11",
