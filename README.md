@@ -1,7 +1,12 @@
 # pallet
-Library for Cross-Platform Development
 
-<img alt="pallet image" width=200 src="images/wooden-pallet.png">
+
+### Library for Cross-Platform Development
+
+![CI](https://github.com/philwalk/pallet/actions/workflows/scala.yml/badge.svg)
+
+<img alt="pallet image" width=240 src="images/wooden-pallet.png">
+
 
 Provides support for expressive idioms typical of scripting languages, for writing portable code that runs everywhere.
 
