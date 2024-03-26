@@ -9,7 +9,7 @@ javacOptions ++= Seq("-source", "11", "-target", "11")
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.10.9"
+ThisBuild / version       := "0.10.10"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -75,8 +75,7 @@ libraryDependencies ++= Seq(
   "com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
   "org.scalatest"         %% "scalatest"       % "3.2.18" % Test,
   "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
-  "org.vastblue"           % "unifile_3"       % "0.3.1",
-//"com.github.sisyphsu"    % "dateparser"      % "1.0.11",
+  "org.vastblue"           % "unifile_3"       % "0.3.2",
 )
 
 /*
