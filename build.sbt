@@ -71,7 +71,7 @@ lazy val root = (project in file(".")).
   )
 
 libraryDependencies ++= Seq(
-  "org.simpleflatmapper"   % "sfm-csv"         % "8.2.3",
+  "org.simpleflatmapper"   % "sfm-csv"         % "9.0.0",
   "com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
   "org.scalatest"         %% "scalatest"       % "3.2.18" % Test,
   "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
