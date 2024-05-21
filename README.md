@@ -35,7 +35,7 @@ For `scala` or `scala-cli` scripts, see examples below.
 Simplicity and Universal Portability:
 * Use `scala` instead of `bash` or `python` for portable general purpose scripting
 * Publish universal scala scripts, rather than multiple OS-customized versions
-* Script as though you're running in on Linux environment.
+* Script as though you're running in Linux, even on Windows or Mac.
 * Convenient runtime branching based on runtime environment:
 ```scala
 #!/usr/bin/env -S scala-cli shebang
@@ -63,7 +63,7 @@ import vastblue.pallet.*
 * extends the range of scala scripting:
 Example: read process command lines from `/proc/$PID/cmdline` files
 ```scala
-#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.1/classes
+#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.3/classes
 
 import vastblue.pallet.*
 import vastblue.file.ProcfsPaths.cmdlines
@@ -98,14 +98,14 @@ output when run from a Windows `Msys64` bash session:
 script name: jsrc/procCmdline.sc
 
 /proc/32314/cmdline
-'C:\opt\jdk\bin\java.exe' '-Dscala.home=C:/opt/scala' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.3.1.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.3.1.jar;C:/opt/scala/lib/scala3-compiler_3-3.3.1.jar;C:/opt/scala/lib/tasty-core_3-3.3.1.jar;C:/opt/scala/lib/scala3-staging_3-3.3.1.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.3.1.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' 'dotty.tools.MainGenericRunner' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.3.1.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.3.1.jar;C:/opt/scala/lib/scala3-compiler_3-3.3.1.jar;C:/opt/scala/lib/tasty-core_3-3.3.1.jar;C:/opt/scala/lib/scala3-staging_3-3.3.1.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.3.1.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' '-deprecation' '-cp' 'target/scala-3.3.1/classes' './procCmdline.sc'
+'C:\opt\jdk\bin\java.exe' '-Dscala.home=C:/opt/scala' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.3.3.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.3.3.jar;C:/opt/scala/lib/scala3-compiler_3-3.3.3.jar;C:/opt/scala/lib/tasty-core_3-3.3.3.jar;C:/opt/scala/lib/scala3-staging_3-3.3.3.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.3.3.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' 'dotty.tools.MainGenericRunner' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.3.3.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.3.3.jar;C:/opt/scala/lib/scala3-compiler_3-3.3.3.jar;C:/opt/scala/lib/tasty-core_3-3.3.3.jar;C:/opt/scala/lib/scala3-staging_3-3.3.3.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.3.3.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' '-deprecation' '-cp' 'target/scala-3.3.3/classes' './procCmdline.sc'
 
 /proc/32274/cmdline
-'bash' '/c/opt/scala/bin/scala' '-deprecation' '-cp' 'target/scala-3.3.1/classes' './procCmdline.sc'
+'bash' '/c/opt/scala/bin/scala' '-deprecation' '-cp' 'target/scala-3.3.3/classes' './procCmdline.sc'
 ```
 Example #2: write and read `.csv` files:
 ```scala
-#!/usr/bin/env -S scala -cp target/scala-3.3.1/classes
+#!/usr/bin/env -S scala -cp target/scala-3.3.3/classes
 //package vastblue
 
 import vastblue.pallet.*
@@ -269,7 +269,7 @@ object Fstab {
 ```scala
 #!/ usr / bin / env -S scala -cli shebang
 
-//> using scala "3.3.1"
+//> using scala "3.3.3"
 //> using lib "org.vastblue::pallet::0.10.8"
 
 import vastblue.pallet.*
@@ -301,7 +301,7 @@ Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extensio
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using scala "3.3.1"
+//> using scala "3.3.3"
 //> using lib "org.vastblue::pallet::0.10.8"
 
 import vastblue.pallet.*

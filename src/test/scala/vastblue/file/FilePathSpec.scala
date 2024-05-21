@@ -27,7 +27,7 @@ class FilePathSpec extends AnyFunSpec with Matchers with BeforeAndAfter {
       it (" should be correct for os") {
         val hd = Platform.hereDrive
         val workingDrive: String = Platform.workingDrive.string
-        assert(hd equalsIgnoreCase workingDrive)
+        assert(hd.equalsIgnoreCase(workingDrive))
         if (isWindows) {
           assert(hd.matches("[a-zA-Z]:"))
         } else {

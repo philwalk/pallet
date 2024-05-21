@@ -1,11 +1,10 @@
-//#!/usr/bin/env -S scala -cp target/scala-3.3.1/classes
+//#!/usr/bin/env -S scala -cp target/scala-3.3.3/classes
 package vastblue.examples
 
 import vastblue.pallet.*
 
 object CsvWriteRead {
   def main(args: Array[String]): Unit = {
-    
     var testFiles = args.filter { _.path.isFile }.toSeq
     if (testFiles.isEmpty) testFiles = Seq("tabTest.csv", "commaTest.csv")
 

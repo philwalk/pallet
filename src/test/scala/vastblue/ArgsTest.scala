@@ -49,6 +49,6 @@ class ArgsTest extends AnyFunSpec with Matchers {
   // format: on
 
   def ix(arg: String*): IndexedSeq[String] = {
-    IndexedSeq(arg: _*)
+    IndexedSeq(arg *)
   }
 }
