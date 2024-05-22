@@ -1,15 +1,17 @@
-lazy val scala213 = "2.13.13"
-lazy val scala331 = "3.3.1"
-lazy val scalaVer = scala331
+//lazy val scala213 = "2.13.13"
+lazy val scala3 = "3.3.3"
+lazy val scalaVer = scala3
 
-lazy val supportedScalaVersions = List(scala331)
+lazy val supportedScalaVersions = List(scala3)
 // lazy val supportedScalaVersions = List(scalaVer)
 
 javacOptions ++= Seq("-source", "11", "-target", "11")
 
+//enablePlugins(ScalaNativePlugin)
+
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.10.10"
+ThisBuild / version       := "0.10.11"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -60,22 +62,26 @@ resolvers += Resolver.mavenLocal
 
 publishTo := sonatypePublishToBundle.value
 
+Compile / packageBin / packageOptions +=
+  Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
+
 lazy val root = (project in file(".")).
   enablePlugins(BuildInfoPlugin).
   settings(
     crossScalaVersions := supportedScalaVersions,
     name               := "pallet",
+    description        := "scala scripting support",
  // mainClass          := Some("vast.apps.ShowSysProps"),
     buildInfoKeys      := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage   := "pallet", // available as "import pallet.BuildInfo"
   )
 
 libraryDependencies ++= Seq(
-  "org.simpleflatmapper"   % "sfm-csv"         % "9.0.0",
-  "com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
   "org.scalatest"         %% "scalatest"       % "3.2.18" % Test,
+//"com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
+  "org.simpleflatmapper"   % "sfm-csv"         % "9.0.0",
   "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
-  "org.vastblue"           % "unifile_3"       % "0.3.2",
+  "org.vastblue"           % "unifile_3"       % "0.3.3",
 )
 
 /*

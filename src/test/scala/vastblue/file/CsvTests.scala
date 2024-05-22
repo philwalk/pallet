@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 class CsvTests extends AnyFunSpec with Matchers with BeforeAndAfter {
   lazy val TMP = sys.props("java.io.tmpdir")
 
-  @volatile lazy val csvTestFile = {
+  lazy val csvTestFile = {
     val fnamestr = s"${TMP}/youMayDeleteThisDebrisCsvParser.csv"
     printf("csvTestFile[%s]\n", fnamestr)
     val path = Paths.get(fnamestr)

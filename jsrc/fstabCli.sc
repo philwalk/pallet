@@ -1,8 +1,8 @@
 #!/usr/bin/env -S scala-cli shebang
 
-//> using scala "3.3.1"
-//> using lib "org.vastblue::unifile::0.3.1"
-//> using lib "org.vastblue::pallet::0.10.8"
+//> using scala "3.3.3"
+//> using lib "org.vastblue::unifile::0.3.3"
+//> using lib "org.vastblue::pallet::0.10.11"
 
 //import vastblue.pallet.*
 import vastblue.unifile.*

@@ -15,7 +15,7 @@ class FastCsvTest extends AnyFunSpec with Matchers with BeforeAndAfter {
     }
   }
 
-  @volatile lazy val testCsv = new java.io.File(s"${TMP}/FastCsvTest01.csv")
+  lazy val testCsv = new java.io.File(s"${TMP}/FastCsvTest01.csv")
   after {
     if (testCsv.exists) testCsv.delete()
   }
@@ -63,7 +63,7 @@ class FastCsvTest extends AnyFunSpec with Matchers with BeforeAndAfter {
 
   case class TestItem(in: String, errors: Int, rows: Seq[String], columnTypes: String = "")
   def q = "\""
-  @volatile lazy val testItems = Seq[TestItem](
+  lazy val testItems = Seq[TestItem](
     TestItem("a,b,c", 0, Seq("a", "b", "c"), ""),
     TestItem("1,2,3", 0, Seq("1", "2", "3"), ""),
 //  TestItem("1,2,3", 0, Seq( 1 , 2 , 3 ), "iii"),

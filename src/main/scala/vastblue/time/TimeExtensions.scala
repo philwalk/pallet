@@ -29,7 +29,7 @@ trait TimeExtensions {
         sys.error(s"cannot convert to DateTime from: ${ta.getClass.getName}")
     }
   }
-  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
+  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ `isBefore` _)
   implicit def int2richInt(i: Int): RichInt         = new RichInt(i)
   implicit def int2Period(i: Int): java.time.Period = java.time.Period.ofWeeks(i)
 
