@@ -1,5 +1,5 @@
-//lazy val scala213 = "2.13.13"
-lazy val scala3 = "3.3.3"
+//lazy val scala213 = "2.13.14"
+lazy val scala3   = "3.4.2"
 lazy val scalaVer = scala3
 
 lazy val supportedScalaVersions = List(scala3)
@@ -8,10 +8,11 @@ lazy val supportedScalaVersions = List(scala3)
 javacOptions ++= Seq("-source", "11", "-target", "11")
 
 //enablePlugins(ScalaNativePlugin)
+//nativeLinkStubs := true
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.10.11"
+ThisBuild / version       := "0.10.15" // jetison  // last org.simpleflatmapper sfm-csv version is 0.10.11
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -53,14 +54,14 @@ ThisBuild / publishTo := {
 
 ThisBuild / publishMavenStyle.withRank(KeyRanks.Invisible) := true
 
-ThisBuild / crossScalaVersions := supportedScalaVersions
-
 // For all Sonatype accounts created on or after February 2021
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 resolvers += Resolver.mavenLocal
 
 publishTo := sonatypePublishToBundle.value
+
+ThisBuild / crossScalaVersions := supportedScalaVersions
 
 Compile / packageBin / packageOptions +=
   Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
@@ -77,11 +78,12 @@ lazy val root = (project in file(".")).
   )
 
 libraryDependencies ++= Seq(
-  "org.scalatest"         %% "scalatest"       % "3.2.18" % Test,
-//"com.github.sbt"         % "junit-interface" % "0.13.3" % Test,
-  "org.simpleflatmapper"   % "sfm-csv"         % "9.0.0",
-  "io.github.chronoscala" %% "chronoscala"     % "2.0.10",
-  "org.vastblue"           % "unifile_3"       % "0.3.3",
+  "org.scalatest"            %% "scalatest"       % "3.2.19" % Test,
+//"com.github.sbt"            % "junit-interface" % "0.13.3" % Test,
+  "org.simpleflatmapper"      % "sfm-csv"         % "9.0.2",
+  "com.github.tototoshi"     %% "scala-csv"       % "2.0.0",
+  "io.github.chronoscala"    %% "chronoscala"     % "2.0.10",
+  "org.vastblue"              % "unifile_3"       % "0.3.5",
 )
 
 /*
