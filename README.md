@@ -9,6 +9,7 @@
 
 
 Provides support for expressive idioms typical of scripting languages, for writing portable code that runs everywhere.
+Leverages `vastblue.unifile.Paths.get()` to support both `posix` and `Windows` filesystem paths.
 
 * Supported Scala Versions
   * `scala 3.x`
@@ -27,7 +28,7 @@ Provides support for expressive idioms typical of scripting languages, for writi
 
 To use `pallet` in an `SBT` project, add this dependency to `build.sbt`
 ```sbt
-  "org.vastblue" % "pallet_3" % "0.10.8"
+  "org.vastblue" % "pallet_3" % "0.10.16"
 ```
 For `scala` or `scala-cli` scripts, see examples below.
 
@@ -40,7 +41,7 @@ Simplicity and Universal Portability:
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using lib "org.vastblue::pallet::0.10.8"
+//> using dep "org.vastblue::pallet::0.10.16"
 import vastblue.pallet.*
 
   printf("uname / osType / osName:\n%s\n", s"platform info: ${unameLong} / ${osType} / ${osName}")
@@ -63,7 +64,7 @@ import vastblue.pallet.*
 * extends the range of scala scripting:
 Example: read process command lines from `/proc/$PID/cmdline` files
 ```scala
-#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.3/classes
+#!/usr/bin/env -S scala -deprecation -cp target/scala-3.4.3/classes
 
 import vastblue.pallet.*
 import vastblue.file.ProcfsPaths.cmdlines
@@ -98,14 +99,14 @@ output when run from a Windows `Msys64` bash session:
 script name: jsrc/procCmdline.sc
 
 /proc/32314/cmdline
-'C:\opt\jdk\bin\java.exe' '-Dscala.home=C:/opt/scala' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.3.3.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.3.3.jar;C:/opt/scala/lib/scala3-compiler_3-3.3.3.jar;C:/opt/scala/lib/tasty-core_3-3.3.3.jar;C:/opt/scala/lib/scala3-staging_3-3.3.3.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.3.3.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' 'dotty.tools.MainGenericRunner' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.3.3.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.3.3.jar;C:/opt/scala/lib/scala3-compiler_3-3.3.3.jar;C:/opt/scala/lib/tasty-core_3-3.3.3.jar;C:/opt/scala/lib/scala3-staging_3-3.3.3.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.3.3.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' '-deprecation' '-cp' 'target/scala-3.3.3/classes' './procCmdline.sc'
+'C:\opt\jdk\bin\java.exe' '-Dscala.home=C:/opt/scala' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.4.3.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.4.3.jar;C:/opt/scala/lib/scala3-compiler_3-3.4.3.jar;C:/opt/scala/lib/tasty-core_3-3.4.3.jar;C:/opt/scala/lib/scala3-staging_3-3.4.3.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.4.3.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' 'dotty.tools.MainGenericRunner' '-classpath' 'C:/opt/scala/lib/scala-library-2.13.10.jar;C:/opt/scala/lib/scala3-library_3-3.4.3.jar;C:/opt/scala/lib/scala-asm-9.5.0-scala-1.jar;C:/opt/scala/lib/compiler-interface-1.3.5.jar;C:/opt/scala/lib/scala3-interfaces-3.4.3.jar;C:/opt/scala/lib/scala3-compiler_3-3.4.3.jar;C:/opt/scala/lib/tasty-core_3-3.4.3.jar;C:/opt/scala/lib/scala3-staging_3-3.4.3.jar;C:/opt/scala/lib/scala3-tasty-inspector_3-3.4.3.jar;C:/opt/scala/lib/jline-reader-3.19.0.jar;C:/opt/scala/lib/jline-terminal-3.19.0.jar;C:/opt/scala/lib/jline-terminal-jna-3.19.0.jar;C:/opt/scala/lib/jna-5.3.1.jar;;' '-deprecation' '-cp' 'target/scala-3.4.3/classes' './procCmdline.sc'
 
 /proc/32274/cmdline
-'bash' '/c/opt/scala/bin/scala' '-deprecation' '-cp' 'target/scala-3.3.3/classes' './procCmdline.sc'
+'bash' '/c/opt/scala/bin/scala' '-deprecation' '-cp' 'target/scala-3.4.3/classes' './procCmdline.sc'
 ```
 Example #2: write and read `.csv` files:
 ```scala
-#!/usr/bin/env -S scala -cp target/scala-3.3.3/classes
+#!/usr/bin/env -S scala -cp target/scala-3.4.3/classes
 //package vastblue
 
 import vastblue.pallet.*
@@ -144,13 +145,13 @@ $ time jsrc/csvWriteRead.sc
 ```
 Output:
 ```bash
-# filename: C:/Users/philwalk/workspace/pallet/tabTest.csv
+# filename: C:/Users/username/workspace/pallet/tabTest.csv
 0: 1st  2nd     3rd
 1: A    B       C
 1st|2nd|3rd
 A|B|C
 
-# filename: C:/Users/philwalk/workspace/pallet/commaTest.csv
+# filename: C:/Users/username/workspace/pallet/commaTest.csv
 0: 1st,2nd,3rd
 1: A,B,C
 1st|2nd|3rd
@@ -231,7 +232,7 @@ Some differences to be aware of between `scala-cli` scripts and conventional `sc
 For a per-user classpath `atFile`, define your classpath in a file named, e.g., `/Users/username/.scala3cp`.
 To include the `scala3` version of this library, for example, the `@file` might contain:
 ```
--classpath /Users/username/.ivy2/local/org.vastblue/pallet_3/0.10.8/jars/pallet_3.jar
+-classpath /Users/username/.ivy2/local/org.vastblue/pallet_3/0.10.16/jars/pallet_3.jar
 ```
 With this configuration, your scala 3 `shebang` line will look like this:
 ```scala
@@ -269,8 +270,8 @@ object Fstab {
 ```scala
 #!/ usr / bin / env -S scala -cli shebang
 
-//> using scala "3.3.3"
-//> using lib "org.vastblue::pallet::0.10.8"
+//> using scala "3.4.3"
+//> using dep "org.vastblue::pallet::0.10.16"
 
 import vastblue.pallet.*
 import vastblue.Platform.*
@@ -301,8 +302,8 @@ Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extensio
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using scala "3.3.3"
-//> using lib "org.vastblue::pallet::0.10.8"
+//> using scala "3.4.3"
+//> using dep "org.vastblue::pallet::0.10.16"
 
 import vastblue.pallet.*
 

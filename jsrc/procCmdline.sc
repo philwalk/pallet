@@ -1,4 +1,4 @@
-#!/usr/bin/env -S scala -deprecation -cp target/scala-3.3.3/classes
+#!/usr/bin/env -S scala -deprecation -cp target/scala-3.4.3/classes
 //package vastblue.examples
 
 import vastblue.pallet.*
