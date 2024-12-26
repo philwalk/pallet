@@ -2,7 +2,7 @@ scalaVersion := "2.12.20"
 
 val SONATYPE_VERSION = sys.env.getOrElse("SONATYPE_VERSION", "3.12.2") // "3.10.0")
 
-//addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.17")
+//addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.3") // "0.4.17")
 
 addSbtPlugin("ch.epfl.scala"  % "sbt-bloop"     % "2.0.6")
 addSbtPlugin("ch.epfl.scala"  % "sbt-scalafix"  % "0.13.0")
