@@ -8,11 +8,11 @@ import vastblue.unifile.*
  *   + fetch and list dependency file paths
  *   + convert sbt dependencies to scala-cli "using dep" format
  *
- * Example conversion from sbt dependency format to scala-cli lib format:
+ * Example conversion from sbt dependency format to scala-cli dep format:
  *
  * from:
- *   org.vastblue             %% unifile       % 0.3.6
- *   org.vastblue             %% pallet        % 0.10.16
+ *   org.vastblue             %% unifile       % 0.3.7
+ *   org.vastblue             %% pallet        % 0.10.17
  *   org.scalanlp             %% breeze-viz    % 2.1.0
  *   org.scalanlp             %% breeze        % 2.1.0
  *   org.scala-lang.modules   %% scala-xml     % 2.2.0
@@ -23,8 +23,8 @@ import vastblue.unifile.*
  *   com.github.darrenjw      %% scala-glm     % 0.8
  *
  * to:
- *   //> using dep "org.vastblue::pallet::0.10.16"
- *   //> using dep "org.vastblue::unifile::0.3.6"
+ *   //> using dep "org.vastblue::pallet::0.10.17"
+ *   //> using dep "org.vastblue::unifile::0.3.7"
  *   //> using dep "org.scalanlp::breeze-viz::2.1.0"
  *   //> using dep "org.scalanlp::breeze::2.1.0"
  *   //> using dep "org.scala-lang.modules::scala-xml::2.2.0"
@@ -40,7 +40,7 @@ object Sbt2cs {
       "[<inputFile>]",
      s"[-sbt [<sbt-sourcefile>]   ; default: ${defaultSbtSource}",
      s"[-cli]                     ; convert sbt deps to scala-cli format",
-     s"[-fetch]                   ; fetch and list lib jars",
+     s"[-fetch]                   ; fetch and list dep jars",
     ))
   }
   var (op, inputFile) = ("", "")
