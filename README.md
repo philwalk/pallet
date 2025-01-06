@@ -131,15 +131,12 @@ When using `scala-cli`, the classpath is fully managed for you.
 For java version 9 or above, you can also define the classpath in a java options file.
 When specifying an options file for `Darwin/Osx`, the `@atFile` path must be absolute.
 
-Example portable `shebang` line:
-   `#!/usr/bin/env -S scala @/opt/atFiles/scala3cp`
-
 ### Setup for running the example scripts:
 There are various ways to write scala3 script `hash-bang` lines:
 
-  `#!/usr/bin/env -S scala-cli shebang`
-  `#!/usr/bin/env -S scala`
-  `#!/usr/bin/env -S scala @/opt/scalaAtfile`
+  * `#!/usr/bin/env -S scala-cli shebang`
+  * `#!/usr/bin/env -S scala`
+  * `#!/usr/bin/env -S scala @/opt/scalaAtfile`
 
 For scala versions 3.5+, the first two variations are roughly (exactly?) equivalent.
 For versions 3.4.3 and earlier, the 3rd form defines the `classpath` in an options file.
@@ -150,7 +147,7 @@ Some differences to be aware of between `scala-cli` scripts and legacy `scala` s
   * a `scala-cli` script declares dependencies within the script via special comments
   * if a `main()` method is defined, `scala-cli` requires it to be explicitly called at package level.
 
-### Example script: display the native path and the number of lines in `/etc/fstab`
+### Examples
 If you work in a `Windows` posix shell, you are aware that `java.nio.file.Paths.get()` expects file path String to be legal `Windows` paths.
 
 The following command line should print `true` to the Console:
@@ -162,46 +159,17 @@ and the following command line will print `false`:
 scala -e 'println(java.nio.file.Paths.get("/etc/fstab").toFile.isFile)'
 ```
 
+#### script: display the native path and the number of lines in `/etc/fstab`
 ```scala
-#!/ usr / bin / env -S scala
+#!/usr/bin/env -S scala-cli shebang
 
-import vastblue.pallet.*
-import vastblue.Platform.*
-
-object Fstab {
-  def main(args: Array[String]): Unit = {
-    // `posixroot` is the native path corresponding to "/"
-    // display the native path and lines.size of /etc/fstab
-    val p = Paths.get("/etc/fstab")
-    printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
-      _uname("-o"), posixroot, p.norm, p.lines.size)
-  }
-}
-```
-### Equivalent Scala-cli version of the same script:
-
-```scala
-#!/ usr / bin / env -S scala -cli shebang
-
-//> using scala "3.4.3"
 //> using dep "org.vastblue::pallet::0.10.19"
-
 import vastblue.pallet.*
-import vastblue.Platform.*
-
-object FstabCli {
-  def main(args: Array[String]): Unit = {
-    // `posixroot` is the native path corresponding to "/"
-    // display the native path and lines.size of /etc/fstab
-    val p = Paths.get("/etc/fstab")
-    printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
-      _uname("-o"), posixroot, p.norm, p.lines.size)
-  }
-}
-
-FstabCli.main(args)
+val p = Paths.get("/etc/fstab")
+printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
+  uname("-o"), posixroot, p.posx, p.lines.size)
 ```
-### Output of the previous example scripts on various platforms:
+#### Output of the previous example scripts on various platforms:
 ```
 Linux Mint # env: GNU/Linux | posixroot: /           | /etc/fstab            | 21 lines
 Darwin     # env: Darwin    | posixroot: /           | /etc/fstab            | 0 lines
@@ -211,77 +179,37 @@ Msys64     # env: Msys      | posixroot: C:/msys64/  | C:/msys64/etc/fstab   | 2
 ```
 Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extension returns `Nil`.
 
-### Example `scala-cli` script:
+#### Example: list child directories of "."
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using scala "3.4.3"
 //> using dep "org.vastblue::pallet::0.10.19"
-
 import vastblue.pallet.*
 
-def main(args: Array[String]): Unit = {
-  // list child directories of "."
-  val cwd: Path = Paths.get(".")
-  for ( p: Path <- cwd.paths.filter { _.isDirectory }) {
-    printf("%s\n", p.norm)
-  }
+// list child directories of "."
+val cwd: Path = Paths.get(".")
+for ( p: Path <- cwd.paths.filter { _.isDirectory }) {
+  printf("%s\n", p.posx)
 }
-main(args)
 ```
-### Example `scala3` script
+#### Example: print the native paths of command line arguments
 ```scala
-#!/usr/bin/env -S scala -cp @./atFile
-
+#!/usr/bin/env -S scala-cli shebang
+//> using dep "org.vastblue::pallet::0.10.19"
 import vastblue.pallet.*
 
-def main(args: Array[String]): Unit =
-  // display native path of command-line provided filenames
+// display native path of command-line provided filenames
+if args.isEmpty then
+  printf("usage: %s <path1> [<path2> ...]\n", scriptPath)
+else
   val dirs = for
     fname <- args
     p = Paths.get(fname)
     if p.isFile
-  yield p.norm
+  yield p.posx
 
   printf("%s\n", dirs.toList.mkString("\n"))
 ```
-
-### How to consistently access comand line arguments
-The Windows `jvm` will sometimes expand `glob` arguments, even if double-quoted.
- * https://stackoverflow.com/questions/37037375/trailing-asterisks-on-windows-jvm-command-line-args-are-globbed-in-cygwin-bash-s/37081167#37081167:~:text=This%20problem%20is%20caused,net/browse/JDK%2D8131329
-This script demonstrates a consistent, portable way to get command line arguments.
-```scala
-#!/usr/bin/env -S scala
-package vastblue
-
-import vastblue.pallet.*
-
-def main(args: Array[String]): Unit = {
-  // display default args
-  for (arg <- args) {
-    printf("arg [%s]\n", arg)
-  }
-  // display extended and repaired args
-  val argv = prepArgs(args.toSeq)
-  for ((arg, i) <- argv.zipWithIndex) {
-    printf(" %2d: [%s]\n", i, arg)
-  }
-}
-```
-Pass arguments with embedded spaces and glob expressions to see the difference between `args` and `argv`.
-Notice that `argv` has the script path in argv(0), similar to the standard in `C` 
-
-### Using `SCALA_OPTS` environment variable
-With `scala 3`, you can specify the `classpath` via an environment variable, permitting the use of a universal `shebang` line (a portability requirement).
-
-* Create a classpath `atFile` named `${HOME}/scala3cp`: 
-* define `SCALA_OPTS` (e.g., in ~/.bashrc):
-  * `export SCALA_OPTS="@${HOME}/scala3cp"`
-
-If you want to speed up subsequent calls to your scripts (after the initial compile-and-run invocation), you can add the `-save` option to your `SCALA_OPTS` variable:
-  * `export SCALA_OPTS="@/${HOME}/scala3cp -save"`
-
-The `-save` option saves the compiled script to a `jar` file in the script parent directory, speeding up subsequent calls, which are equivalent to `java -jar <jarfile>`.  The `jar` is self-contained, as it defines main class, classpath, etc. via the jar `manifest.mf` file.
 
 ### Setup
   * `Windows`: install one of the following:
@@ -299,21 +227,18 @@ Things that maximize the odds of your script running on another system:
   * use `scala 3`
   * use `posix` file paths by default
   * in `Windows`
-    * represent paths internally with forward slashes and avoid drive letters
+    * represent paths internally with forward slashes
     * drive letter not needed for paths on the current working drive (often C:)
     * to access disks other than the working drive, mount them via `/etc/fstab`
-    * `vastblue.Paths.get()` is can parse both `posix` and `Windows` filesystem paths
+    * `vastblue.Paths.get()` can parse both `posix` and `Windows` filesystem paths
   * don't assume path strings use `java.nio.File.separator` or `sys.props("line.separator")`
   * use them to format output, as appropriate, never to parse path strings
   * split strings with `"(\r)?\n"` rather than `line.separator`
-    * `split("\n")` can leave carriage-return debris lines ends
+    * `split("\n")` can leave carriage-return debris
+    * `split(File.separator) fails or leaves debris if input string came from another OS
   * create `java.nio.file.Path` objects in either of two ways:
     * `vastblue.file.Paths.get("/etc/fstab")
     * `"/etc/fstab".path       // guaranteed to use `vastblue.file.Paths.get()`
-  * if client needs glob expression command line arguments, `val argv = prepArgs(args.toSeq)`
-    * this avoids exposure to the `Windows` jvm glob expansion bug, and
-    * inserts `script` path or `main` method class as `argv(0)` (as in C/C++)
-    * argv(0) script name available as input parameter affecting script behaviour
 ### Examples
 Examples below illustrate some of the capabilities.
 
@@ -403,7 +328,7 @@ for (filename <- testFiles){
   }
 
   assert(testFile.isFile)
-  printf("\n# filename: %s\n", testFile.norm)
+  printf("\n# filename: %s\n", testFile.posx)
   // display file text lines
   for ((line: String, i: Int) <- testFile.lines.zipWithIndex){
     printf("%d: %s\n", i, line)
