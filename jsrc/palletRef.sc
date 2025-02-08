@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.4.3"
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 
 import vastblue.pallet._
 
