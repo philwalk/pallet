@@ -5,14 +5,14 @@ lazy val scalaVer = scala3
 lazy val supportedScalaVersions = List(scala3)
 // lazy val supportedScalaVersions = List(scalaVer)
 
-javacOptions ++= Seq("-source", "11", "-target", "11")
+javacOptions ++= Seq("-source", "17", "-target", "17")
 
 //enablePlugins(ScalaNativePlugin)
 //nativeLinkStubs := true
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.10.19"
+ThisBuild / version       := "0.10.22"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -23,8 +23,7 @@ ThisBuild / organizationHomepage := Some(url("https://vastblue.org"))
 
 parallelExecution := false
 
-Compile / packageBin / packageOptions +=
-  Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
+// Compile / packageBin / packageOptions += Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
 
 ThisBuild / scmInfo := Some(
   ScmInfo(
@@ -79,7 +78,7 @@ lazy val root = (project in file(".")).
 
 libraryDependencies ++= Seq(
   "org.scalatest"            %% "scalatest"       % "3.2.19" % Test,
-  "org.vastblue"              % "unifile_3"       % "0.3.9",
+  "org.vastblue"              % "unifile_3"       % "0.3.12",
   "org.simpleflatmapper"      % "sfm-csv"         % "9.0.2",
   "com.github.tototoshi"     %% "scala-csv"       % "2.0.0",
   "io.github.chronoscala"    %% "chronoscala"     % "2.0.10",

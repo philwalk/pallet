@@ -8,8 +8,15 @@
 <img alt="pallet image" width=240 src="images/wooden-pallet.png">
 
 
-Provides support for expressive idioms typical of scripting languages, for writing portable code that runs everywhere.
-Leverages `vastblue.unifile.Paths.get()` to support both `posix` and `Windows` filesystem paths.
+* Provides expressive idioms for writing portable code.
+
+* Write one version of a script that runs in 90% or more of development environments.
+
+The JVM on most platforms other than `Windows` share similarities, and are unix-like.
+You can install unix-like shell environments on Windows, but the JVM doesn't understand them.
+This library extends unifile [Unifile](https://github.com/philwalk/unifile) to provide filesystem support.
+`unifile` might be a better alternative if you don't need Date & Time functions, `csv` support, or if you
+want to avoid 3rd party dependencies.
 
 * Supported Scala Versions
   * `scala 3.x`
@@ -26,19 +33,27 @@ Leverages `vastblue.unifile.Paths.get()` to support both `posix` and `Windows` f
 
 ### Usage
 
-To use `pallet` in an `SBT` project, add this dependency to `build.sbt`
-```sbt
-  "org.vastblue" % "pallet"  %% "0.10.19" // scala 3
-  "org.vastblue" % "pallet_3" % "0.10.19" // scala 2.13.x
+To use this library in `scala-cli` or `scala 3.5+` scripts:
+```scala
+#!/usr/bin/env -S scala-cli shebang
+//> using dep org.vastblue::unifile:0.3.12
+//> using dep org.vastblue::pallet:0.10.22
+import vastblue.pallet.*
 ```
 
+For sbt projects:
+```sbt
+  "org.vastblue" % "pallet"  %% "0.10.22" // scala 3
+  "org.vastblue" % "pallet_3" % "0.10.22" // scala 2.13.x
+```
 ## Summary
-Simplicity and Universal Portability:
 * Use `scala` instead of `bash` or `python` for portable general purpose scripting
-* Publish universal scala scripts, rather than multiple OS-customized versions
+* Publish one script version, rather than multiple OS-customized versions
 * Script as though you're running in Linux, even on Windows or Mac.
 * standard OS and platform variables, based on `uname` information
 * directly read csv file rows from `java.nio.file.Path` objects
+* lots of commonly-needed file extensions:
+  * `if scriptPath.path.lastModified > "/etc/hosts".path.lastModified then ...`
 Extends the range of scala scripting:
 * reference Windows filesystem paths via posix abstractions
 * predefined environment information:
@@ -80,14 +95,10 @@ Extends the range of scala scripting:
   * lastModHoursAgo: Double
   * lastModDaysAgo: Double
   * withFileWriter(p: Path)(func: PrintWriter => Any)
-  * append DATA to script file
-  * many others
 * iterate directory subfiles:
   * files: Iterator[JFile]
   * paths: Iterator[Path]
   * walkTree(file: JFile, depth: Int = 1, maxdepth: Int = -1): Iterable[JFile]
-  * walkTreeFiltered(file: JFile, depth: Int = 1, maxdepth: Int = -1)(filt: JFile => Boolean): Iterable[JFile]
-  * walkTreeFast(p: Path, tossDirs: Set[String], maxdepth: Int = -1)(filt: Path => Boolean)
 
 * read files in the `/proc` tree in Windows, e.g.:
   * `/proc/meminfo`
@@ -106,64 +117,32 @@ Best with a recent version of coreutils:
   (e.g., `ubuntu`: 8.32-4.1ubuntu1, `osx`: stable 9.4)
 
 ### Concept
-* Concise, expressive and readable scripting idioms
-* correct portable handling of command line args
-* `vastblue.file.Paths` is a `java.nio.file.Paths` drop-in replacement that:
-  * correctly handles mounted `posix` paths
-  * returns ordinary `java.nio.file.Path` objects
-
-### Background
-If you work in diverse environments, you generally must customize scripts for each environment:
- * in `Linux`, `Darwin/Osx`, shell or python scripts
- * in `Windows`, batch files, powershell scripts, or other Windows-specific tools
-
-Hard to make scala scripts portable across `Linux`, `Osx`, `Windows`, because
-the jvm doesn't support filesystem abstractions of `cygwin64`, `msys64`, etc.
-
-Most platforms other than `Windows` are unix-like, but:
- * differing conventions and incompatibilities:
-   * Linux / OSX symantics of `/usr/bin/env`, etc.
-
-This library provides the missing piece.
-
-### The Classpath
-When using `scala-cli`, the classpath is fully managed for you.
-For java version 9 or above, you can also define the classpath in a java options file.
-When specifying an options file for `Darwin/Osx`, the `@atFile` path must be absolute.
 
 ### Setup for running the example scripts:
-There are various ways to write scala3 script `hash-bang` lines:
-
+recommended scala-cli `hash-bang` line:
   * `#!/usr/bin/env -S scala-cli shebang`
-  * `#!/usr/bin/env -S scala`
-  * `#!/usr/bin/env -S scala @/opt/scalaAtfile`
 
-For scala versions 3.5+, the first two variations are roughly (exactly?) equivalent.
-For versions 3.4.3 and earlier, the 3rd form defines the `classpath` in an options file.
+### Portable Conversion of Path Strings to java.nio.file.Path
+A posix shell path such as "/etc/fstab" is not recognized by the Windows jvm
+as referring to "C:\msys64\etc\fstab", and attempting to read from it probably
+throws `FileNotFoundException`.
 
-Each `scala-cli` script specifies required dependencies internally, and the classpath is managed for you.
-
-Some differences to be aware of between `scala-cli` scripts and legacy `scala` scripts:
-  * a `scala-cli` script declares dependencies within the script via special comments
-  * if a `main()` method is defined, `scala-cli` requires it to be explicitly called at package level.
-
-### Examples
-If you work in a `Windows` posix shell, you are aware that `java.nio.file.Paths.get()` expects file path String to be legal `Windows` paths.
-
-The following command line should print `true` to the Console:
+The following command lines illustrate the default Windows JVM behavior:
 ```scala
+# prints `true` to the Console for Windows paths:
 scala -e 'println(java.nio.file.Paths.get("C:/Windows").toFile.isDirectory)'
 ```
-and the following command line will print `false`:
 ```scala
+# prints `false` to the Console for mounted posix paths:
 scala -e 'println(java.nio.file.Paths.get("/etc/fstab").toFile.isFile)'
 ```
 
-#### script: display the native path and the number of lines in `/etc/fstab`
+### Example OS portable scripts
+
+#### display the native path and the number of lines in `/etc/fstab`
 ```scala
 #!/usr/bin/env -S scala-cli shebang
-
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 import vastblue.pallet.*
 val p = Paths.get("/etc/fstab")
 printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
@@ -183,7 +162,7 @@ Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extensio
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 import vastblue.pallet.*
 
 // list child directories of "."
@@ -195,7 +174,7 @@ for ( p: Path <- cwd.paths.filter { _.isDirectory }) {
 #### Example: print the native paths of command line arguments
 ```scala
 #!/usr/bin/env -S scala-cli shebang
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 import vastblue.pallet.*
 
 // display native path of command-line provided filenames
@@ -223,19 +202,17 @@ else
     * `brew install coreutils`
 
 ### How to Write Portable Scala Scripts
-Things that maximize the odds of your script running on another system:
+Things that maximize the odds of your script running on most systems:
   * use `scala 3`
-  * use `posix` file paths by default
-  * in `Windows`
-    * represent paths internally with forward slashes
-    * drive letter not needed for paths on the current working drive (often C:)
+  * represent paths internally with forward slashes
+  * drive letter not needed for paths on the current working drive (often C:)
     * to access disks other than the working drive, mount them via `/etc/fstab`
     * `vastblue.Paths.get()` can parse both `posix` and `Windows` filesystem paths
-  * don't assume path strings use `java.nio.File.separator` or `sys.props("line.separator")`
-  * use them to format output, as appropriate, never to parse path strings
-  * split strings with `"(\r)?\n"` rather than `line.separator`
+  * don't rely on `java.File.pathSeparator` for parsing path strings
+  * split strings to lines using `"(\r)?\n"` rather than JVM default line ending
     * `split("\n")` can leave carriage-return debris
-    * `split(File.separator) fails or leaves debris if input string came from another OS
+    * `split(java.io.File.separator) fails or leaves debris if input string came from another OS
+  * split PATH-like environment variables using `java.io.File.pathSeparator`
   * create `java.nio.file.Path` objects in either of two ways:
     * `vastblue.file.Paths.get("/etc/fstab")
     * `"/etc/fstab".path       // guaranteed to use `vastblue.file.Paths.get()`
@@ -245,7 +222,7 @@ Examples below illustrate some of the capabilities.
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 import vastblue.pallet.*
 
   printf("uname / osType / osName:\n%s\n", s"platform info: ${unameLong} / ${osType} / ${osName}")
@@ -268,7 +245,7 @@ import vastblue.pallet.*
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 import vastblue.pallet.*
 
 import vastblue.pallet.*
@@ -311,7 +288,7 @@ Example #2: write and read `.csv` files:
 ```scala
 #!/usr/bin/env -S scala-cli shebang
 
-//> using dep "org.vastblue::pallet::0.10.19"
+//> using dep "org.vastblue::pallet::0.10.22"
 import vastblue.pallet.*
 
 val testFiles = Seq("tabTest.csv", "commaTest.csv")

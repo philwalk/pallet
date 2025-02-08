@@ -29,7 +29,7 @@ object pallet extends vastblue.util.PathExtensions {
 
     def fastCsv(delimiter: String): FastCsv = p.toFile.fastCsv(delimiter)
 
-    def csvRows: Seq[Seq[String]] = FastCsv(p).rows
+    def csvRows: Seq[Seq[String]] = FastCsv(p).rows.dropWhile(_.mkString.trim.startsWith("#"))
 
     def csvColnamesAndRows: (Seq[String], Seq[Seq[String]]) = csvRows.toList match {
     case cnames :: tail => (cnames, tail)
