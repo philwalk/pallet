@@ -12,11 +12,13 @@
 
 * Write one version of a script that runs in 90% or more of development environments.
 
-The JVM on most platforms other than `Windows` share similarities, and are unix-like.
-You can install unix-like shell environments on Windows, but the JVM doesn't understand them.
-This library extends unifile [Unifile](https://github.com/philwalk/unifile) to provide filesystem support.
-`unifile` might be a better alternative if you don't need Date & Time functions, `csv` support, or if you
-want to avoid 3rd party dependencies.
+The JVM on non-Windows platforms share similarities, and tend to be unix-like.
+Although bash shell environments exist, the `Windows` JVM doesn't support the posix
+filesystem abstractions they provide.
+
+This library leverages [Unifile](https://github.com/philwalk/unifile) to resolve these
+deficiencies.  In addition, it provides Date & Time functions, `csv` support, and other
+enhancements.
 
 * Supported Scala Versions
   * `scala 3.x`
