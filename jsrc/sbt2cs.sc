@@ -1,12 +1,16 @@
-#!/usr/bin/env -S scala
+#!/usr/bin/env -S scala-cli shebang
 //package vast.apps
 
-import vastblue.unifile.*
+//> using jvm 17
+//> using scala 3.6.4
+//> using dep org.vastblue::pallet:0.11.0
+
+import vastblue.pallet.*
 
 /*
  * Options:
  *   + fetch and list dependency file paths
- *   + convert sbt dependencies to scala-cli "using dep" format
+ *   + convert sbt dependencies to scala-cli using dep format
  *
  * Example conversion from sbt dependency format to scala-cli dep format:
  *
@@ -23,16 +27,16 @@ import vastblue.unifile.*
  *   com.github.darrenjw      %% scala-glm     % 0.8
  *
  * to:
- *   //> using dep "org.vastblue::pallet::0.11.0"
- *   //> using dep "org.vastblue::unifile::0.4.1"
- *   //> using dep "org.scalanlp::breeze-viz::2.1.0"
- *   //> using dep "org.scalanlp::breeze::2.1.0"
- *   //> using dep "org.scala-lang.modules::scala-xml::2.2.0"
- *   //> using dep "org.scala-lang.modules::scala-swing::3.0.0"
- *   //> using dep "net.ruippeixotog::scala-scraper::3.1.1"
- *   //> using dep "dev.ludovic.netlib:blas:3.0.3"
- *   //> using dep "com.github.fommil.netlib:all:1.1.2"
- *   //> using dep "com.github.darrenjw::scala-glm::0.8"
+ *   //> using dep org.vastblue::pallet::0.11.0
+ *   //> using dep org.vastblue::unifile::0.4.1
+ *   //> using dep org.scalanlp::breeze-viz::2.1.0
+ *   //> using dep org.scalanlp::breeze::2.1.0
+ *   //> using dep org.scala-lang.modules::scala-xml::2.2.0
+ *   //> using dep org.scala-lang.modules::scala-swing::3.0.0
+ *   //> using dep net.ruippeixotog::scala-scraper::3.1.1
+ *   //> using dep dev.ludovic.netlib:blas:3.0.3
+ *   //> using dep com.github.fommil.netlib:all:1.1.2
+ *   //> using dep com.github.darrenjw::scala-glm::0.8
 */
 object Sbt2cs {
   def usage(m: String=""): Nothing = {
