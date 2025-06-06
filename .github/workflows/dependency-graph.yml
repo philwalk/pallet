@@ -15,9 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin' # Install Temurin JDK
+          java-version: '17'      # Adjust to your project's Java version
+      - name: Install sbt
+        run: |
+          echo "Installing sbt..."
+          curl -L https://www.scala-sbt.org/sbt-native-packages/sbt.tgz | tar xz
+          sudo mv sbt /usr/local/bin/
       - uses: scalacenter/sbt-dependency-submission@v2
         with:
-          ## Optional: Define the working directory of your build.
-          ## It should contain the build.sbt file. 
           working-directory: './'
           configs-ignore: scala-doc-tool
