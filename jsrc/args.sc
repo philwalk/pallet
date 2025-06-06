@@ -1,6 +1,7 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 
 // display default args

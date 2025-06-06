@@ -38,13 +38,16 @@ enhancements.
 To use this library in `scala-cli` or `scala 3.5+` scripts:
 ```scala
 #!/usr/bin/env -S scala-cli shebang
+
 //> using dep org.vastblue::unifile:0.4.1
 //> using dep org.vastblue::pallet:0.11.0
+
 import vastblue.pallet.*
 ```
 
 For sbt projects:
 ```sbt
+
   "org.vastblue" % "pallet"  %% "0.11.0" // scala 3
   "org.vastblue" % "pallet_3" % "0.11.0" // scala 2.13.x
 ```
@@ -144,7 +147,9 @@ scala -e 'println(java.nio.file.Paths.get("/etc/fstab").toFile.isFile)'
 #### display the native path and the number of lines in `/etc/fstab`
 ```scala
 #!/usr/bin/env -S scala-cli shebang
+
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 val p = Paths.get("/etc/fstab")
 printf("env: %-10s| posixroot: %-12s| %-22s| %d lines\n",
@@ -165,6 +170,7 @@ Note that on Darwin, there is no `/etc/fstab` file, so the `Path#lines` extensio
 #!/usr/bin/env -S scala-cli shebang
 
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 
 // list child directories of "."
@@ -176,7 +182,9 @@ for ( p: Path <- cwd.paths.filter { _.isDirectory }) {
 #### Example: print the native paths of command line arguments
 ```scala
 #!/usr/bin/env -S scala-cli shebang
+
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 
 // display native path of command-line provided filenames
@@ -225,6 +233,7 @@ Examples below illustrate some of the capabilities.
 #!/usr/bin/env -S scala-cli shebang
 
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 
   printf("uname / osType / osName:\n%s\n", s"platform info: ${unameLong} / ${osType} / ${osName}")
@@ -248,6 +257,7 @@ import vastblue.pallet.*
 #!/usr/bin/env -S scala-cli shebang
 
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 
 import vastblue.pallet.*
@@ -291,6 +301,7 @@ Example #2: write and read `.csv` files:
 #!/usr/bin/env -S scala-cli shebang
 
 //> using dep "org.vastblue::pallet::0.11.0"
+
 import vastblue.pallet.*
 
 val testFiles = Seq("tabTest.csv", "commaTest.csv")
