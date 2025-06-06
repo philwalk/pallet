@@ -1,11 +1,9 @@
 #!/usr/bin/env -S scala-cli shebang
 
 //> using scala "3.4.3"
-//> using dep "org.vastblue::unifile::0.3.12"
-//> using dep "org.vastblue::pallet::0.10.22"
+//> using dep "org.vastblue::pallet::0.11.0"
 
-//import vastblue.pallet.*
-import vastblue.unifile.*
+import vastblue.pallet.*
 
 object FstabCli {
   def main(args: Array[String]): Unit = {
@@ -19,4 +17,3 @@ object FstabCli {
       uname("-o"), posixroot, p.posx, p.lines.size)
   }
 }
-FstabCli.main(args)

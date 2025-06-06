@@ -12,7 +12,7 @@ javacOptions ++= Seq("-source", "17", "-target", "17")
 
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.10.22"
+ThisBuild / version       := "0.11.0"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -78,7 +78,7 @@ lazy val root = (project in file(".")).
 
 libraryDependencies ++= Seq(
   "org.scalatest"            %% "scalatest"       % "3.2.19" % Test,
-  "org.vastblue"              % "unifile_3"       % "0.3.12",
+  "org.vastblue"              % "unifile_3"       % "0.4.1",
   "org.simpleflatmapper"      % "sfm-csv"         % "9.0.2",
   "com.github.tototoshi"     %% "scala-csv"       % "2.0.0",
   "io.github.chronoscala"    %% "chronoscala"     % "2.0.10",

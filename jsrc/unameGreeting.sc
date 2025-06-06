@@ -1,7 +1,7 @@
 #!/usr/bin/env -S scala
 
-//> using scala "3.4.3"
-//> using dep "org.vastblue::pallet::0.10.22"
+//> using scala 3.4.3
+//> using dep "org.vastblue::pallet::0.11.0"
 
 import vastblue.pallet.*
 

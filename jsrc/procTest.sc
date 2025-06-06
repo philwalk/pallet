@@ -1,5 +1,9 @@
-#!/usr/bin/env -S scala
+#!/usr/bin/env -S scala-cli shebang
 //package vastblue
+
+//> using jvm 17
+//> using scala 3.6.4
+//> using dep org.vastblue::pallet:0.11.0
 
 import vastblue.pallet._
 import vastblue.file.ProcfsPaths._

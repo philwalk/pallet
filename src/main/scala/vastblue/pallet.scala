@@ -5,6 +5,7 @@ import vastblue.file.Util.*
 import vastblue.file.FastCsv
 import vastblue.file.FastCsv.*
 import vastblue.time.TimeDate.*
+import vastblue.Platform.envPath
 
 object pallet extends vastblue.util.PathExtensions {
   var hook: Int    = 0 // breakpoint hook
@@ -16,6 +17,9 @@ object pallet extends vastblue.util.PathExtensions {
   def yesterday    = now - 1.day
 
   def posixroot: String = vastblue.Platform.posixroot
+
+  def which(basename: String): String                             = Platform.which(basename)
+  def find(basename: String, dirs: Seq[String] = envPath): String = Platform.which(basename)
 
   extension (p: Path) {
     def lastModifiedTime          = whenModified(p.toFile)
