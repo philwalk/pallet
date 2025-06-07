@@ -18,9 +18,6 @@ object pallet extends vastblue.util.PathExtensions {
 
   def posixroot: String = vastblue.Platform.posixroot
 
-  def which(basename: String): String                             = Platform.which(basename)
-  def find(basename: String, dirs: Seq[String] = envPath): String = Platform.which(basename)
-
   extension (p: Path) {
     def lastModifiedTime          = whenModified(p.toFile)
     def lastModSecondsDbl: Double = {
