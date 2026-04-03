@@ -365,6 +365,7 @@ sys     0m0.411s
 ```scala
 import vastblue.pallet.*
 import vastblue.util.DataTypes.*
+import vastblue.time.TimeDate.*
 ```
 
 **After:**
