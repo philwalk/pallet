@@ -205,26 +205,8 @@ object DataTypes {
     }
   }
 
-  /*
-  * Integer percent, e.g., 8%
-  */
-  def v2sp(xx:Big,colwidth:Int=3,dec:Int=0,factor:Double=100.0):String =
-    numStrPct(xx,colwidth,dec,factor) // alias
-
   def v2s(num:Big):String = num2string(num.toDouble)
 
-  def numStrPct(xx:Big,colwidth:Int=9,dec:Int=2,factor:Double=100.0):String = {
- // val fmtm0 = "%%%ds".format(colwidth)
-    val fmtm1 = "%%%d.%df".format(colwidth-1,dec)
-    val fmtm2 = "%%%d.%df".format(colwidth-2,dec)
-    val result = (xx * factor) match {
-    case BadNum               => " " * (colwidth-3) + "N/A"
-    case num if num >= 1e9    => fmtm2.format(num)+"B%"
-    case num if num >= 1e6    => fmtm2.format(num)+"M%"
-    case num                  => fmtm1.format(num)+"%"
-    }
-    result
-  }
   def num2string(xx:Big,dec:Int=2,factor:Double=1.0):String = {
     numStr(xx,9,dec,factor)
   }
@@ -244,6 +226,25 @@ object DataTypes {
     else                    fmt.format(xx)
   }
 
+  /*
+  * Integer percent, e.g., 8%
+  */
+  def v2sp(xx:Big,colwidth:Int=3,dec:Int=0,factor:Double=100.0):String =
+    numStrPct(xx,colwidth,dec,factor) // alias
+
+  def numStrPct(xx:Big,colwidth:Int=9,dec:Int=2,factor:Double=100.0):String = {
+ // val fmtm0 = "%%%ds".format(colwidth)
+    val fmtm1 = "%%%d.%df".format(colwidth-1,dec)
+    val fmtm2 = "%%%d.%df".format(colwidth-2,dec)
+    val result = (xx * factor) match {
+    case BadNum               => " " * (colwidth-3) + "N/A"
+    case num if num >= 1e9    => fmtm2.format(num)+"B%"
+    case num if num >= 1e6    => fmtm2.format(num)+"M%"
+    case num                  => fmtm1.format(num)+"%"
+    }
+    result
+  }
+
   def big2double(xx:Big):Double = {
     xx match {
     case BadNum => Double.NaN
@@ -253,8 +254,8 @@ object DataTypes {
   def bigDecimal2num(num:Big):String = num2string(num)
   def num2str(num:Big):String = num2string(num)
   def v2sPct(num:Big):String = numStrPct(num)
-
 }
+
 import DataTypes.*
 
 object NumLike {
