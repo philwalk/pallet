@@ -1,18 +1,17 @@
-//lazy val scala213 = "2.13.13"
-lazy val scala3 = "3.4.3"
+lazy val scala3 = "3.6.4"
 lazy val scalaVer = scala3
 
 lazy val supportedScalaVersions = List(scala3)
-// lazy val supportedScalaVersions = List(scalaVer)
 
 javacOptions ++= Seq("-source", "17", "-target", "17")
 
 //enablePlugins(ScalaNativePlugin)
 //nativeLinkStubs := true
-
 //ThisBuild / envFileName   := "dev.env" // sbt-dotenv plugin gets build environment here
 ThisBuild / scalaVersion  := scalaVer
-ThisBuild / version       := "0.11.0"
+
+lazy val projectName = "pallet"
+ThisBuild / version       := "0.11.3"
 ThisBuild / versionScheme := Some("semver-spec")
 
 ThisBuild / organization         := "org.vastblue"
@@ -23,12 +22,10 @@ ThisBuild / organizationHomepage := Some(url("https://vastblue.org"))
 
 parallelExecution := false
 
-// Compile / packageBin / packageOptions += Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
-
 ThisBuild / scmInfo := Some(
   ScmInfo(
-    url("https://github.com/philwalk/pallet"),
-    "scm:git@github.com:philwalk/pallet.git"
+    url(s"https://github.com/philwalk/$projectName"),
+    s"scm:git@github.com:philwalk/$projectName.git"
   )
 )
 
@@ -53,14 +50,14 @@ ThisBuild / publishTo := {
 
 ThisBuild / publishMavenStyle.withRank(KeyRanks.Invisible) := true
 
+ThisBuild / crossScalaVersions := supportedScalaVersions
+
 // For all Sonatype accounts created on or after February 2021
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 
 resolvers += Resolver.mavenLocal
 
 publishTo := sonatypePublishToBundle.value
-
-ThisBuild / crossScalaVersions := supportedScalaVersions
 
 Compile / packageBin / packageOptions +=
   Package.ManifestAttributes(java.util.jar.Attributes.Name.CLASS_PATH -> "")
@@ -69,7 +66,7 @@ lazy val root = (project in file(".")).
   enablePlugins(BuildInfoPlugin).
   settings(
     crossScalaVersions := supportedScalaVersions,
-    name               := "pallet",
+    name               := projectName,
     description        := "scala scripting support",
  // mainClass          := Some("vast.apps.ShowSysProps"),
     buildInfoKeys      := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
@@ -77,11 +74,11 @@ lazy val root = (project in file(".")).
   )
 
 libraryDependencies ++= Seq(
-  "org.scalatest"            %% "scalatest"       % "3.2.19" % Test,
-  "org.vastblue"              % "unifile_3"       % "0.4.1",
+  "org.scalatest"            %% "scalatest"       % "3.2.20" % Test,
+  "org.vastblue"              % "unifile_3"       % "0.4.2",
   "org.simpleflatmapper"      % "sfm-csv"         % "9.0.2",
-  "com.github.tototoshi"     %% "scala-csv"       % "2.0.0",
-  "io.github.chronoscala"    %% "chronoscala"     % "2.0.10",
+  "com.github.tototoshi"     %% "scala-csv"       % "2.0.0", // "1.4.1"
+  "io.github.chronoscala"    %% "chronoscala"     % "2.1.0",
 )
 
 /*
@@ -120,6 +117,8 @@ case Some((2, n)) if n >= 13 =>
     "-Xsource:3",
     "-Xmaxerrs",
     "10",
+    "-Xsource:3",
+    "-Xsource-features:implicit-resolution",
     "-Yscala3-implicit-resolution",
     "-language:implicitConversions",
   )
@@ -134,3 +133,13 @@ credentials += Credentials(
   "1CF370113B7EE5A327DD25E7B5D88C95FC9CB6CA", // key identifier
   "ignored",
 )
+
+credentials += Credentials(Path.userHome / ".sonatype_credentials") 
+
+// Set this to the same value set as your credential files host.
+sonatypeCredentialHost := "s01.oss.sonatype.org"
+// Set this to the repository to publish to using `s01.oss.sonatype.org`
+// for accounts created after Feb. 2021.
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+
+
