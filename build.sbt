@@ -40,8 +40,8 @@ ThisBuild / developers.withRank(KeyRanks.Invisible) := List(
 
 // Remove all additional repository other than Maven Central from POM
 ThisBuild / publishTo := {
-  // For accounts created after Feb 2021:
-  val nexus = "https://s01.oss.sonatype.org/"
+  // For accounts created after Feb 2021 and updated after 2025:
+  val nexus = "https://central.sonatype.com/"
   if (isSnapshot.value)
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
@@ -53,7 +53,7 @@ ThisBuild / publishMavenStyle.withRank(KeyRanks.Invisible) := true
 ThisBuild / crossScalaVersions := supportedScalaVersions
 
 // For all Sonatype accounts created on or after February 2021
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+ThisBuild / sonatypeCredentialHost := "https://central.sonatype.com/"
 
 resolvers += Resolver.mavenLocal
 
@@ -75,7 +75,7 @@ lazy val root = (project in file(".")).
 
 libraryDependencies ++= Seq(
   "org.scalatest"            %% "scalatest"       % "3.2.20" % Test,
-  "org.vastblue"              % "unifile_3"       % "0.4.2",
+  "org.vastblue"              % "unifile_3"       % "0.4.3",
   "org.simpleflatmapper"      % "sfm-csv"         % "9.0.2",
   "com.github.tototoshi"     %% "scala-csv"       % "2.0.0", // "1.4.1"
   "io.github.chronoscala"    %% "chronoscala"     % "2.1.0",
@@ -134,12 +134,19 @@ credentials += Credentials(
   "ignored",
 )
 
-credentials += Credentials(Path.userHome / ".sonatype_credentials") 
+val credFile = Path.userHome / ".sonatype_credentials"
+credentials ++= (
+  if (credFile.exists) Seq(Credentials(credFile))
+  else Seq(Credentials(
+    "Sonatype Nexus Repository Manager",
+    "central.sonatype.com",
+    sys.env.getOrElse("SONATYPE_USERNAME", ""),
+    sys.env.getOrElse("SONATYPE_PASSWORD", "")
+  ))
+)
 
 // Set this to the same value set as your credential files host.
-sonatypeCredentialHost := "s01.oss.sonatype.org"
-// Set this to the repository to publish to using `s01.oss.sonatype.org`
-// for accounts created after Feb. 2021.
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+sonatypeCredentialHost := "central.sonatype.com"
+sonatypeRepository := "https://central.sonatype.com/service/local"
 
 
